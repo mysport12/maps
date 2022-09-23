@@ -21,7 +21,6 @@ import com.mapbox.rctmgl.location.LocationManager.OnUserLocationChange
 import com.mapbox.rctmgl.utils.GeoJSONUtils
 import com.mapbox.maps.plugin.locationcomponent.OnIndicatorBearingChangedListener
 import com.mapbox.maps.plugin.locationcomponent.OnIndicatorPositionChangedListener
-import com.mapbox.rctmgl.components.camera.CameraUpdateItem
 import com.mapbox.rctmgl.events.IEvent
 import com.mapbox.rctmgl.events.MapChangeEvent
 import com.mapbox.rctmgl.events.constants.EventTypes
@@ -35,6 +34,7 @@ import com.mapbox.maps.*
 import com.mapbox.maps.plugin.PuckBearingSource
 import com.mapbox.maps.plugin.locationcomponent.location
 import com.mapbox.maps.plugin.locationcomponent.location2
+import com.mapbox.maps.plugin.viewport.data.DefaultViewportTransitionOptions
 import com.mapbox.maps.plugin.viewport.data.FollowPuckViewportStateBearing
 import com.mapbox.maps.plugin.viewport.data.FollowPuckViewportStateOptions
 import com.mapbox.maps.plugin.viewport.viewport
@@ -66,6 +66,7 @@ class RCTMGLCamera(private val mContext: Context, private val mManager: RCTMGLCa
     private val mUserLocation: UserLocation = UserLocation()
     private val mCenterCoordinate: ScreenCoordinate? = null
     private val mAnimated = false
+    private var mAnimationDuration : Long? = null
     private val mHeading = 0.0
     private var mFollowPitch : Double? = null
     private var mFollowZoomLevel : Double? = null
@@ -134,6 +135,12 @@ class RCTMGLCamera(private val mContext: Context, private val mManager: RCTMGLCa
         mCameraStop!!.setCallback(mCameraCallback)
         if (mMapView != null) {
             mCameraStop?.let { updateCamera(it) }
+        }
+    }
+
+    fun setAnimationDuration(duration: Int?) {
+        if (duration != null) {
+            mAnimationDuration = duration.toLong()
         }
     }
 
@@ -440,7 +447,11 @@ class RCTMGLCamera(private val mContext: Context, private val mManager: RCTMGLCa
             }
 
             val followState = viewport.makeFollowPuckViewportState(followOptions.build())
-            viewport.transitionTo(followState)
+            val defaultTransitionOptions = DefaultViewportTransitionOptions.Builder()
+            if (mAnimationDuration != null) {
+                defaultTransitionOptions.maxDurationMs(mAnimationDuration!!)
+            }
+            viewport.transitionTo(followState, viewport.makeDefaultViewportTransition(defaultTransitionOptions.build()))
         }
         mapboxMap?.let {
             it.getStyle()?.let {

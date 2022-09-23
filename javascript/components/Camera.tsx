@@ -87,7 +87,10 @@ interface NativeCameraStop {
 }
 
 export interface CameraRef {
-  setCamera: (config: CameraStop | CameraStops) => void;
+  setCamera: (
+    config: CameraStop | CameraStops,
+    ignoreFollowUserLocation: boolean,
+  ) => void;
   fitBounds: (
     ne: Position,
     sw: Position,
@@ -216,26 +219,25 @@ export const Camera = memo(
   forwardRef<CameraRef, CameraProps>(
     (props: CameraProps, ref: React.ForwardedRef<CameraRef>) => {
       const {
-        centerCoordinate,
-        bounds,
-        heading,
-        pitch,
-        zoomLevel,
-        padding,
+        allowUpdates = true,
         animationDuration,
         animationMode,
-        minZoomLevel,
-        maxZoomLevel,
-        maxBounds,
+        bounds,
+        centerCoordinate,
+        defaultSettings,
+        followHeading,
+        followPitch,
         followUserLocation,
         followUserMode,
         followZoomLevel,
-        followPitch,
-        followHeading,
-        defaultSettings,
-        allowUpdates = true,
-        triggerKey,
+        heading,
+        maxBounds,
+        maxZoomLevel,
+        minZoomLevel,
         onUserTrackingModeChange,
+        padding,
+        pitch,
+        zoomLevel,
       } = props;
 
       // @ts-expect-error This avoids a type/value mismatch.
@@ -251,7 +253,7 @@ export const Camera = memo(
             type: 'CameraStop',
           };
 
-          if (props.followUserLocation && !ignoreFollowUserLocation) {
+          if (followUserLocation && !ignoreFollowUserLocation) {
             return null;
           }
 
@@ -262,8 +264,11 @@ export const Camera = memo(
           if (stop.zoomLevel !== undefined) _nativeStop.zoom = stop.zoomLevel;
           if (stop.animationMode !== undefined)
             _nativeStop.mode = nativeAnimationMode(stop.animationMode);
-          if (stop.animationDuration !== undefined)
-            _nativeStop.duration = stop.animationDuration;
+          if (
+            stop.animationDuration !== undefined ||
+            animationDuration !== undefined
+          )
+            _nativeStop.duration = stop.animationDuration ?? animationDuration;
 
           if (stop.centerCoordinate) {
             _nativeStop.centerCoordinate = JSON.stringify(
@@ -287,7 +292,7 @@ export const Camera = memo(
 
           return _nativeStop;
         },
-        [props.followUserLocation],
+        [animationDuration, followUserLocation],
       );
 
       const nativeDefaultStop = useMemo((): NativeCameraStop | null => {
@@ -328,7 +333,7 @@ export const Camera = memo(
         return JSON.stringify(makeLatLngBounds(maxBounds.ne, maxBounds.sw));
       }, [maxBounds]);
 
-      const _setCamera: CameraRef['setCamera'] = (config) => {
+      function setCamera(config, ignoreFollowUserLocation = false) {
         if (!allowUpdates) {
           return;
         }
@@ -346,7 +351,10 @@ export const Camera = memo(
         if (config.type === 'CameraStops') {
           for (const _stop of config.stops) {
             let _nativeStops: NativeCameraStop[] = [];
-            const _nativeStop = buildNativeStop(_stop);
+            const _nativeStop = buildNativeStop(
+              _stop,
+              ignoreFollowUserLocation,
+            );
             if (_nativeStop) {
               _nativeStops = [..._nativeStops, _nativeStop];
             }
@@ -355,23 +363,14 @@ export const Camera = memo(
             });
           }
         } else if (config.type === 'CameraStop') {
-          const _nativeStop = buildNativeStop(config);
+          const _nativeStop = buildNativeStop(config, ignoreFollowUserLocation);
           if (_nativeStop) {
             nativeCamera.current.setNativeProps({ stop: _nativeStop });
           }
         }
-      };
-      const setCamera = useCallback(_setCamera, [
-        allowUpdates,
-        buildNativeStop,
-      ]);
+      }
 
-      const _fitBounds: CameraRef['fitBounds'] = (
-        ne,
-        sw,
-        paddingConfig = 0,
-        _animationDuration = 0,
-      ) => {
+      function fitBounds(ne, sw, paddingConfig = 0, _animationDuration = 0) {
         let _padding = {
           paddingTop: 0,
           paddingBottom: 0,
@@ -406,54 +405,38 @@ export const Camera = memo(
 
         setCamera({
           type: 'CameraStop',
-          bounds: {
-            ne,
-            sw,
-          },
+          bounds: { ne, sw },
           padding: _padding,
           animationDuration: _animationDuration,
           animationMode: 'easeTo',
         });
-      };
-      const fitBounds = useCallback(_fitBounds, [setCamera]);
+      }
 
-      const _flyTo: CameraRef['flyTo'] = (
-        _centerCoordinate,
-        _animationDuration = 2000,
-      ) => {
+      function flyTo(_centerCoordinate, _animationDuration = 2000) {
         setCamera({
           type: 'CameraStop',
           centerCoordinate: _centerCoordinate,
           animationDuration: _animationDuration,
         });
-      };
-      const flyTo = useCallback(_flyTo, [setCamera]);
+      }
 
-      const _moveTo: CameraRef['moveTo'] = (
-        _centerCoordinate,
-        _animationDuration = 0,
-      ) => {
+      function moveTo(_centerCoordinate, _animationDuration = 0) {
         setCamera({
           type: 'CameraStop',
           centerCoordinate: _centerCoordinate,
           animationDuration: _animationDuration,
           animationMode: 'easeTo',
         });
-      };
-      const moveTo = useCallback(_moveTo, [setCamera]);
+      }
 
-      const _zoomTo: CameraRef['zoomTo'] = (
-        _zoomLevel,
-        _animationDuration = 2000,
-      ) => {
+      function zoomTo(_zoomLevel, _animationDuration = 2000) {
         setCamera({
           type: 'CameraStop',
           zoomLevel: _zoomLevel,
           animationDuration: _animationDuration,
           animationMode: 'flyTo',
         });
-      };
-      const zoomTo = useCallback(_zoomTo, [setCamera]);
+      }
 
       useImperativeHandle(ref, () => ({
         /**
@@ -465,6 +448,7 @@ export const Camera = memo(
          * });
          *
          * @param {CameraStop | CameraStops} config
+         * @param {boolean} ignoreFollowUserLocation
          */
         setCamera,
         /**

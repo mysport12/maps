@@ -62,6 +62,12 @@ class RCTMGLCameraManager(private val mContext: ReactApplicationContext) :
         }
     }
 */
+
+    @ReactProp(name = "animationDuration")
+    fun setAnimationDuration(camera: RCTMGLCamera, value: Int) {
+        camera.setAnimationDuration(value)
+    }
+
     @ReactProp(name = "userTrackingMode")
     fun setUserTrackingMode(camera: RCTMGLCamera, userTrackingMode: Int) {
         camera.setUserTrackingMode(userTrackingMode)

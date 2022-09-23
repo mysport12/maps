@@ -63,14 +63,15 @@ return (
 | onUserTrackingModeChange | `func` | `none` | `false` | Executes when user tracking mode changes.<br/>*signature:*`(event:MapboxGLEvent) => void` |
 
 ## methods
-### setCamera()
+### setCamera(config[, ignoreFollowUserLocation])
 
 Sets any camera properties, with default fallbacks if unspecified.
 
 #### arguments
 | Name | Type | Required | Description  |
 | ---- | :--: | :------: | :----------: |
-
+| `config` | `CameraStop \| CameraStops` | `Yes` | null |
+| `ignoreFollowUserLocation` | `boolean` | `No` | null |
 
 
 
@@ -81,14 +82,17 @@ camera.current?.setCamera({
 ```
 
 
-### fitBounds()
+### fitBounds(ne, sw[, paddingConfig][, _animationDuration])
 
 Set the camera position to enclose the provided bounds, with optional<br/>padding and duration.
 
 #### arguments
 | Name | Type | Required | Description  |
 | ---- | :--: | :------: | :----------: |
-
+| `ne` | `Position` | `Yes` | Northeast coordinate of bounding box |
+| `sw` | `Position` | `Yes` | Southwest coordinate of bounding box |
+| `paddingConfig` | `number \| Array` | `No` | The viewport padding, specified as a number (all sides equal), a 2-item array ([vertical, horizontal]), or a 4-item array ([top, right, bottom, left]) |
+| `_animationDuration` | `n/a` | `No` | undefined |
 
 
 
@@ -98,14 +102,15 @@ camera.fitBounds([lon, lat], [lon, lat], [20, 0], 1000);
 ```
 
 
-### flyTo()
+### flyTo(_centerCoordinate[, _animationDuration])
 
 Sets the camera to center around the provided coordinate using a realistic 'travel'<br/>animation, with optional duration.
 
 #### arguments
 | Name | Type | Required | Description  |
 | ---- | :--: | :------: | :----------: |
-
+| `_centerCoordinate` | `n/a` | `Yes` | undefined |
+| `_animationDuration` | `n/a` | `No` | undefined |
 
 
 
@@ -115,14 +120,15 @@ camera.flyTo([lon, lat], 12000);
 ```
 
 
-### moveTo()
+### moveTo(_centerCoordinate[, _animationDuration])
 
 Sets the camera to center around the provided coordinate, with optional duration.
 
 #### arguments
 | Name | Type | Required | Description  |
 | ---- | :--: | :------: | :----------: |
-
+| `_centerCoordinate` | `n/a` | `Yes` | undefined |
+| `_animationDuration` | `n/a` | `No` | undefined |
 
 
 
@@ -132,14 +138,15 @@ camera.moveTo([lon, lat]);
 ```
 
 
-### zoomTo()
+### zoomTo(_zoomLevel[, _animationDuration])
 
 Zooms the camera to the provided level, with optional duration.
 
 #### arguments
 | Name | Type | Required | Description  |
 | ---- | :--: | :------: | :----------: |
-
+| `_zoomLevel` | `n/a` | `Yes` | undefined |
+| `_animationDuration` | `n/a` | `No` | undefined |
 
 
 

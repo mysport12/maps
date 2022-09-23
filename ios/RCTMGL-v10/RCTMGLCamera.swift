@@ -20,7 +20,7 @@ enum UserTrackingMode: String {
 struct CameraUpdateItem {
   var camera: CameraOptions
   var mode: CameraMode
-  var duration: TimeInterval?
+  var duration: TimeInterval? = 0
   
   func execute(map: RCTMGLMapView, cameraAnimator: inout BasicCameraAnimator?) {
     logged("CameraUpdateItem.execute") {
@@ -277,7 +277,7 @@ class RCTMGLCamera : RCTMGLMapComponentBase, LocationConsumer {
         }
       }
       let followState = map.viewport.makeFollowPuckViewportState(options: followOptions)
-      map.viewport.transition(to: followState)
+      map.viewport.transition(to: followState, transition: map.viewport.makeDefaultViewportTransition(options: DefaultViewportTransitionOptions(maxDuration: toSeconds(self.animationDuration as? Double ?? 0.0))))
       map.mapboxMap.setCamera(to: _camera)
     }
   }
@@ -390,7 +390,7 @@ class RCTMGLCamera : RCTMGLMapComponentBase, LocationConsumer {
         pitch: pitch
       ),
       mode: mode,
-      duration: duration
+      duration: duration ?? toSeconds(self.animationDuration as! Double)
     )
     return result
   }
