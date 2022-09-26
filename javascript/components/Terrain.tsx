@@ -92,7 +92,6 @@ export const Terrain = memo((props: Props) => {
     style = { exaggeration: props.exaggeration, ...style };
   }
 
-  console.log('STYLE:', style);
   const baseProps = useMemo(() => {
     return {
       ...props,
@@ -100,7 +99,6 @@ export const Terrain = memo((props: Props) => {
       style: undefined,
     };
   }, [props, style]);
-  console.log('BASE PROPS', baseProps);
 
   return <RCTMGLTerrain {...baseProps} />;
 });
