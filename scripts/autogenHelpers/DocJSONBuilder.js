@@ -22,7 +22,6 @@ const IGNORE_FILES = [
   'AbstractLayer',
   'AbstractSource',
   'NativeBridgeComponent',
-  'NativeBridgeComponent.tsx',
 ];
 const IGNORE_PATTERN = /\.web\./;
 
@@ -49,6 +48,7 @@ class DocJSONBuilder {
     return {
       match: fileExtensionsRegex,
       shortName: true,
+      sort: true,
     };
   }
 
@@ -359,7 +359,7 @@ class DocJSONBuilder {
             return reject(err);
           }
 
-          let fileName = fileNameWithExt.replace(/.(js)/, '');
+          let fileName = fileNameWithExt.replace(/\.(js|tsx|ts$)/, '');
           if (
             IGNORE_FILES.includes(fileName) ||
             fileName.match(IGNORE_PATTERN)
@@ -370,7 +370,7 @@ class DocJSONBuilder {
 
           let parsedComponents = docgen.parse(content, {
             babelOptions: {
-              filename: fileName,
+              filename: fileNameWithExt,
             },
           });
           let [parsed] = parsedComponents;
@@ -423,6 +423,18 @@ class DocJSONBuilder {
     });
   }
 
+  sortObject(not_sorted) {
+    return Object.keys(not_sorted)
+      .sort()
+      .reduce(
+        (acc, key) => ({
+          ...acc,
+          [key]: not_sorted[key],
+        }),
+        {},
+      );
+  }
+
   async generate() {
     this.generateModulesTask({}, MODULES_PATH);
 
@@ -434,7 +446,10 @@ class DocJSONBuilder {
     ];
 
     return Promise.all(tasks).then(() => {
-      fs.writeFileSync(OUTPUT_PATH, JSON.stringify(results, null, 2));
+      fs.writeFileSync(
+        OUTPUT_PATH,
+        JSON.stringify(this.sortObject(results), null, 2),
+      );
       return true;
     });
   }

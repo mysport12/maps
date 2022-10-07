@@ -1,4 +1,98 @@
 {
+  "Annotation": {
+    "description": "",
+    "displayName": "Annotation",
+    "methods": [
+      {
+        "name": "onPress",
+        "docblock": null,
+        "modifiers": [],
+        "params": [],
+        "returns": null
+      },
+      {
+        "name": "symbolStyle",
+        "docblock": null,
+        "modifiers": [
+          "get"
+        ],
+        "params": [],
+        "returns": null
+      }
+    ],
+    "props": [
+      {
+        "name": "id",
+        "required": true,
+        "type": "string",
+        "default": "none",
+        "description": "FIX ME NO DESCRIPTION"
+      },
+      {
+        "name": "animated",
+        "required": false,
+        "type": "bool",
+        "default": "false",
+        "description": "FIX ME NO DESCRIPTION"
+      },
+      {
+        "name": "animationDuration",
+        "required": false,
+        "type": "number",
+        "default": "1000",
+        "description": "FIX ME NO DESCRIPTION"
+      },
+      {
+        "name": "animationEasingFunction",
+        "required": false,
+        "type": "func",
+        "default": "Easing.linear",
+        "description": "FIX ME NO DESCRIPTION"
+      },
+      {
+        "name": "coordinates",
+        "required": false,
+        "type": {
+          "name": "array",
+          "value": {
+            "type": "number"
+          }
+        },
+        "default": "none",
+        "description": "FIX ME NO DESCRIPTION"
+      },
+      {
+        "name": "onPress",
+        "required": false,
+        "type": "func",
+        "default": "none",
+        "description": "FIX ME NO DESCRIPTION"
+      },
+      {
+        "name": "children",
+        "required": false,
+        "type": "any",
+        "default": "none",
+        "description": "FIX ME NO DESCRIPTION"
+      },
+      {
+        "name": "style",
+        "required": false,
+        "type": "any",
+        "default": "none",
+        "description": "FIX ME NO DESCRIPTION"
+      },
+      {
+        "name": "icon",
+        "required": false,
+        "type": "union",
+        "default": "none",
+        "description": "FIX ME NO DESCRIPTION"
+      }
+    ],
+    "fileNameWithExt": "Annotation.js",
+    "name": "Annotation"
+  },
   "Atmosphere": {
     "description": "",
     "displayName": "Atmosphere",
@@ -800,478 +894,6 @@
     ],
     "fileNameWithExt": "Camera.tsx",
     "name": "Camera"
-  },
-  "offlineManager": {
-    "name": "offlineManager",
-    "fileNameWithExt": "offlineManager.js",
-    "description": "OfflineManager implements a singleton (shared object) that manages offline packs.\nAll of this class’s instance methods are asynchronous, reflecting the fact that offline resources are stored in a database.\nThe shared object maintains a canonical collection of offline packs.",
-    "props": [],
-    "styles": [],
-    "methods": [
-      {
-        "name": "createPack",
-        "description": "Creates and registers an offline pack that downloads the resources needed to use the given region offline.",
-        "params": [
-          {
-            "name": "options",
-            "description": "Create options for a offline pack that specifices zoom levels, style url, and the region to download.",
-            "type": {
-              "name": "OfflineCreatePackOptions"
-            },
-            "optional": false
-          },
-          {
-            "name": "progressListener",
-            "description": "Callback that listens for status events while downloading the offline resource.",
-            "type": {
-              "name": "Callback"
-            },
-            "optional": true
-          },
-          {
-            "name": "errorListener",
-            "description": "Callback that listens for status events while downloading the offline resource.",
-            "type": {
-              "name": "Callback"
-            },
-            "optional": true
-          }
-        ],
-        "examples": [
-          "const progressListener = (offlineRegion, status) => console.log(offlineRegion, status);\nconst errorListener = (offlineRegion, err) => console.log(offlineRegion, err);\n\nawait MapboxGL.offlineManager.createPack({\n  name: 'offlinePack',\n  styleURL: 'mapbox://...',\n  minZoom: 14,\n  maxZoom: 20,\n  bounds: [[neLng, neLat], [swLng, swLat]]\n}, progressListener, errorListener)"
-        ],
-        "returns": {
-          "description": "",
-          "type": {
-            "name": "void"
-          }
-        }
-      },
-      {
-        "name": "createPackLegacy",
-        "description": "Legacy Download Method - Creates and registers an offline pack that downloads the resources needed to use the given region offline.",
-        "params": [
-          {
-            "name": "options",
-            "description": "Create options for a offline pack that specifices zoom levels, style url, and the region to download.",
-            "type": {
-              "name": "OfflineCreatePackOptions"
-            },
-            "optional": false
-          },
-          {
-            "name": "progressListener",
-            "description": "Callback that listens for status events while downloading the offline resource.",
-            "type": {
-              "name": "Callback"
-            },
-            "optional": true
-          },
-          {
-            "name": "errorListener",
-            "description": "Callback that listens for status events while downloading the offline resource.",
-            "type": {
-              "name": "Callback"
-            },
-            "optional": true
-          }
-        ],
-        "examples": [
-          "const progressListener = (offlineRegion, status) => console.log(offlineRegion, status);\nconst errorListener = (offlineRegion, err) => console.log(offlineRegion, err);\n\nawait MapboxGL.offlineManager.createPack({\n  name: 'offlinePack',\n  styleURL: 'mapbox://...',\n  minZoom: 14,\n  maxZoom: 20,\n  bounds: [[neLng, neLat], [swLng, swLat]]\n}, progressListener, errorListener)"
-        ],
-        "returns": {
-          "description": "",
-          "type": {
-            "name": "void"
-          }
-        }
-      },
-      {
-        "name": "invalidatePack",
-        "description": "Invalidates the specified offline pack. This method checks that the tiles in the specified offline pack match those from the server. Local tiles that do not match the latest version on the server are updated.This is more efficient than deleting the offline pack and downloading it again. If the data stored locally matches that on the server, new data will not be downloaded.",
-        "params": [
-          {
-            "name": "name",
-            "description": "Name of the offline pack.",
-            "type": {
-              "name": "String"
-            },
-            "optional": false
-          }
-        ],
-        "examples": [
-          "await MapboxGL.offlineManager.invalidatePack('packName')"
-        ],
-        "returns": {
-          "description": "",
-          "type": {
-            "name": "void"
-          }
-        }
-      },
-      {
-        "name": "deletePack",
-        "description": "Unregisters the given offline pack and allows resources that are no longer required by any remaining packs to be potentially freed.",
-        "params": [
-          {
-            "name": "name",
-            "description": "Name of the offline pack.",
-            "type": {
-              "name": "String"
-            },
-            "optional": false
-          }
-        ],
-        "examples": [
-          "await MapboxGL.offlineManager.deletePack('packName')"
-        ],
-        "returns": {
-          "description": "",
-          "type": {
-            "name": "void"
-          }
-        }
-      },
-      {
-        "name": "deletePackLegacy",
-        "description": "Unregisters the given offline pack and allows resources that are no longer required by any remaining packs to be potentially freed.",
-        "params": [
-          {
-            "name": "name",
-            "description": "Name of the offline pack.",
-            "type": {
-              "name": "String"
-            },
-            "optional": false
-          }
-        ],
-        "examples": [
-          "await MapboxGL.offlineManager.deletePackLegacy('packName')"
-        ],
-        "returns": {
-          "description": "",
-          "type": {
-            "name": "void"
-          }
-        }
-      },
-      {
-        "name": "invalidateAmbientCache",
-        "description": "Forces a revalidation of the tiles in the ambient cache and downloads a fresh version of the tiles from the tile server.\nThis is the recommend method for clearing the cache.\nThis is the most efficient method because tiles in the ambient cache are re-downloaded to remove outdated data from a device.\nIt does not erase resources from the ambient cache or delete the database, which can be computationally expensive operations that may carry unintended side effects.",
-        "params": [],
-        "examples": [
-          "await MapboxGL.offlineManager.invalidateAmbientCache();"
-        ],
-        "returns": {
-          "description": "",
-          "type": {
-            "name": "void"
-          }
-        }
-      },
-      {
-        "name": "clearAmbientCache",
-        "description": "Erases resources from the ambient cache.\nThis method clears the cache and decreases the amount of space that map resources take up on the device.",
-        "params": [],
-        "examples": [
-          "await MapboxGL.offlineManager.clearAmbientCache();"
-        ],
-        "returns": {
-          "description": "",
-          "type": {
-            "name": "void"
-          }
-        }
-      },
-      {
-        "name": "migrateOfflineCache",
-        "description": "Migrates the offline cache from pre-v10 SDKs to the new v10 cache location",
-        "params": [],
-        "examples": [
-          "await MapboxGL.offlineManager.migrateOfflineCache()"
-        ],
-        "returns": {
-          "description": "",
-          "type": {
-            "name": "void"
-          }
-        }
-      },
-      {
-        "name": "setMaximumAmbientCacheSize",
-        "description": "Sets the maximum size of the ambient cache in bytes. Disables the ambient cache if set to 0.\nThis method may be computationally expensive because it will erase resources from the ambient cache if its size is decreased.",
-        "params": [
-          {
-            "name": "size",
-            "description": "Size of ambient cache.",
-            "type": {
-              "name": "Number"
-            },
-            "optional": false
-          }
-        ],
-        "examples": [
-          "await MapboxGL.offlineManager.setMaximumAmbientCacheSize(5000000);"
-        ],
-        "returns": {
-          "description": "",
-          "type": {
-            "name": "void"
-          }
-        }
-      },
-      {
-        "name": "resetDatabase",
-        "description": "Deletes the existing database, which includes both the ambient cache and offline packs, then reinitializes it.",
-        "params": [],
-        "examples": [
-          "await MapboxGL.offlineManager.resetDatabase();"
-        ],
-        "returns": {
-          "description": "",
-          "type": {
-            "name": "void"
-          }
-        }
-      },
-      {
-        "name": "getPacks",
-        "description": "Retrieves all the current offline packs that are stored in the database.",
-        "params": [],
-        "examples": [
-          "const offlinePacks = await MapboxGL.offlineManager.getPacks();"
-        ],
-        "returns": {
-          "description": "",
-          "type": {
-            "name": "Array"
-          }
-        }
-      },
-      {
-        "name": "getPacksLegacy",
-        "description": "Retrieves all the current offline legacy packs that are stored in the database.",
-        "params": [],
-        "examples": [
-          "const offlinePacks = await MapboxGL.offlineManager.getPacksLegacy();"
-        ],
-        "returns": {
-          "description": "",
-          "type": {
-            "name": "Array"
-          }
-        }
-      },
-      {
-        "name": "getPack",
-        "description": "Retrieves an offline pack that is stored in the database by name.",
-        "params": [
-          {
-            "name": "name",
-            "description": "Name of the offline pack.",
-            "type": {
-              "name": "String"
-            },
-            "optional": false
-          }
-        ],
-        "examples": [
-          "const offlinePack = await MapboxGL.offlineManager.getPack();"
-        ],
-        "returns": {
-          "description": "",
-          "type": {
-            "name": "OfflinePack"
-          }
-        }
-      },
-      {
-        "name": "mergeOfflineRegions",
-        "description": "Sideloads offline db",
-        "params": [
-          {
-            "name": "path",
-            "description": "Path to offline tile db on file system.",
-            "type": {
-              "name": "String"
-            },
-            "optional": false
-          }
-        ],
-        "examples": [
-          "await MapboxGL.offlineManager.mergeOfflineRegions(path);"
-        ],
-        "returns": {
-          "description": "",
-          "type": {
-            "name": "void"
-          }
-        }
-      },
-      {
-        "name": "setTileCountLimit",
-        "description": "Sets the maximum number of Mapbox-hosted tiles that may be downloaded and stored on the current device.\nThe Mapbox Terms of Service prohibit changing or bypassing this limit without permission from Mapbox.",
-        "params": [
-          {
-            "name": "limit",
-            "description": "Map tile limit count.",
-            "type": {
-              "name": "Number"
-            },
-            "optional": false
-          }
-        ],
-        "examples": [
-          "MapboxGL.offlineManager.setTileCountLimit(1000);"
-        ],
-        "returns": {
-          "description": "",
-          "type": {
-            "name": "void"
-          }
-        }
-      },
-      {
-        "name": "setTileCountLimitLegacy",
-        "description": "Legacy Download Method - Sets the maximum number of Mapbox-hosted tiles that may be downloaded and stored on the current device.\nThe Mapbox Terms of Service prohibit changing or bypassing this limit without permission from Mapbox.",
-        "params": [
-          {
-            "name": "limit",
-            "description": "Map tile limit count.",
-            "type": {
-              "name": "Number"
-            },
-            "optional": false
-          }
-        ],
-        "examples": [
-          "MapboxGL.offlineManager.setTileCountLimit(1000);"
-        ],
-        "returns": {
-          "description": "",
-          "type": {
-            "name": "void"
-          }
-        }
-      },
-      {
-        "name": "setProgressEventThrottle",
-        "description": "Sets the period at which download status events will be sent over the React Native bridge.\nThe default is 500ms.",
-        "params": [
-          {
-            "name": "throttleValue",
-            "description": "event throttle value in ms.",
-            "type": {
-              "name": "Number"
-            },
-            "optional": false
-          }
-        ],
-        "examples": [
-          "MapboxGL.offlineManager.setProgressEventThrottle(500);"
-        ],
-        "returns": {
-          "description": "",
-          "type": {
-            "name": "void"
-          }
-        }
-      },
-      {
-        "name": "subscribe",
-        "description": "Subscribe to download status/error events for the requested offline pack.\nNote that createPack calls this internally if listeners are provided.",
-        "params": [
-          {
-            "name": "packName",
-            "description": "Name of the offline pack.",
-            "type": {
-              "name": "String"
-            },
-            "optional": false
-          },
-          {
-            "name": "progressListener",
-            "description": "Callback that listens for status events while downloading the offline resource.",
-            "type": {
-              "name": "Callback"
-            },
-            "optional": false
-          },
-          {
-            "name": "errorListener",
-            "description": "Callback that listens for status events while downloading the offline resource.",
-            "type": {
-              "name": "Callback"
-            },
-            "optional": false
-          }
-        ],
-        "examples": [
-          "const progressListener = (offlinePack, status) => console.log(offlinePack, status)\nconst errorListener = (offlinePack, err) => console.log(offlinePack, err)\nMapboxGL.offlineManager.subscribe('packName', progressListener, errorListener)"
-        ],
-        "returns": {
-          "description": "",
-          "type": {
-            "name": "void"
-          }
-        }
-      },
-      {
-        "name": "unsubscribe",
-        "description": "Unsubscribes any listeners associated with the offline pack.\nIt's a good idea to call this on componentWillUnmount.",
-        "params": [
-          {
-            "name": "packName",
-            "description": "Name of the offline pack.",
-            "type": {
-              "name": "String"
-            },
-            "optional": false
-          }
-        ],
-        "examples": [
-          "MapboxGL.offlineManager.unsubscribe('packName')"
-        ],
-        "returns": {
-          "description": "",
-          "type": {
-            "name": "void"
-          }
-        }
-      }
-    ]
-  },
-  "snapshotManager": {
-    "name": "snapshotManager",
-    "fileNameWithExt": "snapshotManager.js",
-    "description": "The snapshotManager generates static raster images of the map.\nEach snapshot image depicts a portion of a map defined by an SnapshotOptions object you provide.\nThe snapshotter generates the snapshot asynchronous.",
-    "props": [],
-    "styles": [],
-    "methods": [
-      {
-        "name": "takeSnap",
-        "description": "Takes a snapshot of the base map using the provided Snapshot options. NOTE pitch, heading, zoomLevel only works when centerCoordinate is set!",
-        "params": [
-          {
-            "name": "options",
-            "description": "Snapshot options for create a static image of the base map",
-            "type": {
-              "name": "SnapshotOptions"
-            },
-            "optional": false
-          }
-        ],
-        "examples": [
-          "// creates a temp file png of base map\nconst uri = await MapboxGL.snapshotManager.takeSnap({\n  centerCoordinate: [-74.126410, 40.797968],\n  width: width,\n  height: height,\n  zoomLevel: 12,\n  pitch: 30,\n  heading: 20,\n  styleURL: MapboxGL.StyleURL.Dark,\n  writeToDisk: true, // Create a temporary file\n});\n\n// creates base64 png of base map without logo\nconst uri = await MapboxGL.snapshotManager.takeSnap({\n  centerCoordinate: [-74.126410, 40.797968],\n  width: width,\n  height: height,\n  zoomLevel: 12,\n  pitch: 30,\n  heading: 20,\n  styleURL: MapboxGL.StyleURL.Dark,\n  withLogo: false, // Disable Mapbox logo (Android only)\n});\n\n// creates snapshot with bounds\nconst uri = await MapboxGL.snapshotManager.takeSnap({\n  bounds: [[-74.126410, 40.797968], [-74.143727, 40.772177]],\n  width: width,\n  height: height,\n  styleURL: MapboxGL.StyleURL.Dark,\n});"
-        ],
-        "returns": {
-          "description": "",
-          "type": {
-            "name": "Promise"
-          }
-        }
-      }
-    ]
   },
   "CircleLayer": {
     "description": "CircleLayer is a style layer that renders one or more filled circles on the map.",
@@ -2212,7 +1834,7 @@
         "description": "FIX ME NO DESCRIPTION"
       }
     ],
-    "fileNameWithExt": "HeadingIndicator.js",
+    "fileNameWithExt": "HeadingIndicator.tsx",
     "name": "HeadingIndicator"
   },
   "HeatmapLayer": {
@@ -3732,7 +3354,7 @@
     "name": "MapView"
   },
   "MarkerView": {
-    "description": "MarkerView allows you to place a interactive react native marker to the map.\n\nIf you have static view consider using PointAnnotation or SymbolLayer they'll offer much better performance\n.\nThis is based on [MakerView plugin](https://docs.mapbox.com/android/plugins/overview/markerview/) on Android\nand PointAnnotation on iOS.",
+    "description": "MarkerView represents an interactive React Native marker on the map.\n\nIf you have static views, consider using PointAnnotation or SymbolLayer to display\nan image, as they'll offer much better performance. Mapbox suggests using this\ncomponent for a maximum of around 100 views displayed at one time.\n\nThis is implemented with view annotations on [Android](https://docs.mapbox.com/android/maps/guides/annotations/view-annotations/)\nand [iOS](https://docs.mapbox.com/ios/maps/guides/annotations/view-annotations).\n\nThis component has no dedicated `onPress` method. Instead, you should handle gestures\nwith the React views passed in as `children`.",
     "displayName": "MarkerView",
     "methods": [],
     "props": [
@@ -3741,7 +3363,7 @@
         "required": true,
         "type": "tuple",
         "default": "none",
-        "description": "The center point (specified as a map coordinate) of the marker.\nSee also #anchor."
+        "description": "The center point (specified as a map coordinate) of the marker."
       },
       {
         "name": "anchor",
@@ -3754,26 +3376,40 @@
               "required": true,
               "type": "number",
               "default": "none",
-              "description": "`x` of anchor"
+              "description": "FIX ME NO DESCRIPTION"
             },
             {
               "name": "y",
               "required": true,
               "type": "number",
               "default": "none",
-              "description": "`y` of anchor"
+              "description": "FIX ME NO DESCRIPTION"
             }
           ]
         },
         "default": "{ x: 0.5, y: 0.5 }",
-        "description": "Specifies the anchor being set on a particular point of the annotation.\nThe anchor point is specified in the continuous space [0.0, 1.0] x [0.0, 1.0],\nwhere (0, 0) is the top-left corner of the image, and (1, 1) is the bottom-right corner.\nNote this is only for custom annotations not the default pin view.\nDefaults to the center of the view."
+        "description": "Any coordinate between (0, 0) and (1, 1), where (0, 0) is the top-left corner of\nthe view, and (1, 1) is the bottom-right corner. Defaults to the center at (0.5, 0.5)."
+      },
+      {
+        "name": "allowOverlap",
+        "required": false,
+        "type": "boolean",
+        "default": "false",
+        "description": "@v10\n\nWhether or not nearby markers on the map should all be displayed. If false, adjacent\nmarkers will 'collapse' and only one will be shown. Defaults to false."
+      },
+      {
+        "name": "isSelected",
+        "required": false,
+        "type": "boolean",
+        "default": "false",
+        "description": "FIX ME NO DESCRIPTION"
       },
       {
         "name": "children",
         "required": true,
         "type": "ReactReactElement",
         "default": "none",
-        "description": "Expects one child - can be container with multiple elements"
+        "description": "One or more valid React Native views."
       }
     ],
     "fileNameWithExt": "MarkerView.tsx",
@@ -3803,7 +3439,7 @@
     "name": "NativeUserLocation"
   },
   "PointAnnotation": {
-    "description": "PointAnnotation represents a one-dimensional shape located at a single geographical coordinate.\n\nConsider using ShapeSource and SymbolLayer instead, if you have many points and you have static images,\nthey'll offer much better performance.\n\nIf you need interactive views please use MarkerView,\nas with PointAnnotation on Android child views are rendered onto a bitmap for better performance.",
+    "description": "PointAnnotation represents a one-dimensional shape located at a single geographical coordinate.\n\nConsider using ShapeSource and SymbolLayer instead, if you have many points and you have static images,\nthey'll offer much better performance.\n\nIf you need interactive views please use MarkerView,\nas with PointAnnotation child views are rendered onto a bitmap",
     "displayName": "PointAnnotation",
     "methods": [
       {
@@ -4386,7 +4022,7 @@
             "name": "feature",
             "description": "The feature cluster to expand.",
             "type": {
-              "name": "Feature"
+              "name": "string \\| GeoJSON.Feature"
             },
             "optional": false
           }
@@ -4394,7 +4030,13 @@
         "returns": {
           "description": null,
           "type": {
-            "name": "number"
+            "name": "Promise",
+            "elements": [
+              {
+                "name": "string"
+              }
+            ],
+            "raw": "Promise<string>"
           }
         },
         "description": "Returns the zoom needed to expand the cluster.",
@@ -4404,7 +4046,7 @@
       },
       {
         "name": "getClusterLeaves",
-        "docblock": "Returns the FeatureCollection from the cluster.\n\n@example\nconst collection = await shapeSource.getClusterLeaves(clusterId, limit, offset);\n\n@param  {Feature} feature - The feature cluster to expand.\n@param  {number} limit - The number of points to return.\n@param  {number} offset - The amount of points to skip (for pagination).\n@return {FeatureCollection}",
+        "docblock": "Returns the FeatureCollection from the cluster.\n\n@example\nconst collection = await shapeSource.getClusterLeaves(clusterId, limit, offset);\n\n@param  {GeoJSON.Feature} feature - The feature cluster to expand.\n@param  {number} limit - The number of points to return.\n@param  {number} offset - The amount of points to skip (for pagination).\n@return {FeatureCollection}",
         "modifiers": [
           "async"
         ],
@@ -4413,7 +4055,7 @@
             "name": "feature",
             "description": "The feature cluster to expand.",
             "type": {
-              "name": "Feature"
+              "name": "number \\| GeoJSON.Feature"
             },
             "optional": false
           },
@@ -4447,7 +4089,7 @@
       },
       {
         "name": "getClusterChildren",
-        "docblock": "Returns the FeatureCollection from the cluster (on the next zoom level).\n\n@example\nconst collection = await shapeSource.getClusterChildren(clusterId);\n\n@param  {Feature} feature - The feature cluster to expand.\n@return {FeatureCollection}",
+        "docblock": "Returns the FeatureCollection from the cluster (on the next zoom level).\n\n@example\nconst collection = await shapeSource.getClusterChildren(clusterId);\n\n@param  {GeoJSON.Feature} feature - The feature cluster to expand.\n@return {FeatureCollection}",
         "modifiers": [
           "async"
         ],
@@ -4456,7 +4098,7 @@
             "name": "feature",
             "description": "The feature cluster to expand.",
             "type": {
-              "name": "Feature"
+              "name": "number \\| GeoJSON.Feature"
             },
             "optional": false
           }
@@ -4481,7 +4123,7 @@
             "name": "event",
             "optional": false,
             "type": {
-              "name": null
+              "name": "NativeSyntheticEvent"
             }
           }
         ],
@@ -4506,14 +4148,14 @@
       {
         "name": "shape",
         "required": false,
-        "type": "object",
+        "type": "\\| GeoJSON.GeometryCollection\n\\| GeoJSON.Feature\n\\| GeoJSON.FeatureCollection\n\\| GeoJSON.Geometry",
         "default": "none",
         "description": "The contents of the source. A shape can represent a GeoJSON geometry, a feature, or a feature collection."
       },
       {
         "name": "cluster",
         "required": false,
-        "type": "bool",
+        "type": "boolean",
         "default": "none",
         "description": "Enables clustering on the source for point shapes."
       },
@@ -4562,59 +4204,19 @@
       {
         "name": "lineMetrics",
         "required": false,
-        "type": "bool",
+        "type": "boolean",
         "default": "none",
         "description": "Whether to calculate line distance metrics.\nThis is required for line layers that specify lineGradient values.\nThe default value is false."
       },
       {
         "name": "onPress",
         "required": false,
-        "type": "func",
+        "type": {
+          "name": "func",
+          "funcSignature": "(event:{features: Array, coordinates: {latitude: number, longitude: number}, point: {x: number, y: number}}) => void"
+        },
         "default": "none",
-        "description": "Source press listener, gets called when a user presses one of the children layers only\nif that layer has a higher z-index than another source layers",
-        "params": [
-          {
-            "name": "event",
-            "description": null,
-            "type": {
-              "name": "Object"
-            },
-            "optional": false
-          },
-          {
-            "name": "event.features",
-            "description": "the geojson features that have hit by the press (might be multiple)",
-            "type": {
-              "name": "Array",
-              "elements": [
-                {
-                  "name": "Object"
-                }
-              ]
-            },
-            "optional": false
-          },
-          {
-            "name": "event.coordinates",
-            "description": "the coordinates of the click",
-            "type": {
-              "name": "Object"
-            },
-            "optional": false
-          },
-          {
-            "name": "event.point",
-            "description": "the point of the click",
-            "type": {
-              "name": "Object"
-            },
-            "optional": false
-          }
-        ],
-        "returns": {
-          "description": "void",
-          "type": null
-        }
+        "description": "Source press listener, gets called when a user presses one of the children layers only\nif that layer has a higher z-index than another source layers\n\n@param {Object} event\n@param {Object[]} event.features - the geojson features that have hit by the press (might be multiple)\n@param {Object} event.coordinates - the coordinates of the click\n@param {Object} event.point - the point of the click\n@return void\n*signature:*`(event:{features: Array, coordinates: {latitude: number, longitude: number}, point: {x: number, y: number}}) => void`"
       },
       {
         "name": "hitbox",
@@ -4640,12 +4242,16 @@
         },
         "default": "none",
         "description": "Overrides the default touch hitbox(44x44 pixels) for the source layers"
+      },
+      {
+        "name": "children",
+        "required": true,
+        "type": "React.ReactElement \\| React.ReactElement[]",
+        "default": "none",
+        "description": "FIX ME NO DESCRIPTION"
       }
     ],
-    "composes": [
-      "../utils"
-    ],
-    "fileNameWithExt": "ShapeSource.js",
+    "fileNameWithExt": "ShapeSource.tsx",
     "name": "ShapeSource"
   },
   "SkyLayer": {
@@ -4977,7 +4583,7 @@
       {
         "name": "filter",
         "required": false,
-        "type": "array",
+        "type": "Expression",
         "default": "none",
         "description": "Filter only the features in the source layer that satisfy a condition that you define"
       },
@@ -4997,16 +4603,20 @@
       },
       {
         "name": "style",
-        "required": false,
-        "type": "union",
+        "required": true,
+        "type": "SymbolLayerStyleProps",
         "default": "none",
-        "description": "Customizable style attributes"
+        "description": "FIX ME NO DESCRIPTION"
+      },
+      {
+        "name": "children",
+        "required": false,
+        "type": "JSX.Element \\| JSX.Element[]",
+        "default": "none",
+        "description": "FIX ME NO DESCRIPTION"
       }
     ],
-    "composes": [
-      "../utils"
-    ],
-    "fileNameWithExt": "SymbolLayer.js",
+    "fileNameWithExt": "SymbolLayer.tsx",
     "name": "SymbolLayer",
     "styles": [
       {
@@ -6709,98 +6319,476 @@
     "fileNameWithExt": "VectorSource.js",
     "name": "VectorSource"
   },
-  "Annotation": {
-    "description": "",
-    "displayName": "Annotation",
+  "offlineManager": {
+    "name": "offlineManager",
+    "fileNameWithExt": "offlineManager.js",
+    "description": "OfflineManager implements a singleton (shared object) that manages offline packs.\nAll of this class’s instance methods are asynchronous, reflecting the fact that offline resources are stored in a database.\nThe shared object maintains a canonical collection of offline packs.",
+    "props": [],
+    "styles": [],
     "methods": [
       {
-        "name": "onPress",
-        "docblock": null,
-        "modifiers": [],
-        "params": [],
-        "returns": null
-      },
-      {
-        "name": "symbolStyle",
-        "docblock": null,
-        "modifiers": [
-          "get"
-        ],
-        "params": [],
-        "returns": null
-      }
-    ],
-    "props": [
-      {
-        "name": "id",
-        "required": true,
-        "type": "string",
-        "default": "none",
-        "description": "FIX ME NO DESCRIPTION"
-      },
-      {
-        "name": "animated",
-        "required": false,
-        "type": "bool",
-        "default": "false",
-        "description": "FIX ME NO DESCRIPTION"
-      },
-      {
-        "name": "animationDuration",
-        "required": false,
-        "type": "number",
-        "default": "1000",
-        "description": "FIX ME NO DESCRIPTION"
-      },
-      {
-        "name": "animationEasingFunction",
-        "required": false,
-        "type": "func",
-        "default": "Easing.linear",
-        "description": "FIX ME NO DESCRIPTION"
-      },
-      {
-        "name": "coordinates",
-        "required": false,
-        "type": {
-          "name": "array",
-          "value": {
-            "type": "number"
+        "name": "createPack",
+        "description": "Creates and registers an offline pack that downloads the resources needed to use the given region offline.",
+        "params": [
+          {
+            "name": "options",
+            "description": "Create options for a offline pack that specifices zoom levels, style url, and the region to download.",
+            "type": {
+              "name": "OfflineCreatePackOptions"
+            },
+            "optional": false
+          },
+          {
+            "name": "progressListener",
+            "description": "Callback that listens for status events while downloading the offline resource.",
+            "type": {
+              "name": "Callback"
+            },
+            "optional": true
+          },
+          {
+            "name": "errorListener",
+            "description": "Callback that listens for status events while downloading the offline resource.",
+            "type": {
+              "name": "Callback"
+            },
+            "optional": true
           }
-        },
-        "default": "none",
-        "description": "FIX ME NO DESCRIPTION"
+        ],
+        "examples": [
+          "const progressListener = (offlineRegion, status) => console.log(offlineRegion, status);\nconst errorListener = (offlineRegion, err) => console.log(offlineRegion, err);\n\nawait MapboxGL.offlineManager.createPack({\n  name: 'offlinePack',\n  styleURL: 'mapbox://...',\n  minZoom: 14,\n  maxZoom: 20,\n  bounds: [[neLng, neLat], [swLng, swLat]]\n}, progressListener, errorListener)"
+        ],
+        "returns": {
+          "description": "",
+          "type": {
+            "name": "void"
+          }
+        }
       },
       {
-        "name": "onPress",
-        "required": false,
-        "type": "func",
-        "default": "none",
-        "description": "FIX ME NO DESCRIPTION"
+        "name": "createPackLegacy",
+        "description": "Legacy Download Method - Creates and registers an offline pack that downloads the resources needed to use the given region offline.",
+        "params": [
+          {
+            "name": "options",
+            "description": "Create options for a offline pack that specifices zoom levels, style url, and the region to download.",
+            "type": {
+              "name": "OfflineCreatePackOptions"
+            },
+            "optional": false
+          },
+          {
+            "name": "progressListener",
+            "description": "Callback that listens for status events while downloading the offline resource.",
+            "type": {
+              "name": "Callback"
+            },
+            "optional": true
+          },
+          {
+            "name": "errorListener",
+            "description": "Callback that listens for status events while downloading the offline resource.",
+            "type": {
+              "name": "Callback"
+            },
+            "optional": true
+          }
+        ],
+        "examples": [
+          "const progressListener = (offlineRegion, status) => console.log(offlineRegion, status);\nconst errorListener = (offlineRegion, err) => console.log(offlineRegion, err);\n\nawait MapboxGL.offlineManager.createPack({\n  name: 'offlinePack',\n  styleURL: 'mapbox://...',\n  minZoom: 14,\n  maxZoom: 20,\n  bounds: [[neLng, neLat], [swLng, swLat]]\n}, progressListener, errorListener)"
+        ],
+        "returns": {
+          "description": "",
+          "type": {
+            "name": "void"
+          }
+        }
       },
       {
-        "name": "children",
-        "required": false,
-        "type": "any",
-        "default": "none",
-        "description": "FIX ME NO DESCRIPTION"
+        "name": "invalidatePack",
+        "description": "Invalidates the specified offline pack. This method checks that the tiles in the specified offline pack match those from the server. Local tiles that do not match the latest version on the server are updated.This is more efficient than deleting the offline pack and downloading it again. If the data stored locally matches that on the server, new data will not be downloaded.",
+        "params": [
+          {
+            "name": "name",
+            "description": "Name of the offline pack.",
+            "type": {
+              "name": "String"
+            },
+            "optional": false
+          }
+        ],
+        "examples": [
+          "await MapboxGL.offlineManager.invalidatePack('packName')"
+        ],
+        "returns": {
+          "description": "",
+          "type": {
+            "name": "void"
+          }
+        }
       },
       {
-        "name": "style",
-        "required": false,
-        "type": "any",
-        "default": "none",
-        "description": "FIX ME NO DESCRIPTION"
+        "name": "deletePack",
+        "description": "Unregisters the given offline pack and allows resources that are no longer required by any remaining packs to be potentially freed.",
+        "params": [
+          {
+            "name": "name",
+            "description": "Name of the offline pack.",
+            "type": {
+              "name": "String"
+            },
+            "optional": false
+          }
+        ],
+        "examples": [
+          "await MapboxGL.offlineManager.deletePack('packName')"
+        ],
+        "returns": {
+          "description": "",
+          "type": {
+            "name": "void"
+          }
+        }
       },
       {
-        "name": "icon",
-        "required": false,
-        "type": "union",
-        "default": "none",
-        "description": "FIX ME NO DESCRIPTION"
+        "name": "deletePackLegacy",
+        "description": "Unregisters the given offline pack and allows resources that are no longer required by any remaining packs to be potentially freed.",
+        "params": [
+          {
+            "name": "name",
+            "description": "Name of the offline pack.",
+            "type": {
+              "name": "String"
+            },
+            "optional": false
+          }
+        ],
+        "examples": [
+          "await MapboxGL.offlineManager.deletePackLegacy('packName')"
+        ],
+        "returns": {
+          "description": "",
+          "type": {
+            "name": "void"
+          }
+        }
+      },
+      {
+        "name": "invalidateAmbientCache",
+        "description": "Forces a revalidation of the tiles in the ambient cache and downloads a fresh version of the tiles from the tile server.\nThis is the recommend method for clearing the cache.\nThis is the most efficient method because tiles in the ambient cache are re-downloaded to remove outdated data from a device.\nIt does not erase resources from the ambient cache or delete the database, which can be computationally expensive operations that may carry unintended side effects.",
+        "params": [],
+        "examples": [
+          "await MapboxGL.offlineManager.invalidateAmbientCache();"
+        ],
+        "returns": {
+          "description": "",
+          "type": {
+            "name": "void"
+          }
+        }
+      },
+      {
+        "name": "clearAmbientCache",
+        "description": "Erases resources from the ambient cache.\nThis method clears the cache and decreases the amount of space that map resources take up on the device.",
+        "params": [],
+        "examples": [
+          "await MapboxGL.offlineManager.clearAmbientCache();"
+        ],
+        "returns": {
+          "description": "",
+          "type": {
+            "name": "void"
+          }
+        }
+      },
+      {
+        "name": "migrateOfflineCache",
+        "description": "Migrates the offline cache from pre-v10 SDKs to the new v10 cache location",
+        "params": [],
+        "examples": [
+          "await MapboxGL.offlineManager.migrateOfflineCache()"
+        ],
+        "returns": {
+          "description": "",
+          "type": {
+            "name": "void"
+          }
+        }
+      },
+      {
+        "name": "setMaximumAmbientCacheSize",
+        "description": "Sets the maximum size of the ambient cache in bytes. Disables the ambient cache if set to 0.\nThis method may be computationally expensive because it will erase resources from the ambient cache if its size is decreased.",
+        "params": [
+          {
+            "name": "size",
+            "description": "Size of ambient cache.",
+            "type": {
+              "name": "Number"
+            },
+            "optional": false
+          }
+        ],
+        "examples": [
+          "await MapboxGL.offlineManager.setMaximumAmbientCacheSize(5000000);"
+        ],
+        "returns": {
+          "description": "",
+          "type": {
+            "name": "void"
+          }
+        }
+      },
+      {
+        "name": "resetDatabase",
+        "description": "Deletes the existing database, which includes both the ambient cache and offline packs, then reinitializes it.",
+        "params": [],
+        "examples": [
+          "await MapboxGL.offlineManager.resetDatabase();"
+        ],
+        "returns": {
+          "description": "",
+          "type": {
+            "name": "void"
+          }
+        }
+      },
+      {
+        "name": "getPacks",
+        "description": "Retrieves all the current offline packs that are stored in the database.",
+        "params": [],
+        "examples": [
+          "const offlinePacks = await MapboxGL.offlineManager.getPacks();"
+        ],
+        "returns": {
+          "description": "",
+          "type": {
+            "name": "Array"
+          }
+        }
+      },
+      {
+        "name": "getPacksLegacy",
+        "description": "Retrieves all the current offline legacy packs that are stored in the database.",
+        "params": [],
+        "examples": [
+          "const offlinePacks = await MapboxGL.offlineManager.getPacksLegacy();"
+        ],
+        "returns": {
+          "description": "",
+          "type": {
+            "name": "Array"
+          }
+        }
+      },
+      {
+        "name": "getPack",
+        "description": "Retrieves an offline pack that is stored in the database by name.",
+        "params": [
+          {
+            "name": "name",
+            "description": "Name of the offline pack.",
+            "type": {
+              "name": "String"
+            },
+            "optional": false
+          }
+        ],
+        "examples": [
+          "const offlinePack = await MapboxGL.offlineManager.getPack();"
+        ],
+        "returns": {
+          "description": "",
+          "type": {
+            "name": "OfflinePack"
+          }
+        }
+      },
+      {
+        "name": "mergeOfflineRegions",
+        "description": "Sideloads offline db",
+        "params": [
+          {
+            "name": "path",
+            "description": "Path to offline tile db on file system.",
+            "type": {
+              "name": "String"
+            },
+            "optional": false
+          }
+        ],
+        "examples": [
+          "await MapboxGL.offlineManager.mergeOfflineRegions(path);"
+        ],
+        "returns": {
+          "description": "",
+          "type": {
+            "name": "void"
+          }
+        }
+      },
+      {
+        "name": "setTileCountLimit",
+        "description": "Sets the maximum number of Mapbox-hosted tiles that may be downloaded and stored on the current device.\nThe Mapbox Terms of Service prohibit changing or bypassing this limit without permission from Mapbox.",
+        "params": [
+          {
+            "name": "limit",
+            "description": "Map tile limit count.",
+            "type": {
+              "name": "Number"
+            },
+            "optional": false
+          }
+        ],
+        "examples": [
+          "MapboxGL.offlineManager.setTileCountLimit(1000);"
+        ],
+        "returns": {
+          "description": "",
+          "type": {
+            "name": "void"
+          }
+        }
+      },
+      {
+        "name": "setTileCountLimitLegacy",
+        "description": "Legacy Download Method - Sets the maximum number of Mapbox-hosted tiles that may be downloaded and stored on the current device.\nThe Mapbox Terms of Service prohibit changing or bypassing this limit without permission from Mapbox.",
+        "params": [
+          {
+            "name": "limit",
+            "description": "Map tile limit count.",
+            "type": {
+              "name": "Number"
+            },
+            "optional": false
+          }
+        ],
+        "examples": [
+          "MapboxGL.offlineManager.setTileCountLimit(1000);"
+        ],
+        "returns": {
+          "description": "",
+          "type": {
+            "name": "void"
+          }
+        }
+      },
+      {
+        "name": "setProgressEventThrottle",
+        "description": "Sets the period at which download status events will be sent over the React Native bridge.\nThe default is 500ms.",
+        "params": [
+          {
+            "name": "throttleValue",
+            "description": "event throttle value in ms.",
+            "type": {
+              "name": "Number"
+            },
+            "optional": false
+          }
+        ],
+        "examples": [
+          "MapboxGL.offlineManager.setProgressEventThrottle(500);"
+        ],
+        "returns": {
+          "description": "",
+          "type": {
+            "name": "void"
+          }
+        }
+      },
+      {
+        "name": "subscribe",
+        "description": "Subscribe to download status/error events for the requested offline pack.\nNote that createPack calls this internally if listeners are provided.",
+        "params": [
+          {
+            "name": "packName",
+            "description": "Name of the offline pack.",
+            "type": {
+              "name": "String"
+            },
+            "optional": false
+          },
+          {
+            "name": "progressListener",
+            "description": "Callback that listens for status events while downloading the offline resource.",
+            "type": {
+              "name": "Callback"
+            },
+            "optional": false
+          },
+          {
+            "name": "errorListener",
+            "description": "Callback that listens for status events while downloading the offline resource.",
+            "type": {
+              "name": "Callback"
+            },
+            "optional": false
+          }
+        ],
+        "examples": [
+          "const progressListener = (offlinePack, status) => console.log(offlinePack, status)\nconst errorListener = (offlinePack, err) => console.log(offlinePack, err)\nMapboxGL.offlineManager.subscribe('packName', progressListener, errorListener)"
+        ],
+        "returns": {
+          "description": "",
+          "type": {
+            "name": "void"
+          }
+        }
+      },
+      {
+        "name": "unsubscribe",
+        "description": "Unsubscribes any listeners associated with the offline pack.\nIt's a good idea to call this on componentWillUnmount.",
+        "params": [
+          {
+            "name": "packName",
+            "description": "Name of the offline pack.",
+            "type": {
+              "name": "String"
+            },
+            "optional": false
+          }
+        ],
+        "examples": [
+          "MapboxGL.offlineManager.unsubscribe('packName')"
+        ],
+        "returns": {
+          "description": "",
+          "type": {
+            "name": "void"
+          }
+        }
       }
-    ],
-    "fileNameWithExt": "Annotation.js",
-    "name": "Annotation"
+    ]
+  },
+  "snapshotManager": {
+    "name": "snapshotManager",
+    "fileNameWithExt": "snapshotManager.js",
+    "description": "The snapshotManager generates static raster images of the map.\nEach snapshot image depicts a portion of a map defined by an SnapshotOptions object you provide.\nThe snapshotter generates the snapshot asynchronous.",
+    "props": [],
+    "styles": [],
+    "methods": [
+      {
+        "name": "takeSnap",
+        "description": "Takes a snapshot of the base map using the provided Snapshot options. NOTE pitch, heading, zoomLevel only works when centerCoordinate is set!",
+        "params": [
+          {
+            "name": "options",
+            "description": "Snapshot options for create a static image of the base map",
+            "type": {
+              "name": "SnapshotOptions"
+            },
+            "optional": false
+          }
+        ],
+        "examples": [
+          "// creates a temp file png of base map\nconst uri = await MapboxGL.snapshotManager.takeSnap({\n  centerCoordinate: [-74.126410, 40.797968],\n  width: width,\n  height: height,\n  zoomLevel: 12,\n  pitch: 30,\n  heading: 20,\n  styleURL: MapboxGL.StyleURL.Dark,\n  writeToDisk: true, // Create a temporary file\n});\n\n// creates base64 png of base map without logo\nconst uri = await MapboxGL.snapshotManager.takeSnap({\n  centerCoordinate: [-74.126410, 40.797968],\n  width: width,\n  height: height,\n  zoomLevel: 12,\n  pitch: 30,\n  heading: 20,\n  styleURL: MapboxGL.StyleURL.Dark,\n  withLogo: false, // Disable Mapbox logo (Android only)\n});\n\n// creates snapshot with bounds\nconst uri = await MapboxGL.snapshotManager.takeSnap({\n  bounds: [[-74.126410, 40.797968], [-74.143727, 40.772177]],\n  width: width,\n  height: height,\n  styleURL: MapboxGL.StyleURL.Dark,\n});"
+        ],
+        "returns": {
+          "description": "",
+          "type": {
+            "name": "Promise"
+          }
+        }
+      }
+    ]
   }
 }

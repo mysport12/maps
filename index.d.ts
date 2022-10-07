@@ -22,6 +22,7 @@ import {
   FeatureCollection,
 } from '@turf/helpers';
 
+import type { SymbolLayerStyleProps } from './javascript/utils/MapboxStyles';
 import {
   Camera as _Camera,
   CameraStop as _CameraStop,
@@ -38,6 +39,14 @@ import {
 import { MarkerView as _MarkerView } from './javascript/components/MarkerView';
 import { PointAnnotation as _PointAnnotation } from './javascript/components/PointAnnotation';
 import { Atmosphere as _Atmosphere } from './javascript/components/Atmosphere';
+import {
+  SymbolLayer as _SymbolLayer,
+  Props as _SymbolLayerProps,
+} from './javascript/components/SymbolLayer';
+import {
+  ShapeSource as _ShapeSource,
+  Props as _ShapeSourceProps,
+} from './javascript/components/ShapeSource';
 import type {
   MapboxGLEvent as _MapboxGLEvent,
   AnimatedPoint as _AnimatedPoint,
@@ -96,7 +105,7 @@ type AutoAlignment = Alignment | 'auto';
 
 type NamedStyles<T> = {
   [P in keyof T]:
-    | SymbolLayerStyle
+    | SymbolLayerStyleProps
     | RasterLayerStyle
     | LineLayerStyle
     | FillLayerStyle
@@ -142,6 +151,9 @@ declare namespace MapboxGL {
   const Atmosphere = _Atmosphere;
   const MarkerView = _MarkerView;
   const PointAnnotation = _PointAnnotation;
+  const SymbolLayer = _SymbolLayer;
+  const ShapeSource = _ShapeSource;
+  type ShapeSource = _ShapeSource;
 
   type MapboxGLEvent = _MapboxGLEvent;
   type UserTrackingMode = _UserTrackingMode;
@@ -238,7 +250,7 @@ declare namespace MapboxGL {
 
   namespace Animated {
     // sources
-    class ShapeSource extends Component<ShapeSourceProps> {}
+    class ShapeSource extends Component<_ShapeSourceProps> {}
     class ImageSource extends Component<ImageSourceProps> {}
 
     // layers
@@ -246,7 +258,7 @@ declare namespace MapboxGL {
     class FillExtrusionLayer extends Component<FillExtrusionLayerProps> {}
     class LineLayer extends Component<LineLayerProps> {}
     class CircleLayer extends Component<CircleLayerProps> {}
-    class SymbolLayer extends Component<SymbolLayerProps> {}
+    class SymbolLayer extends Component<_SymbolLayerProps> {}
     class RasterLayer extends Component<RasterLayerProps> {}
     class BackgroundLayer extends Component<BackgroundLayerProps> {}
   }
@@ -358,33 +370,6 @@ declare namespace MapboxGL {
    * Sources
    */
   class VectorSource extends Component<VectorSourceProps> {}
-  class ShapeSource extends Component<ShapeSourceProps> {
-    features(
-      filter?: Expression,
-    ): Promise<FeatureCollection<Geometry, Properties>>;
-
-    getClusterExpansionZoom(
-      feature: Feature<Geometry, Properties> | number,
-    ): Promise<number>;
-    /**
-     * Returns all the leaves of a cluster with pagination support.
-     * @param cluster feature cluster
-     * @param limit the number of leaves to return
-     * @param offset the amount of points to skip (for pagination)
-     */
-    getClusterLeaves: (
-      feature: Feature<Geometry, Properties> | number,
-      limit: number,
-      offset: number,
-    ) => Promise<FeatureCollection<Geometry, Properties>>;
-    /**
-     * Returns the children of a cluster (on the next zoom level).
-     * @param cluster feature cluster
-     */
-    getClusterChildren: (
-      feature: Feature<Geometry, Properties> | number,
-    ) => Promise<FeatureCollection<Geometry, Properties>>;
-  }
   class RasterSource extends Component<RasterSourceProps> {}
   class RasterDemSource extends Component<RasterSourceProps> {}
 
@@ -397,7 +382,6 @@ declare namespace MapboxGL {
   class FillLayer extends Component<FillLayerProps> {}
   class LineLayer extends Component<LineLayerProps> {}
   class RasterLayer extends Component<RasterLayerProps> {}
-  class SymbolLayer extends Component<SymbolLayerProps> {}
   class HeatmapLayer extends Component<HeatmapLayerProps> {}
   class Images extends Component<ImagesProps> {}
   class ImageSource extends Component<ImageSourceProps> {}
@@ -752,75 +736,8 @@ export type TextVariableAnchorValues =
   | 'bottom-left'
   | 'bottom-right';
 
-export interface SymbolLayerStyle {
-  symbolPlacement?: 'point' | 'line' | Expression;
-  symbolSpacing?: number | Expression;
-  symbolAvoidEdges?: boolean | Expression;
-  symbolSortKey?: number | Expression;
-  symbolZOrder?: 'auto' | 'viewport-y' | 'source' | Expression;
-  iconAllowOverlap?: boolean | Expression;
-  iconIgnorePlacement?: boolean | Expression;
-  iconOptional?: boolean | Expression;
-  iconRotationAlignment?: AutoAlignment | Expression;
-  iconSize?: number | Expression;
-  iconTextFit?: 'none' | 'width' | 'height' | 'both' | Expression;
-  iconTextFitPadding?: Array<number> | Expression;
-  iconImage?: string | Expression;
-  iconRotate?: number | Expression;
-  iconPadding?: number | Expression;
-  iconKeepUpright?: boolean | Expression;
-  iconOffset?: Array<number> | Expression;
-  iconAnchor?: Anchor | Expression;
-  iconPitchAlignment?: AutoAlignment | Expression;
-  textPitchAlignment?: AutoAlignment | Expression;
-  textRotationAlignment?: AutoAlignment | Expression;
-  textField?: string | Expression;
-  textFont?: Array<string> | Expression;
-  textSize?: number | Expression;
-  textMaxWidth?: number | Expression;
-  textLineHeight?: number | Expression;
-  textLetterSpacing?: number | Expression;
-  textJustify?: 'left' | 'center' | 'right' | Expression;
-  textAnchor?: Anchor | Expression;
-  textMaxAngle?: number | Expression;
-  textRotate?: number | Expression;
-  textPadding?: number | Expression;
-  textKeepUpright?: boolean | Expression;
-  textTransform?: 'none' | 'uppercase' | 'lowercase' | Expression;
-  textOffset?: Array<number> | Expression;
-  textAllowOverlap?: boolean | Expression;
-  textIgnorePlacement?: boolean | Expression;
-  textOptional?: boolean | Expression;
-  textVariableAnchor?: Array<TextVariableAnchorValues>;
-  textRadialOffset?: number | Expression;
-  visibility?: Visibility | Expression;
-  iconOpacity?: number | Expression;
-  iconOpacityTransition?: Transition | Expression;
-  iconColor?: string | Expression;
-  iconColorTransition?: Transition | Expression;
-  iconHaloColor?: string | Expression;
-  iconHaloColorTransition?: Transition | Expression;
-  iconHaloWidth?: number | Expression;
-  iconHaloWidthTransition?: Transition | Expression;
-  iconHaloBlur?: number | Expression;
-  iconHaloBlurTransition?: Transition | Expression;
-  iconTranslate?: Array<number> | Expression;
-  iconTranslateTransition?: Transition | Expression;
-  iconTranslateAnchor?: Alignment | Expression;
-  textOpacity?: number | Expression;
-  textOpacityTransition?: Transition | Expression;
-  textColor?: string | Expression;
-  textColorTransition?: Transition | Expression;
-  textHaloColor?: string | Expression;
-  textHaloColorTransition?: Transition | Expression;
-  textHaloWidth?: number | Expression;
-  textHaloWidthTransition?: Transition | Expression;
-  textHaloBlur?: number | Expression;
-  textHaloBlurTransition?: Transition | Expression;
-  textTranslate?: Array<number> | Expression;
-  textTranslateTransition?: Transition | Expression;
-  textTranslateAnchor?: Alignment | Expression;
-}
+/** @deprecated Will be removed in next betas */
+export type SymbolLayerStyle = SymbolLayerStyleProps;
 
 export interface HeatmapLayerStyle {
   visibility?: Visibility | Expression;
@@ -872,30 +789,6 @@ export interface VectorSourceProps extends TileSourceProps {
   };
 }
 
-export interface ShapeSourceProps extends ViewProps {
-  id: string;
-  url?: string;
-  shape?:
-    | GeoJSON.GeometryCollection
-    | GeoJSON.Feature
-    | GeoJSON.FeatureCollection
-    | GeoJSON.Geometry;
-  cluster?: boolean;
-  clusterRadius?: number;
-  clusterMaxZoomLevel?: number;
-  clusterProperties?: object;
-  maxZoomLevel?: number;
-  buffer?: number;
-  tolerance?: number;
-  lineMetrics?: boolean;
-  images?: { assets?: string[] } & { [key: string]: ImageSourcePropType };
-  onPress?: (event: OnPressEvent) => void;
-  hitbox?: {
-    width: number;
-    height: number;
-  };
-}
-
 export interface RasterSourceProps extends TileSourceProps {
   tileSize?: number;
 }
@@ -935,10 +828,6 @@ export interface LineLayerProps extends LayerBaseProps {
 
 export interface RasterLayerProps extends LayerBaseProps {
   style?: StyleProp<RasterLayerStyle>;
-}
-
-export interface SymbolLayerProps extends LayerBaseProps {
-  style?: StyleProp<SymbolLayerStyle>;
 }
 
 export interface HeatmapLayerProps extends LayerBaseProps {

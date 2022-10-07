@@ -84,8 +84,12 @@ import com.mapbox.mapboxsdk.maps.MapboxMap;
     }
 
     fun convert(value: IntArray): EdgeInsets {
+        val left = value[0].toDouble();
+        val top = value[1].toDouble();
+        val right = value[2].toDouble();
+        val bottom = value[3].toDouble();
         return EdgeInsets(
-            value[0].toDouble(), value[1].toDouble(), value[2].toDouble(), value[3].toDouble()
+            top, left, bottom, right
         )
     }
 
@@ -162,10 +166,10 @@ import com.mapbox.mapboxsdk.maps.MapboxMap;
             }
             if (readableMap.hasKey("bounds")) {
                 val metrics = context.resources.displayMetrics
-                var paddingTop = getBoundsPaddingByKey(readableMap, metrics.scaledDensity, "paddingTop")
-                var paddingRight = getBoundsPaddingByKey(readableMap, metrics.scaledDensity, "paddingRight")
-                var paddingBottom = getBoundsPaddingByKey(readableMap, metrics.scaledDensity, "paddingBottom")
-                var paddingLeft = getBoundsPaddingByKey(readableMap, metrics.scaledDensity, "paddingLeft")
+                var paddingTop = getBoundsPaddingByKey(readableMap, metrics.density, "paddingTop")
+                var paddingRight = getBoundsPaddingByKey(readableMap, metrics.density, "paddingRight")
+                var paddingBottom = getBoundsPaddingByKey(readableMap, metrics.density, "paddingBottom")
+                var paddingLeft = getBoundsPaddingByKey(readableMap, metrics.density, "paddingLeft")
 
                 val collection = FeatureCollection.fromJson(readableMap.getString("bounds")!!)
                 stop.setBounds(
@@ -213,9 +217,9 @@ import com.mapbox.mapboxsdk.maps.MapboxMap;
             return intArrayOf(resultLeft, resultTop, resultRight, resultBottom)
         }
 
-        private fun getBoundsPaddingByKey(map: ReadableMap, scaledDensity: Float, key: String): Int? {
+        private fun getBoundsPaddingByKey(map: ReadableMap, density: Float, key: String): Int? {
             if (map.hasKey(key)) {
-                return (map.getInt(key) * scaledDensity).toInt()
+                return (map.getInt(key) * density).toInt()
             } else {
                 return null;
             }
