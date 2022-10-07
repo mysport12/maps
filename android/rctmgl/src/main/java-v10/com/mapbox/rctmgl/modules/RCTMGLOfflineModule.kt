@@ -126,9 +126,9 @@ class RCTMGLOfflineModule(private val mReactContext: ReactApplicationContext) :
                             offlineRegionLegacy = it
                             offlineRegionLegacy.setMetadata(getMetadataBytes(metadataStr!!)!!) {
                                 if (it.isValue) {
-                                    Log.d(TAG, "Metadata added to region")
+                                    Log.d("Offline", "Metadata added to region")
                                 } else {
-                                    Log.d(TAG, "Could not set metadata on region")
+                                    Log.d("Offline", "Could not set metadata on region")
                                 }
                             }
                             offlineRegionLegacy.setOfflineRegionObserver(object : OfflineRegionObserver {
