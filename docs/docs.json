@@ -4033,10 +4033,10 @@
             "name": "Promise",
             "elements": [
               {
-                "name": "string"
+                "name": "number"
               }
             ],
-            "raw": "Promise<string>"
+            "raw": "Promise<number>"
           }
         },
         "description": "Returns the zoom needed to expand the cluster.",
