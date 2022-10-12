@@ -156,7 +156,7 @@ class RCTMGLMarkerView: UIView, RCTMGLMapComponent {
 
     do {
       let options = getOptions()
-      try annotationManager.add(self, id: id, options: options)
+      try annotationManager.add(self, options: options)
       didAddToMap = true
     } catch {
       Logger.log(level: .error, message: "[MarkerView] Error adding annotation", error: error)
@@ -186,7 +186,7 @@ class RCTMGLMarkerView: UIView, RCTMGLMapComponent {
     if let options = annotationManager?.options(for: self) {
       do {
         annotationManager?.remove(self)
-        try annotationManager?.add(self, id: id, options: options)
+        try annotationManager?.add(self, options: options)
       } catch {
         Logger.log(level: .error, message: "[MarkerView] Error selecting annotation", error: error)
       }
