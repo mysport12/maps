@@ -490,7 +490,6 @@ class RCTMGLOfflineModule(private val mReactContext: ReactApplicationContext) :
                     val legacyManger = getOfflineManagerLegacy()
                     legacyManger!!.getOfflineRegions { regions ->
                         if (regions.isValue) {
-                            Log.d("OFFLINE DOWNLOAD", "regions is a value not an error")
                             convertLegacyRegionsToJSON((regions.value)!!, promise)
                         } else {
                             Log.d("OFFLINE DOWNLOAD", "regions is an error")
