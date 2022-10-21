@@ -393,6 +393,7 @@ open class RCTMGLMapView(private val mContext: Context, var mManager: RCTMGLMapV
     }
 
     fun setReactStyleURL(styleURL: String) {
+        mStyleURL = styleURL
         if (mMap != null) {
             removeAllSourcesFromMap()
             if (isJSONValid(mStyleURL)) {
