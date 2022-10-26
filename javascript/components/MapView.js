@@ -58,6 +58,11 @@ class MapView extends NativeBridgeComponent(
     ]),
 
     /**
+     * The projection used when rendering the map
+     */
+    projection: PropTypes.oneOf(['mercator', 'globe']),
+
+    /**
      * Style for wrapping React Native View
      */
     style: PropTypes.any,
@@ -294,6 +299,7 @@ class MapView extends NativeBridgeComponent(
   };
 
   static defaultProps = {
+    projection: 'mercator',
     localizeLabels: false,
     scrollEnabled: true,
     pitchEnabled: true,
@@ -391,19 +397,25 @@ class MapView extends NativeBridgeComponent(
         );
         if (props.onRegionDidChange) {
           console.warn(
-            'rnmapbox/maps: only one of  MapView.onRegionDidChange or onMapIdle is supported',
+            'rnmapbox/maps: only one of MapView.onRegionDidChange or onMapIdle is supported',
           );
         }
       }
       if (addIfHasHandler('CameraChanged')) {
         console.warn(
-          'onCameraChanged is deprecated and will be removed in next beta - please use onRegionWillChange',
+          'onCameraChanged is deprecated and will be removed in next beta - please use onRegionIsChanging',
         );
-        if (props.onRegionWillChange) {
+        if (props.onRegionIsChanging) {
           console.warn(
-            'rnmapbox/maps: only one of MapView.onRegionWillChange or onCameraChanged is supported',
+            'rnmapbox/maps: only one of MapView.onRegionIsChanging or onCameraChanged is supported',
           );
         }
+      }
+
+      if (props.onRegionWillChange) {
+        console.warn(
+          'onRegionWillChange is deprecated and will be removed in v10 - please use onRegionIsChanging',
+        );
       }
 
       this._runNativeCommand('setHandledMapChangedEvents', this._nativeRef, [
