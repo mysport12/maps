@@ -333,7 +333,7 @@ open class RCTMGLMapView(private val mContext: Context, var mManager: RCTMGLMapV
         mQueuedFeatures = null;
     }
 
-    private fun addAllSourcesToMap() {
+    private fun addAllFeaturesToMap() {
         if (mSources.size == 0) {
             return
         }
