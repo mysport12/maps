@@ -1,3 +1,4 @@
+import { Position } from '@turf/helpers';
 import React, {
   forwardRef,
   memo,
@@ -7,7 +8,6 @@ import React, {
   useRef,
 } from 'react';
 import { NativeModules, requireNativeComponent } from 'react-native';
-import { Position } from '@turf/helpers';
 
 import { MapboxGLEvent } from '../types';
 import { makeLatLngBounds, makePoint } from '../utils/geoUtils';

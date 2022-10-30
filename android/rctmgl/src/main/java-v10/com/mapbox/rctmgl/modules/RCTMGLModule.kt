@@ -1,6 +1,7 @@
 package com.mapbox.rctmgl.modules
 
 import android.os.Handler
+import com.facebook.react.bridge.Promise
 import com.mapbox.maps.extension.style.layers.properties.generated.LineJoin
 import com.mapbox.maps.ResourceOptionsManager.Companion.getDefault
 import com.facebook.react.module.annotations.ReactModule
@@ -112,11 +113,12 @@ class RCTMGLModule(private val mReactContext: ReactApplicationContext) : ReactCo
     }
 
     @ReactMethod
-    fun setAccessToken(accessToken: String?) {
+    fun setAccessToken(accessToken: String?, promise: Promise) {
         mReactContext.runOnUiQueueThread(Runnable {
             getDefault(
                 reactApplicationContext, accessToken
             )
+            promise.resolve(accessToken)
         })
     }
 
