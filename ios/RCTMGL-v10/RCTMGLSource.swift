@@ -2,10 +2,22 @@
 
 @objc
 class RCTMGLSource : RCTMGLInteractiveElement {
+
+  var layers: [RCTMGLSourceConsumer] = []
   
   var source : Source? = nil
 
   var ownsSource : Bool = false
+
+  override func getLayerIDs() -> [String] {
+     layers.compactMap {
+       if let layer = $0 as? RCTMGLLayer {
+         return layer.id
+       } else {
+         return nil
+       }
+     }
+   }
   
   func makeSource() -> Source {
     fatalError("Subclasses should override makeSource")
@@ -15,6 +27,8 @@ class RCTMGLSource : RCTMGLInteractiveElement {
     fatalError("Subclasses should override makeSource")
   }
   
+  // MARK: - UIView+React
+
   @objc override func insertReactSubview(_ subview: UIView!, at atIndex: Int) {
     if let layer : RCTMGLSourceConsumer = subview as? RCTMGLSourceConsumer {
       if let map = map {
@@ -22,7 +36,16 @@ class RCTMGLSource : RCTMGLInteractiveElement {
       }
       layers.append(layer)
     }
+    super.insertReactSubview(subview, at: atIndex)
   }
+
+  @objc override func removeReactSubview(_ subview: UIView!) {
+     super.removeReactSubview(subview)
+   }
+
+   @objc override func didUpdateReactSubviews() {
+     // do nothing to prevent inserting layers to UIView hierarchy
+   }
   
   // MARK: - RCTMGLInteractiveElement
   
