@@ -76,8 +76,15 @@ abstract class RCTLayer<T : Layer?>(protected var mContext: Context) : AbstractS
         }
         mLayerIndex = layerIndex
         if (mLayer != null) {
-            removeFromMap(mMapView!!)
-            addAtIndex(mLayerIndex!!)
+            try {
+                removeFromMap(mMapView!!)
+                addAtIndex(mLayerIndex!!)
+            } catch (e: Exception) {
+                FLog.e(
+                    LOG_TAG,
+                    "Set layerIndex failed probably because layer was removed."
+                )
+            }
         }
     }
 
@@ -259,7 +266,14 @@ abstract class RCTLayer<T : Layer?>(protected var mContext: Context) : AbstractS
         private get() =// v10TOOD: adding anything seems to make getStyle null
             if (mMap == null) {
                 null
-            } else mMapView!!.savedStyle
+            } else {
+                val s = mMap?.getStyle()
+                if (s != null) {
+                    s
+                } else {
+                    mMapView?.savedStyle
+                }
+            } 
 
     //        return mMap.getStyle();
     abstract fun makeLayer(): T
