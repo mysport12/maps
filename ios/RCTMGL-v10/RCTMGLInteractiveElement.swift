@@ -4,7 +4,6 @@ import MapboxMaps
 class RCTMGLInteractiveElement : UIView, RCTMGLMapComponent {
 
   weak var map : RCTMGLMapView? = nil
-  
   static let hitboxDefault = 44.0
 
   @objc var draggable: Bool = false

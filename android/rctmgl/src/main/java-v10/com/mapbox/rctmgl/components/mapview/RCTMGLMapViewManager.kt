@@ -269,11 +269,12 @@ open class RCTMGLMapViewManager(context: ReactApplicationContext?) :
                 );
             }
             METHOD_QUERY_FEATURES_RECT -> {
+                val layerIds = ConvertUtils.toStringList(args!!.getArray(3))
                 mapView.queryRenderedFeaturesInRect(
                         args!!.getString(0),
                         ConvertUtils.toRectF(args.getArray(1)),
                         ExpressionParser.from(args!!.getArray(2)),
-                        ConvertUtils.toStringList(args!!.getArray(3))
+                        if (layerIds.size == 0) null else layerIds
                 );
             }
             METHOD_VISIBLE_BOUNDS -> {
