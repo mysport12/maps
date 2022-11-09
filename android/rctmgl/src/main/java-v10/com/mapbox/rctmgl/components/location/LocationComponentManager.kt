@@ -130,19 +130,7 @@ class LocationComponentManager(rctmglMapView: RCTMGLMapView?, context: Context?)
             }
         } else {
             val mapboxBlueColor = Color.parseColor("#4A90E2")
-            var topImage = AppCompatResources.getDrawable(mContext!!, R.drawable.mapbox_user_icon)
             val tintColor = mMapView!!.tintColor
-            if (tintColor != null) {
-                val drawable = topImage as VectorDrawable?
-                drawable!!.setTint(tintColor)
-                topImage = drawable
-            }
-            val bearingImage = AppCompatResources.getDrawable(
-                mContext!!, R.drawable.mapbox_user_stroke_icon
-            )
-            val shadowImage = AppCompatResources.getDrawable(
-                mContext!!, R.drawable.mapbox_user_icon_shadow
-            )
             locationComponent.updateSettings {
                 locationPuck = locationComponent.createDefault2DPuck(mContext!!, true)
                 pulsingEnabled = true
