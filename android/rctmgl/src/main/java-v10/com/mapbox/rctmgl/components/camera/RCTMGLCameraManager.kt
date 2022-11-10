@@ -48,11 +48,6 @@ class RCTMGLCameraManager(private val mContext: ReactApplicationContext) :
         camera.setAnimationDuration(value)
     }
 
-    @ReactProp(name = "followZoomLevel")
-    fun setZoomLevel(camera: RCTMGLCamera, zoomLevel: Double) {
-        camera.setZoomLevel(zoomLevel)
-    }
-
     @ReactProp(name = "followUserLocation")
     fun setFollowUserLocation(camera: RCTMGLCamera, value: Boolean) {
         camera.setFollowUserLocation(value)

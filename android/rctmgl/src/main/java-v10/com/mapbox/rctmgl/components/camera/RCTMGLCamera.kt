@@ -6,7 +6,6 @@ import android.location.Location
 import com.mapbox.rctmgl.utils.GeoJSONUtils.toPoint
 import com.mapbox.rctmgl.location.LocationManager.Companion.getInstance
 import com.mapbox.rctmgl.utils.GeoJSONUtils.toLocation
-import com.mapbox.maps.plugin.animation.flyTo
 import com.mapbox.rctmgl.components.AbstractMapFeature
 import com.mapbox.rctmgl.components.mapview.RCTMGLMapView
 import com.mapbox.rctmgl.components.location.LocationComponentManager
@@ -48,26 +47,22 @@ class RCTMGLCamera(private val mContext: Context, private val mManager: RCTMGLCa
     private var mUserTrackingMode = 0
     private val mLocationManager: LocationManager?
     private val mUserLocation: UserLocation = UserLocation()
-    private val mCenterCoordinate: ScreenCoordinate? = null
-    private val mAnimated = false
     private var mAnimationDuration : Long? = null
-    private val mHeading = 0.0
     private var mFollowPitch : Double? = null
     private var mFollowZoomLevel : Double? = null
     private var mFollowHeading : Double? = null
-    private var mZoomLevel = -1.0
     private var mMinZoomLevel : Double? = null
     private var mMaxZoomLevel : Double? = null
     private var mMaxBounds: LatLngBounds? = null
     private var mFollowUserLocation = false
     private var mFollowUserMode: String? = null
     private val mLocationChangeListener: OnUserLocationChange = object : OnUserLocationChange {
-        override fun onLocationChange(nextLocation: Location?) {
+        override fun onLocationChange(location: Location?) {
             if (mapboxMap == null || mLocationComponentManager == null || !mLocationComponentManager!!.hasLocationComponent() || !mFollowUserLocation) {
                 return
             }
-            mUserLocation.currentLocation = nextLocation
-            sendUserLocationUpdateEvent(toPoint(nextLocation!!))
+            mUserLocation.currentLocation = location
+            sendUserLocationUpdateEvent(toPoint(location!!))
         }
     }
     private val mCameraCallback: Animator.AnimatorListener = object : Animator.AnimatorListener {
@@ -100,9 +95,6 @@ class RCTMGLCamera(private val mContext: Context, private val mManager: RCTMGLCa
         }
     }
 
-    override fun removeFromMap(mapView: RCTMGLMapView) {
-        super.removeFromMap(mapView)
-    }
     fun setStop(stop: CameraStop) {
         mCameraStop = stop
         mCameraStop!!.setCallback(mCameraCallback)
@@ -228,33 +220,6 @@ class RCTMGLCamera(private val mContext: Context, private val mManager: RCTMGLCa
                     mUserTrackingMode
                 )
             )
-
-            /*
-            mLocationComponentManager.addOnCameraTrackingChangedListener(new OnCameraTrackingChangedListener() {
-                    @Override public void onCameraTrackingChanged(int currentMode) {
-                        int userTrackingMode = UserTrackingMode.NONE;
-                        switch (currentMode) {
-                            case CameraMode.NONE:
-                                userTrackingMode = UserTrackingMode.NONE;
-                                break;
-                            case CameraMode.TRACKING:
-                                userTrackingMode = UserTrackingMode.FOLLOW;
-                                break;
-                            case CameraMode.TRACKING_COMPASS:
-                                userTrackingMode = UserTrackingMode.FollowWithHeading;
-                                break;
-                            case CameraMode.TRACKING_GPS:
-                                userTrackingMode = UserTrackingMode.FollowWithCourse;
-                                break;
-                            default:
-                                userTrackingMode = UserTrackingMode.NONE;
-                        }
-                        updateUserTrackingMode(userTrackingMode);
-                    }
-                    @Override public void onCameraTrackingDismissed() {
-                    }
-            });
-             */
         } else {
             mLocationComponentManager!!.setCameraMode(com.mapbox.rctmgl.components.location.CameraMode.NONE)
         }
@@ -268,35 +233,6 @@ class RCTMGLCamera(private val mContext: Context, private val mManager: RCTMGLCa
     fun setMaxZoomLevel(zoomLevel: Double?) {
         mMaxZoomLevel = zoomLevel
         updateMaxBounds()
-    }
-
-    fun setZoomLevel(zoomLevel: Double) {
-        mZoomLevel = zoomLevel
-        updateCameraPositionIfNeeded()
-    }
-
-    private fun buildCamera(
-        previousPosition: CameraState,
-        shouldUpdateTarget: Boolean
-    ): CameraOptions {
-        return if (shouldUpdateTarget) {
-            previousPosition.toCameraOptions(mCenterCoordinate)
-        } else {
-            previousPosition.toCameraOptions(null)
-        }
-    }
-
-    private fun updateCameraPositionIfNeeded() {
-        if (mMapView != null) {
-            val prevPosition = mapboxMap!!.cameraState
-            val cameraUpdate =  /*CameraUpdateFactory.newCameraPosition(*/
-                buildCamera(prevPosition, false)
-            if (mAnimated) {
-                mapboxMap!!.flyTo(cameraUpdate, null)
-            } else {
-                mapboxMap!!.setCamera(cameraUpdate)
-            }
-        }
     }
 
     fun setFollowUserLocation(value: Boolean) {
@@ -316,9 +252,7 @@ class RCTMGLCamera(private val mContext: Context, private val mManager: RCTMGLCa
 
             mLocationManager?.let { locManager ->
                 val provider = locManager.provider
-
                 map.location.setLocationProvider(provider)
-                map.location2.setLocationProvider(provider)
                 locManager.enable()
             }
 
@@ -344,13 +278,17 @@ class RCTMGLCamera(private val mContext: Context, private val mManager: RCTMGLCa
                     location.updateSettings2 {
                         puckBearingEnabled = false
                     }
-                    when(mFollowHeading) {
-                        null -> followOptions.bearing( FollowPuckViewportStateBearing.Constant(
-                            cameraState.bearing
-                        ))
-                        else -> followOptions.bearing( FollowPuckViewportStateBearing.Constant(
-                            cameraState.bearing
-                        ))
+                    when (mFollowHeading) {
+                        null -> followOptions.bearing(
+                            FollowPuckViewportStateBearing.Constant(
+                                cameraState.bearing
+                            )
+                        )
+                        else -> followOptions.bearing(
+                            FollowPuckViewportStateBearing.Constant(
+                                cameraState.bearing
+                            )
+                        )
                     }
                 }
                 else -> {
@@ -358,7 +296,7 @@ class RCTMGLCamera(private val mContext: Context, private val mManager: RCTMGLCa
                 }
             }
             val cameraOptions = CameraOptions.Builder()
-            when(mFollowPitch) {
+            when (mFollowPitch) {
                 null -> {
                     followOptions.pitch(cameraState.pitch)
                     cameraOptions.pitch(cameraState.pitch)
@@ -368,7 +306,7 @@ class RCTMGLCamera(private val mContext: Context, private val mManager: RCTMGLCa
                     cameraOptions.pitch(mFollowPitch)
                 }
             }
-            when(mFollowZoomLevel) {
+            when (mFollowZoomLevel) {
                 null -> {
                     followOptions.zoom(cameraState.zoom)
                     cameraOptions.zoom(cameraState.zoom)
@@ -380,11 +318,12 @@ class RCTMGLCamera(private val mContext: Context, private val mManager: RCTMGLCa
             }
             val followState = viewport.makeFollowPuckViewportState(followOptions.build())
             val defaultTransitionOptions = DefaultViewportTransitionOptions.Builder()
-            if (mAnimationDuration != null) {
-                defaultTransitionOptions.maxDurationMs(mAnimationDuration!!)
-            }
-            viewport.transitionTo(followState, viewport.makeDefaultViewportTransition(defaultTransitionOptions.build()))
-            map.getMapboxMap().setCamera(cameraOptions.build())
+            defaultTransitionOptions.maxDurationMs(mAnimationDuration ?: 0)
+            viewport.transitionTo(
+                followState,
+                viewport.makeDefaultViewportTransition(defaultTransitionOptions.build())
+            )
+//            mapboxMap?.setCamera(cameraOptions.build())
         }
         mapboxMap?.let {
             it.getStyle()?.let { style ->
