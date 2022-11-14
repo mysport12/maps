@@ -505,27 +505,29 @@ class RCTMGLOfflineModule(private val mReactContext: ReactApplicationContext) :
 
     @ReactMethod
     fun migrateOfflineCache() {
-
-        // Old and new cache file paths
-        val targetPathName = mReactContext.filesDir.absolutePath + "/.mapbox/map_data"
-        val sourcePath = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Paths.get(mReactContext.filesDir.absolutePath + "/mbgl-offline.db")
-        } else {
-            TODO("VERSION.SDK_INT < O")
-        }
-        val targetPath = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Paths.get("$targetPathName/map_data.db")
-        } else {
-            TODO("VERSION.SDK_INT < O")
-        }
-
         try {
-            val directory = File(targetPathName)
-            directory.mkdirs()
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Files.move(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING)
+            // Old and new cache file paths
+            val targetPathName = mReactContext.filesDir.absolutePath + "/.mapbox/map_data"
+            val sourcePath = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                Paths.get(mReactContext.filesDir.absolutePath + "/mbgl-offline.db")
+            } else {
+                mReactContext.filesDir.absolutePath + "/mbgl-offline.db"
             }
-            Log.d("TAG","v10 cache directory created successfully")
+            val targetPath = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                Paths.get("$targetPathName/map_data.db")
+            } else {
+                "$targetPathName/map_data.db"
+            }
+            val directory = File(targetPathName)
+            if (!directory.exists()) {
+                directory.mkdirs()
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    Files.move(sourcePath as Path?, targetPath as Path?, StandardCopyOption.REPLACE_EXISTING)
+                } else {
+                    File(sourcePath as String?).renameTo(File(targetPath as String?))
+                }
+                Log.d("TAG","v10 cache directory created successfully")
+            }
         } catch (e: Exception) {
             Log.d("TAG", "${e}... file move unsuccessful")
         }
