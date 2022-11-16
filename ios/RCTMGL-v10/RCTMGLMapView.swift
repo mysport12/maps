@@ -8,22 +8,21 @@ open class RCTMGLMapView : MapView {
 
   var compassEnabled: Bool = false
   var compassFadeWhenNorth: Bool = false
-  var compassImage: String?
-  
   var reactOnPress : RCTBubblingEventBlock?
   var reactOnLongPress : RCTBubblingEventBlock?
   var reactOnMapChange : RCTBubblingEventBlock?
 
   var styleLoaded: Bool = false
   var styleLoadWaiters : [(MapboxMap)->Void] = []
-  var onStyleLoadedComponents: [RCTMGLMapComponent] = []
 
   weak var reactCamera : RCTMGLCamera?
   var images : [RCTMGLImages] = []
   var sources : [RCTMGLInteractiveElement] = []
   
   var handleMapChangedEvents = Set<RCTMGLEvent.EventType>()
-
+  
+  var onStyleLoadedComponents: [RCTMGLMapComponent] = []
+  
   private var isPendingInitialLayout = true
   private var wasGestureActive = false
   private var isGestureActive = false
@@ -81,7 +80,7 @@ open class RCTMGLMapView : MapView {
     super.insertReactSubview(subview, at: atIndex)
   }
   
-  @objc open override func removeReactSubview(_ subview: UIView!) {
+  @objc open override func removeReactSubview(_ subview:UIView!) {
     removeFromMap(subview)
     super.removeReactSubview(subview)
   }
@@ -139,7 +138,7 @@ open class RCTMGLMapView : MapView {
 
   @objc func setReactProjection(_ value: String?) {
     if let value = value {
-      let projection = StyleProjection(name: value == "globe" ? .globe : .mercator)
+      var projection = StyleProjection(name: value == "globe" ? .globe : .mercator)
       try! self.mapboxMap.style.setProjection(projection)
     }
   }
@@ -149,7 +148,7 @@ open class RCTMGLMapView : MapView {
     mapView.ornaments.options.attributionButton.visibility = value ? .visible : .hidden
   }
   
-  @objc func setReactAttributionPosition(_ position: [String: NSNumber]) {
+  @objc func setReactAttributionPosition(_ position: [String: Int]!) {
     if let ornamentOptions = self.getOrnamentOptionsFromPosition(position) {
       mapView.ornaments.options.attributionButton.position = ornamentOptions.position
       mapView.ornaments.options.attributionButton.margins = ornamentOptions.margins
@@ -160,7 +159,7 @@ open class RCTMGLMapView : MapView {
     mapView.ornaments.options.logo.visibility = value ? .visible : .hidden
   }
   
-  @objc func setReactLogoPosition(_ position: [String: NSNumber]) {
+  @objc func setReactLogoPosition(_ position: [String: Int]!) {
     if let ornamentOptions = self.getOrnamentOptionsFromPosition(position) {
       mapView.ornaments.options.logo.position = ornamentOptions.position
       mapView.ornaments.options.logo.margins = ornamentOptions.margins
@@ -169,25 +168,17 @@ open class RCTMGLMapView : MapView {
   
   @objc func setReactCompassEnabled(_ value: Bool) {
     compassEnabled = value
-    refreshCompassVisibility()
+    mapView.ornaments.options.compass.visibility = value ? compassFadeWhenNorth ? .adaptive : .visible : .hidden
   }
   
   @objc func setReactCompassFadeWhenNorth(_ value: Bool) {
     compassFadeWhenNorth = value
-    refreshCompassVisibility()
-  }
-  
-  private func refreshCompassVisibility() {
-    var visibility: OrnamentVisibility = .hidden
-    if compassEnabled {
-      visibility = compassFadeWhenNorth ? .adaptive : .visible
+    if (compassEnabled) {
+      mapView.ornaments.options.compass.visibility = value ? .adaptive : .visible
     }
-    mapView.ornaments.options.compass.visibility = visibility
-    
-    refreshCompassImage()
   }
   
-  @objc func setReactCompassPosition(_ position: [String: NSNumber]) {
+  @objc func setReactCompassPosition(_ position: [String: Int]!) {
     if let ornamentOptions = self.getOrnamentOptionsFromPosition(position) {
       mapView.ornaments.options.compass.position = ornamentOptions.position
       mapView.ornaments.options.compass.margins = ornamentOptions.margins
@@ -217,37 +208,19 @@ open class RCTMGLMapView : MapView {
     }
   }
   
-  @objc func setReactCompassViewPosition(_ position: NSNumber) {
-    mapView.ornaments.options.compass.position = toOrnamentPositon(Int(truncating: position))
+  @objc func setReactCompassViewPosition(_ position: Int) {
+    mapView.ornaments.options.compass.position = toOrnamentPositon(position)
   }
   
   @objc func setReactCompassViewMargins(_ margins: CGPoint) {
     mapView.ornaments.options.compass.margins = margins;
   }
 
-  @objc func setReactCompassImage(_ image: String) {
-    compassImage = image.isEmpty ? nil : image
-    refreshCompassImage()
-  }
-  
-  private func refreshCompassImage() {
-    if let compassImage = compassImage {
-      onMapStyleLoaded { map in
-        let img = map.style.image(withId: compassImage)
-        self.mapView.ornaments.options.compass.image = img
-      }
-    } else {
-      // Does not currently reset the image to the default.
-      // See https://github.com/mapbox/mapbox-maps-ios/issues/1673.
-      self.mapView.ornaments.options.compass.image = nil
-    }
-  }
-
   @objc func setReactScaleBarEnabled(_ value: Bool) {
     self.mapView.ornaments.options.scaleBar.visibility = value ? .visible : .hidden
   }
   
-  @objc func setReactScaleBarPosition(_ position: [String: NSNumber]) {
+  @objc func setReactScaleBarPosition(_ position: [String: Int]!) {
     if let ornamentOptions = self.getOrnamentOptionsFromPosition(position) {
       mapView.ornaments.options.scaleBar.position = ornamentOptions.position
       mapView.ornaments.options.scaleBar.margins = ornamentOptions.margins
@@ -286,20 +259,20 @@ open class RCTMGLMapView : MapView {
     }
   }
 
-  private func getOrnamentOptionsFromPosition(_ position: [String: NSNumber]) -> (position: OrnamentPosition, margins: CGPoint)? {
+  private func getOrnamentOptionsFromPosition(_ position: [String: Int]) -> (position: OrnamentPosition, margins: CGPoint)? {
     let left = position["left"]
     let right = position["right"]
     let top = position["top"]
     let bottom = position["bottom"]
     
     if let left = left, let top = top {
-      return (OrnamentPosition.topLeading, CGPoint(x: Int(truncating: left), y: Int(truncating: top)))
+      return (OrnamentPosition.topLeading, CGPoint(x: left, y: top))
     } else if let right = right, let top = top {
-      return (OrnamentPosition.topTrailing, CGPoint(x: Int(truncating: right), y: Int(truncating: top)))
+      return (OrnamentPosition.topTrailing, CGPoint(x: right, y: top))
     } else if let bottom = bottom, let right = right {
-      return (OrnamentPosition.bottomTrailing, CGPoint(x: Int(truncating: right), y: Int(truncating: bottom)))
+      return (OrnamentPosition.bottomTrailing, CGPoint(x: right, y: bottom))
     } else if let bottom = bottom, let left = left {
-      return (OrnamentPosition.bottomLeading, CGPoint(x: Int(truncating: left), y: Int(truncating: bottom)))
+      return (OrnamentPosition.bottomLeading, CGPoint(x: left, y: bottom))
     }
     
     return nil
@@ -455,7 +428,7 @@ extension RCTMGLMapView {
       self.onStyleLoadedComponents.forEach { (component) in
         component.addToMap(self, style: self.mapboxMap.style)
       }
-      
+
       if !self.styleLoaded {
         self.styleLoaded = true
         if let mapboxMap = self.mapboxMap {
