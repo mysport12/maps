@@ -43,9 +43,15 @@ class RCTMGLCameraManager(private val mContext: ReactApplicationContext) :
         }
     }
 
-    @ReactProp(name = "animationDuration")
-    fun setAnimationDuration(camera: RCTMGLCamera, value: Int) {
-        camera.setAnimationDuration(value)
+    @ReactProp(name = "userTrackingMode")
+    fun setUserTrackingMode(camera: RCTMGLCamera, userTrackingMode: Int) {
+        camera.setUserTrackingMode(userTrackingMode)
+        throw AssertionError("Unused code")
+    }
+
+    @ReactProp(name = "zoomLevel")
+    fun setZoomLevel(camera: RCTMGLCamera, zoomLevel: Double) {
+        camera.setZoomLevel(zoomLevel)
     }
 
     @ReactProp(name = "followUserLocation")

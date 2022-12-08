@@ -528,7 +528,7 @@
             "type": {
               "name": "number \\| Array"
             },
-            "optional": true
+            "optional": false
           },
           {
             "name": "_animationDuration",

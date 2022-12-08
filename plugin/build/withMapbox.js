@@ -7,14 +7,14 @@ exports._addMapboxMavenRepo = exports.setExcludedArchitectures = exports.addMapb
 const fs_1 = require("fs");
 const path_1 = __importDefault(require("path"));
 const config_plugins_1 = require("expo/config-plugins");
-const generateCode_1 = require("@expo/config-plugins/build/utils/generateCode");
+const generateCode_1 = require("./generateCode");
 let pkg = {
     name: '@rnmapbox/maps',
 };
 try {
     pkg = require('@rnmapbox/maps/package.json');
 }
-catch (_a) {
+catch {
     // empty catch block
 }
 /**

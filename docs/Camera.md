@@ -82,7 +82,7 @@ camera.current?.setCamera({
 ```
 
 
-### fitBounds(ne, sw[, paddingConfig][, _animationDuration])
+### fitBounds(ne, sw, paddingConfig[, _animationDuration])
 
 Set the camera position to enclose the provided bounds, with optional<br/>padding and duration.
 
@@ -91,7 +91,7 @@ Set the camera position to enclose the provided bounds, with optional<br/>paddin
 | ---- | :--: | :------: | :----------: |
 | `ne` | `Position` | `Yes` | Northeast coordinate of bounding box |
 | `sw` | `Position` | `Yes` | Southwest coordinate of bounding box |
-| `paddingConfig` | `number \| Array` | `No` | The viewport padding, specified as a number (all sides equal), a 2-item array ([vertical, horizontal]), or a 4-item array ([top, right, bottom, left]) |
+| `paddingConfig` | `number \| Array` | `Yes` | The viewport padding, specified as a number (all sides equal), a 2-item array ([vertical, horizontal]), or a 4-item array ([top, right, bottom, left]) |
 | `_animationDuration` | `n/a` | `No` | undefined |
 
 

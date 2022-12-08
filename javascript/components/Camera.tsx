@@ -370,7 +370,7 @@ export const Camera = memo(
         }
       }
 
-      function fitBounds(ne, sw, paddingConfig = 0, _animationDuration = 0) {
+      function fitBounds(ne, sw, paddingConfig, _animationDuration = 0) {
         let _padding = {
           paddingTop: 0,
           paddingBottom: 0,

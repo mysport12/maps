@@ -4,145 +4,122 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.VectorDrawable
 import androidx.appcompat.content.res.AppCompatResources
-import com.mapbox.maps.CameraOptions
-import com.mapbox.maps.MapboxMap
+import com.mapbox.maps.plugin.locationcomponent.location
+import com.mapbox.rctmgl.components.mapview.RCTMGLMapView
 import com.mapbox.maps.Style
 import com.mapbox.maps.plugin.LocationPuck2D
-import com.mapbox.maps.plugin.gestures.gestures
-import com.mapbox.maps.plugin.locationcomponent.*
 import com.mapbox.rctmgl.R
-import com.mapbox.rctmgl.components.mapview.RCTMGLMapView
 import com.mapbox.rctmgl.location.LocationManager
-import com.mapbox.rctmgl.location.LocationManager.Companion.getInstance
 
 /**
- * The LocationComponent on android implements both location tracking and display of user's current location.
+ * The LocationComponent on android implements display of user's current location.
+ * But viewport seems to be tied to it in the sense that if location is not enbabled then it's viewport user tracking is not working.
  * LocationComponentManager attempts to separate that, so that Camera can ask for location tracking independent of display of user current location.
  * And NativeUserLocation can ask for display of user's current location - independent of Camera's user tracking.
  */
-class LocationComponentManager(rctmglMapView: RCTMGLMapView?, context: Context?) {
-    private var mMapView: RCTMGLMapView? = null
-    private var mMap: MapboxMap? = null
-    private var mLocationManager: LocationManager? = null
-    private var mLocationComponent: LocationComponentPlugin? = null
-    private var mContext: Context? = null
-    private var mCameraMode = CameraMode.NONE
+class LocationComponentManager(mapView: RCTMGLMapView, context: Context) {
+    private var mShowNativeUserLocation = false
+    private var mFollowLocation = false
+    var mMapView = mapView
+    var mContext = context
+    var mState = State(enabled=true, hidden=false, tintColor= null)
+    var mLocationManager: LocationManager? = LocationManager.getInstance(context!!)
 
-    @RenderMode.Mode
-    private var mRenderMode = RenderMode.COMPASS
-    private val mLocationBearingChangedListener = OnIndicatorBearingChangedListener { v ->
-        if (mFollowUserLocation) {
-            mMapView!!.getMapboxMap().setCamera(CameraOptions.Builder().bearing(v).build())
-        }
-    }
-    private val mLocationPositionChangeListener = OnIndicatorPositionChangedListener { point ->
-        if (mFollowUserLocation) {
-            mMapView!!.getMapboxMap().setCamera(CameraOptions.Builder().center(point).build())
-            mMapView!!.gestures.focalPoint = mMapView!!.getMapboxMap().pixelForCoordinate(point)
-        }
-    }
-    private var mShowUserLocation = false
-    private var mFollowUserLocation = false
-    private var mShowingUserLocation = false
-    fun showUserLocation(showUserLocation: Boolean) {
-        mShowUserLocation = showUserLocation
-        stateChanged()
+    data class State(
+        val enabled: Boolean, // in case followUserLocation is active or visible
+        val hidden: Boolean, // in case it isn't native
+        val tintColor: Int?, // tint of location puck
+    )
+
+    fun showNativeUserLocation(showUserLocation: Boolean) {
+        mShowNativeUserLocation = showUserLocation
+
+        _applyChanges()
     }
 
-    fun setFollowUserLocation(followUserLocation: Boolean) {
-        mFollowUserLocation = followUserLocation
-        stateChanged()
-    }
+    fun setFollowLocation(followLoation: Boolean) {
+        mFollowLocation = followLoation
 
-    fun setCameraMode(@CameraMode.Mode cameraMode: Int) {
-        mCameraMode = cameraMode
-        stateChanged()
-        val locationComponent = mMapView!!.location
-        if (mCameraMode == CameraMode.NONE || mCameraMode == CameraMode.TRACKING) {
-            locationComponent.removeOnIndicatorBearingChangedListener(
-                mLocationBearingChangedListener
-            )
-        } else {
-            locationComponent.addOnIndicatorBearingChangedListener(mLocationBearingChangedListener)
-        }
-        if (mCameraMode == CameraMode.NONE || mCameraMode == CameraMode.NONE_COMPASS || mCameraMode == CameraMode.NONE_GPS) {
-            locationComponent.removeOnIndicatorPositionChangedListener(
-                mLocationPositionChangeListener
-            )
-        } else {
-            locationComponent.addOnIndicatorPositionChangedListener(mLocationPositionChangeListener)
-        }
-    }
-
-    fun tintColorChanged() {
-        applyOptions(mShowingUserLocation, mLocationComponent)
-    }
-
-    fun setRenderMode(@RenderMode.Mode renderMode: Int) {
-        mRenderMode = renderMode
-    }
-
-    private fun stateChanged() {
-        mLocationComponent!!.enabled = mFollowUserLocation || mShowUserLocation
-        if (mShowingUserLocation != mShowUserLocation) {
-            updateShowUserLocation(mShowUserLocation)
-        }
-        if (mFollowUserLocation) {
-            mLocationComponent!!.onStart()
-        }
-        mLocationComponent!!.enabled = mFollowUserLocation || mShowUserLocation
-    }
-
-    fun hasLocationComponent(): Boolean {
-        return mLocationComponent != null
+        _applyChanges()
     }
 
     fun update(style: Style) {
-        update(mShowUserLocation)
+        _applyChanges()
     }
 
-    fun update(displayUserLocation: Boolean) {
-        if (mLocationComponent == null) {
-            mLocationComponent = mMapView!!.location
-            mLocationComponent!!.setLocationProvider(mLocationManager!!.provider)
-            mShowingUserLocation = displayUserLocation
-        }
-        updateShowUserLocation(displayUserLocation)
+    fun setRenderMode(renderMode: RenderMode) {
+        _applyChanges()
     }
 
-    private fun updateShowUserLocation(displayUserLocation: Boolean) {
-        if (mShowingUserLocation != displayUserLocation) {
-            applyOptions(displayUserLocation, mLocationComponent)
-            mShowingUserLocation = displayUserLocation
-        }
-    }
+    fun _applyChanges() {
+        mMapView?.let {
+            val newState = State(
+                enabled = mShowNativeUserLocation || mFollowLocation,
+                hidden = !mShowNativeUserLocation,
+                tintColor = mMapView!!.tintColor,
+            )
 
-    private fun applyOptions(
-        displayUserLocation: Boolean,
-        locationComponent: LocationComponentPlugin?
-    ) {
-        locationComponent!!.enabled = true
-        if (!displayUserLocation) {
-            val empty = AppCompatResources.getDrawable(mContext!!, R.drawable.empty)
-            locationComponent.updateSettings {
-                locationPuck = LocationPuck2D(shadowImage = empty, topImage = empty)
-                pulsingEnabled = true
+            if (! mState.equals(newState)) {
+                it.location.updateSettings {
+                    val trackLocation = true
+                    enabled = newState.enabled
+
+                    if ((newState.hidden != mState.hidden) || (newState.tintColor != mState.tintColor)) {
+                        if (newState.hidden) {
+                            var emptyLocationPuck = LocationPuck2D()
+                            val empty = AppCompatResources.getDrawable(mContext!!, R.drawable.empty)
+                            emptyLocationPuck.bearingImage = empty
+                            emptyLocationPuck.shadowImage = empty
+                            emptyLocationPuck.topImage = empty
+                            //emptyLocationPuck.opacity = 0.0
+                            locationPuck = emptyLocationPuck
+                            pulsingEnabled = false
+                        } else {
+                            val mapboxBlueColor = Color.parseColor("#4A90E2")
+                            val tintColor = newState.tintColor
+                            val defaultLocationPuck = LocationPuck2D()
+                            var topImage = AppCompatResources.getDrawable(mContext!!, R.drawable.mapbox_user_icon)
+                            if (tintColor != null) {
+                                val drawable = topImage as VectorDrawable?
+                                drawable!!.setTint(tintColor)
+                                topImage = drawable
+                            }
+                            defaultLocationPuck.topImage = topImage
+                            val bearingImage = AppCompatResources.getDrawable(
+                                mContext!!, R.drawable.mapbox_user_stroke_icon
+                            )
+                            defaultLocationPuck.bearingImage = bearingImage
+                            val shadowImage = AppCompatResources.getDrawable(
+                                mContext!!, R.drawable.mapbox_user_icon_shadow
+                            )
+                            defaultLocationPuck.shadowImage = shadowImage
+                            locationPuck = defaultLocationPuck
+                            pulsingEnabled = true
+                            if (tintColor != null) {
+                                pulsingColor = tintColor
+                            } else {
+                                pulsingColor = mapboxBlueColor
+                            }
+                        }
+                    }
+                }
+
+                if (newState.enabled != mState.enabled) {
+                    if (newState.enabled) {
+                        mLocationManager?.startCounted()
+                        val provider = mLocationManager?.provider
+                        if (provider != null) {
+                            it.location.setLocationProvider(provider)
+                        }
+                    } else {
+                        mLocationManager?.stopCounted()
+                    }
+                }
+
+                mState = newState;
             }
-        } else {
-            val mapboxBlueColor = Color.parseColor("#4A90E2")
-            val tintColor = mMapView!!.tintColor
-            locationComponent.updateSettings {
-                locationPuck = locationComponent.createDefault2DPuck(mContext!!, true)
-                pulsingEnabled = true
-                pulsingColor = tintColor ?: mapboxBlueColor
-            }
-        }
-    }
 
-    init {
-        mMapView = rctmglMapView
-        mMap = mMapView!!.getMapboxMap()
-        mContext = context
-        mLocationManager = getInstance(context!!)
+
+        }
     }
 }
