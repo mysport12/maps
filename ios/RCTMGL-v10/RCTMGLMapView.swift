@@ -807,6 +807,7 @@ class PointAnnotationManager : AnnotationInteractionDelegate {
       noAnnotationFound(tap)
       return
     }
+    let existingAnnotations = self.manager.annotations
     let options = RenderedQueryOptions(layerIds: [layerId], filter: nil)
     mapFeatureQueryable.queryRenderedFeatures(
       with: tap.location(in: tap.view),
@@ -827,7 +828,7 @@ class PointAnnotationManager : AnnotationInteractionDelegate {
             }
 
             // Find if any `queriedFeatureIds` match an annotation's `id`
-            let tappedAnnotations = self.manager.annotations.filter { queriedFeatureIds.contains($0.id) }
+            let tappedAnnotations = existingAnnotations.filter { queriedFeatureIds.contains($0.id) }
 
             // If `tappedAnnotations` is not empty, call delegate
             if !tappedAnnotations.isEmpty {
@@ -910,10 +911,10 @@ class PointAnnotationManager : AnnotationInteractionDelegate {
     }
       switch sender.state {
         case .began:
+        let existingAnnotations = self.manager.annotations
         mapFeatureQueryable.queryRenderedFeatures(
           with: sender.location(in: sender.view),
             options: options) { [weak self] (result) in
-              
               guard let self = self else { return }
               switch result {
                 case .success(let queriedFeatures):
@@ -924,9 +925,8 @@ class PointAnnotationManager : AnnotationInteractionDelegate {
                       }
                       return featureId
                   }
-
                   // Find if any `queriedFeatureIds` match an annotation's `id`
-                let draggedAnnotations = self.manager.annotations.filter { queriedFeatureIds.contains($0.id) }
+                let draggedAnnotations = existingAnnotations.filter { queriedFeatureIds.contains($0.id) }
                 let enabledAnnotations = draggedAnnotations.filter { ($0.userInfo?[RCTMGLPointAnnotation.key] as? WeakRef<RCTMGLPointAnnotation>)?.object?.draggable ?? false }
                   // If `tappedAnnotations` is not empty, call delegate
                   if !enabledAnnotations.isEmpty {
@@ -940,25 +940,11 @@ class PointAnnotationManager : AnnotationInteractionDelegate {
                   Logger.log(level:.warn, message:"Failed to query map for annotations due to error: \(error)")
                 }
               }
-
       case .changed:
           guard let annotation = self.draggedAnnotation else {
               return
           }
-        
           self.onDragHandler(self.manager, didDetectDraggedAnnotations: [annotation], dragState: .changed, targetPoint: targetPoint)
-
-          // For some reason Mapbox doesn't let us update the geometry of an existing annotation
-          // so we have to create a whole new one.
-          var newAnnotation = PointAnnotation(id: annotation.id, coordinate: targetPoint)
-          newAnnotation.image = annotation.image
-          newAnnotation.userInfo = annotation.userInfo
-          
-          var newAnnotations = self.manager.annotations.filter { an in
-              return an.id != annotation.id
-          }
-          newAnnotations.append(newAnnotation)
-          manager.annotations = newAnnotations
       case .cancelled, .ended:
         guard let annotation = self.draggedAnnotation else {
             return
