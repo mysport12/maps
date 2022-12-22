@@ -2,6 +2,7 @@ package com.mapbox.rctmgl.components.location
 
 import android.annotation.SuppressLint
 import android.content.Context
+import com.facebook.react.bridge.ReadableMap
 import com.mapbox.rctmgl.components.mapview.OnMapReadyCallback
 import com.mapbox.maps.MapboxMap
 import com.mapbox.android.core.permissions.PermissionsManager
@@ -13,13 +14,20 @@ class RCTMGLNativeUserLocation(context: Context?) : AbstractMapFeature(context),
     private var mEnabled = true
     private var mMap: MapboxMap? = null
 
+    private var mNativeBearingImage : String? = null
+    private var mNativeShadowImage : String? = null
+    private var mNativeTopImage : String? = null
     private var mRenderMode : RenderMode = RenderMode.COMPASS
+
     override fun addToMap(mapView: RCTMGLMapView) {
         super.addToMap(mapView)
         mEnabled = true
         mapView.getMapboxMap()
         mapView.getMapAsync(this)
         setRenderMode(mRenderMode)
+        mMapView?.locationComponentManager?.setNativeBearingImage(mNativeBearingImage)
+        mMapView?.locationComponentManager?.setNativeShadowImage(mNativeShadowImage)
+        mMapView?.locationComponentManager?.setNativeTopImage(mNativeTopImage)
         mMapView?.locationComponentManager?.showNativeUserLocation(true)
     }
 
@@ -45,6 +53,30 @@ class RCTMGLNativeUserLocation(context: Context?) : AbstractMapFeature(context),
 
         mMapView?.locationComponentManager?.update(style)
         mMapView?.locationComponentManager?.showNativeUserLocation(mEnabled)
+    }
+
+    fun setNativeBearingImage(image: ReadableMap?) {
+        val uri = image?.getString("uri")!!
+        if (mNativeBearingImage != uri) {
+            mMapView?.locationComponentManager?.setNativeBearingImage(uri)
+        }
+        mNativeBearingImage = uri
+    }
+
+    fun setNativeShadowImage(image: ReadableMap?) {
+        val uri = image?.getString("uri")!!
+        if (mNativeShadowImage != uri) {
+            mMapView?.locationComponentManager?.setNativeShadowImage(uri)
+        }
+        mNativeShadowImage = uri
+    }
+
+    fun setNativeTopImage(image: ReadableMap?) {
+        val uri = image?.getString("uri")!!
+        if (mNativeTopImage != uri) {
+            mMapView?.locationComponentManager?.setNativeTopImage(uri)
+        }
+        mNativeTopImage = uri
     }
 
     fun setRenderMode(renderMode: RenderMode) {

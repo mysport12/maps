@@ -333,18 +333,16 @@ export const Camera = memo(
         return JSON.stringify(makeLatLngBounds(maxBounds.ne, maxBounds.sw));
       }, [maxBounds]);
 
+      // @ts-expect-error The compiler doesn't understand that the `config` union type is guaranteed
+      // to be an object type.
       function setCamera(config, ignoreFollowUserLocation = false) {
         if (!allowUpdates) {
           return;
         }
 
         if (!config.type)
-          // @ts-expect-error The compiler doesn't understand that the `config` union type is guaranteed
-          // to be an object type.
           config = {
             ...config,
-            // @ts-expect-error Allows JS files to pass in an invalid config (lacking the `type` property),
-            // which would raise a compilation error in TS files.
             type: config.stops ? 'CameraStops' : 'CameraStop',
           };
 
@@ -370,7 +368,12 @@ export const Camera = memo(
         }
       }
 
-      function fitBounds(ne, sw, paddingConfig, _animationDuration = 0) {
+      function fitBounds(
+        ne: Array<number>,
+        sw: Array<number>,
+        paddingConfig: Array<number> | number | undefined,
+        _animationDuration = 0,
+      ) {
         let _padding = {
           paddingTop: 0,
           paddingBottom: 0,
@@ -412,7 +415,10 @@ export const Camera = memo(
         });
       }
 
-      function flyTo(_centerCoordinate, _animationDuration = 2000) {
+      function flyTo(
+        _centerCoordinate: Array<number>,
+        _animationDuration = 2000,
+      ) {
         setCamera({
           type: 'CameraStop',
           centerCoordinate: _centerCoordinate,
@@ -420,7 +426,10 @@ export const Camera = memo(
         });
       }
 
-      function moveTo(_centerCoordinate, _animationDuration = 0) {
+      function moveTo(
+        _centerCoordinate: Array<number>,
+        _animationDuration = 0,
+      ) {
         setCamera({
           type: 'CameraStop',
           centerCoordinate: _centerCoordinate,
@@ -429,7 +438,7 @@ export const Camera = memo(
         });
       }
 
-      function zoomTo(_zoomLevel, _animationDuration = 2000) {
+      function zoomTo(_zoomLevel: number, _animationDuration = 2000) {
         setCamera({
           type: 'CameraStop',
           zoomLevel: _zoomLevel,

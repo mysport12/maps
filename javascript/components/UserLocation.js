@@ -229,11 +229,20 @@ class UserLocation extends React.Component {
   }
 
   _renderNative() {
-    const { androidRenderMode, showsUserHeadingIndicator } = this.props;
+    const {
+      androidRenderMode,
+      nativeBearingImage,
+      nativeShadowImage,
+      nativeTopImage,
+      showsUserHeadingIndicator,
+    } = this.props;
 
     let props = {
       androidRenderMode,
       iosShowsUserHeadingIndicator: showsUserHeadingIndicator,
+      nativeBearingImage,
+      nativeShadowImage,
+      nativeTopImage,
     };
     return <NativeUserLocation {...props} />;
   }
@@ -261,9 +270,7 @@ class UserLocation extends React.Component {
         id="mapboxUserLocation"
         onPress={onPress}
         coordinates={coordinates}
-        style={{
-          iconRotate: heading,
-        }}
+        style={{ iconRotate: heading }}
       >
         {children || normalIcon(showsUserHeadingIndicator, heading)}
       </Annotation>

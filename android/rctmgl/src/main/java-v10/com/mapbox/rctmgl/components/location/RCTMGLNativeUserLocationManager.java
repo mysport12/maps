@@ -1,5 +1,6 @@
 package com.mapbox.rctmgl.components.location;
 
+import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.uimanager.ThemedReactContext;
 import com.facebook.react.uimanager.ViewGroupManager;
 import com.facebook.react.uimanager.annotations.ReactProp;
@@ -15,15 +16,34 @@ public class RCTMGLNativeUserLocationManager extends ViewGroupManager<RCTMGLNati
         return REACT_CLASS;
     }
 
-    @ReactProp(name="androidRenderMode")
-    public void setAndroidRenderMode(com.mapbox.rctmgl.components.location.RCTMGLNativeUserLocation userLocation, String mode) {
+    @ReactProp(name = "androidRenderMode")
+    public void setAndroidRenderMode(com.mapbox.rctmgl.components.location.RCTMGLNativeUserLocation userLocation,
+            String mode) {
         if ("compass".equalsIgnoreCase(mode)) {
-           userLocation.setRenderMode(RenderMode.COMPASS);
+            userLocation.setRenderMode(RenderMode.COMPASS);
         } else if ("gps".equalsIgnoreCase(mode)) {
-           userLocation.setRenderMode(RenderMode.GPS);
+            userLocation.setRenderMode(RenderMode.GPS);
         } else {
-           userLocation.setRenderMode(RenderMode.NORMAL);
-       }
+            userLocation.setRenderMode(RenderMode.NORMAL);
+        }
+    }
+
+    @ReactProp(name = "nativeBearingImage")
+    public void setNativeBearingImage(com.mapbox.rctmgl.components.location.RCTMGLNativeUserLocation userLocation,
+            ReadableMap image) {
+        userLocation.setNativeBearingImage(image);
+    }
+
+    @ReactProp(name = "nativeShadowImage")
+    public void setNativeShadowImage(com.mapbox.rctmgl.components.location.RCTMGLNativeUserLocation userLocation,
+            ReadableMap image) {
+        userLocation.setNativeShadowImage(image);
+    }
+
+    @ReactProp(name = "nativeTopImage")
+    public void setNativeTopImage(com.mapbox.rctmgl.components.location.RCTMGLNativeUserLocation userLocation,
+            ReadableMap image) {
+        userLocation.setNativeTopImage(image);
     }
 
     @Nonnull

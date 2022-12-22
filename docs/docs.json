@@ -510,7 +510,7 @@
             "name": "ne",
             "description": "Northeast coordinate of bounding box",
             "type": {
-              "name": "Position"
+              "name": "Array"
             },
             "optional": false
           },
@@ -518,7 +518,7 @@
             "name": "sw",
             "description": "Southwest coordinate of bounding box",
             "type": {
-              "name": "Position"
+              "name": "Array"
             },
             "optional": false
           },
@@ -526,7 +526,7 @@
             "name": "paddingConfig",
             "description": "The viewport padding, specified as a number (all sides equal), a 2-item array ([vertical, horizontal]), or a 4-item array ([top, right, bottom, left])",
             "type": {
-              "name": "number \\| Array"
+              "name": "Array<number> \\| number \\| undefined"
             },
             "optional": false
           },
@@ -553,7 +553,7 @@
             "name": "_centerCoordinate",
             "optional": false,
             "type": {
-              "name": null
+              "name": "Array"
             }
           },
           {
@@ -579,7 +579,7 @@
             "name": "_centerCoordinate",
             "optional": false,
             "type": {
-              "name": null
+              "name": "Array"
             }
           },
           {
@@ -605,7 +605,7 @@
             "name": "_zoomLevel",
             "optional": false,
             "type": {
-              "name": null
+              "name": "number"
             }
           },
           {
