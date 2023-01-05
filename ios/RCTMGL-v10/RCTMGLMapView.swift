@@ -14,15 +14,16 @@ open class RCTMGLMapView : MapView {
 
   var styleLoaded: Bool = false
   var styleLoadWaiters : [(MapboxMap)->Void] = []
+  var onStyleLoadedComponents: [RCTMGLMapComponent] = []
+  
+  var componentsToRefreshOnStyleChange: [RCTMGLMapComponent] = []
 
   weak var reactCamera : RCTMGLCamera?
   var images : [RCTMGLImages] = []
   var sources : [RCTMGLInteractiveElement] = []
   
   var handleMapChangedEvents = Set<RCTMGLEvent.EventType>()
-  
-  var onStyleLoadedComponents: [RCTMGLMapComponent] = []
-  
+    
   private var isPendingInitialLayout = true
   private var wasGestureActive = false
   private var isGestureActive = false
@@ -30,11 +31,13 @@ open class RCTMGLMapView : MapView {
   var layerWaiters : [String:[(String) -> Void]] = [:]
   
   lazy var pointAnnotationManager : PointAnnotationManager = {
-    return PointAnnotationManager(annotations: annotations, mapView: mapView)
+    let result = PointAnnotationManager(annotations: annotations, mapView: mapView)
+    self._removeMapboxLongPressGestureRecognizer()
+    return result
   }()
 
   lazy var calloutAnnotationManager : MapboxMaps.PointAnnotationManager = {
-    return annotations.makePointAnnotationManager(id: "rctmlg-callout")
+    return annotations.makePointAnnotationManager(id: "rctmgl-mapview-callouts")
   }()
   
   var mapView : MapView {
@@ -45,6 +48,7 @@ open class RCTMGLMapView : MapView {
     if let mapComponent = subview as? RCTMGLMapComponent {
       let style = mapView.mapboxMap.style
       if mapComponent.waitForStyleLoad() {
+        componentsToRefreshOnStyleChange.append(mapComponent)
         if (self.styleLoaded) {
           mapComponent.addToMap(self, style: style)
         } else {
@@ -65,6 +69,7 @@ open class RCTMGLMapView : MapView {
     if let mapComponent = subview as? RCTMGLMapComponent {
       if mapComponent.waitForStyleLoad() {
         onStyleLoadedComponents.removeAll { $0 === mapComponent }
+        componentsToRefreshOnStyleChange.removeAll { $0 === mapComponent }
       }
       mapComponent.removeFromMap(self)
     } else {
@@ -208,8 +213,8 @@ open class RCTMGLMapView : MapView {
     }
   }
   
-  @objc func setReactCompassViewPosition(_ position: Int) {
-    mapView.ornaments.options.compass.position = toOrnamentPositon(position)
+  @objc func setReactCompassViewPosition(_ position: NSInteger) {
+    mapView.ornaments.options.compass.position = toOrnamentPositon(Int(truncating: NSNumber(value: position)))
   }
   
   @objc func setReactCompassViewMargins(_ margins: CGPoint) {
@@ -246,7 +251,21 @@ open class RCTMGLMapView : MapView {
     self.mapView.gestures.options.pitchEnabled = value
   }
   
+  func refreshComponentsBeforeStyleChange() {
+    componentsToRefreshOnStyleChange.forEach {
+      $0.removeFromMap(self)
+    }
+  }
+  
+  func refreshComponentsAfterStyleChange(style: Style) {
+    componentsToRefreshOnStyleChange.forEach {
+      $0.addToMap(self, style: style)
+    }
+  }
+  
   @objc func setReactStyleURL(_ value: String?) {
+    var initialLoad = !self.styleLoaded
+    if !initialLoad { refreshComponentsBeforeStyleChange() }
     self.styleLoaded = false
     if let value = value {
       if let _ = URL(string: value) {
@@ -254,6 +273,11 @@ open class RCTMGLMapView : MapView {
       } else {
         if RCTJSONParse(value, nil) != nil {
           mapView.mapboxMap.loadStyleJSON(value)
+        }
+      }
+      if !initialLoad {
+        self.onNext(event: .styleLoaded) {_,_ in
+          self.refreshComponentsAfterStyleChange(style: self.mapboxMap.style)
         }
       }
     }
@@ -278,6 +302,14 @@ open class RCTMGLMapView : MapView {
     }
     
     return nil
+  }
+
+  func _removeMapboxLongPressGestureRecognizer() {
+    mapView.gestureRecognizers?.forEach { recognizer in
+      if (String(describing: type(of:recognizer)) == "MapboxLongPressGestureRecognizer") {
+        mapView.removeGestureRecognizer(recognizer)
+      }
+    }
   }
 }
 
@@ -848,7 +880,7 @@ class PointAnnotationManager : AnnotationInteractionDelegate {
   weak var mapView : MapView? = nil
   
   init(annotations: AnnotationOrchestrator, mapView: MapView) {
-    manager = annotations.makePointAnnotationManager()
+    manager = annotations.makePointAnnotationManager(id: "rctmgl-mapview-point-annotations")
     manager.delegate = self
     self.mapView = mapView
   }
@@ -941,10 +973,15 @@ class PointAnnotationManager : AnnotationInteractionDelegate {
                 }
               }
       case .changed:
-          guard let annotation = self.draggedAnnotation else {
+          guard var annotation = self.draggedAnnotation else {
               return
           }
           self.onDragHandler(self.manager, didDetectDraggedAnnotations: [annotation], dragState: .changed, targetPoint: targetPoint)
+
+          let idx = self.manager.annotations.firstIndex { an in return an.id == annotation.id }
+          if let idx = idx {
+            self.manager.annotations[idx].point = Point(targetPoint)
+          }
       case .cancelled, .ended:
         guard let annotation = self.draggedAnnotation else {
             return
