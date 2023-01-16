@@ -406,14 +406,18 @@ class RCTMGLOfflineModule: RCTEventEmitter {
           self.offlinePackProgressDidChange(progress: progress, metadata: metadata, state: .active)
         }) { result in
           switch result {
-          case .success(_):
-            if let progess = lastProgress {
-              self.offlinePackProgressDidChange(progress: progess, metadata: metadata, state: .complete)
+          case .success(let value):
+            DispatchQueue.main.async {
+              if let progess = lastProgress {
+                self.offlinePackProgressDidChange(progress: progess, metadata: metadata, state: .complete)
+              }
+              self.tileRegionPacks[id]!.state = .complete
             }
-            self.tileRegionPacks[id]!.state = .complete
           case .failure(let error):
-            self.tileRegionPacks[id]!.state = .inactive
-            self.offlinePackDidReceiveError(name: id, error: error)
+            DispatchQueue.main.async {
+              self.tileRegionPacks[id]!.state = .inactive
+              self.offlinePackDidReceiveError(name: id, error: error)
+            }
           }
         }
 
