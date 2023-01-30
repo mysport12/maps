@@ -55,6 +55,15 @@ class RCTMGLOfflineModule: RCTEventEmitter {
   
   lazy var tileRegionPacks : [String: TileRegionPack] = [:]
   
+  var progressEventThrottle : (
+    waitBetweenEvents: Double?,
+    lastSentTimestamp: Double?,
+    lastSentState: State?
+  ) = (
+    300,
+    nil,
+    nil
+  )
   
   @objc override
   func startObserving() {
@@ -349,7 +358,7 @@ class RCTMGLOfflineModule: RCTEventEmitter {
   }
   
   func offlinePackProgressDidChange(progress: TileRegionLoadProgress, metadata: [String:Any], state: State) {
-    if self.shouldSendProgressEvent() {
+    if self.shouldSendProgressEvent(progress: progress, state: state) {
       let event = makeProgressEvent(metadata["name"] as! String, progress: progress, state: state)
       self._sendEvent(Callbacks.progress.rawValue, event: event)
     }
@@ -678,3 +687,38 @@ final class RegionObserver : OfflineRegionObserver {
     offlineModule?.offlinePackDidExceedTileLimitLegacy(name: packName, limit: limit)
   }
 }
+
+// MARK: progress throttle
+
+extension RCTMGLOfflineModule {
+  @objc
+  func setProgressEventThrottle(_ throttleValue: NSNumber) {
+    progressEventThrottle.waitBetweenEvents = throttleValue.doubleValue
+  }
+  
+
+  func shouldSendProgressEvent(progress: TileRegionLoadProgress, state: State) -> Bool
+  {
+    let currentTimestamp: Double = CACurrentMediaTime() * 1000.0
+    
+    guard let lastSentState = progressEventThrottle.lastSentState, lastSentState == state else {
+      progressEventThrottle.lastSentState = state
+      progressEventThrottle.lastSentTimestamp = currentTimestamp
+      return true
+    }
+    
+    guard let waitBetweenEvents = progressEventThrottle.waitBetweenEvents,
+          let lastSentTimestamp = progressEventThrottle.lastSentTimestamp else {
+      progressEventThrottle.lastSentTimestamp = currentTimestamp
+      return true;
+    }
+    
+    if (currentTimestamp - lastSentTimestamp > waitBetweenEvents) {
+      progressEventThrottle.lastSentTimestamp = currentTimestamp
+      return true;
+    }
+     
+    return false;
+  }
+}
+

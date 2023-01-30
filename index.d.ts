@@ -611,6 +611,7 @@ export interface UserLocationProps {
   animated?: boolean;
   children?: ReactNode;
   minDisplacement?: number;
+  requestsAlwaysUse?: boolean;
   onPress?: () => void;
   onUpdate?: (location: MapboxGL.Location) => void;
   renderMode?: 'normal' | 'native';

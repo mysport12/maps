@@ -6081,6 +6081,13 @@
         "description": "Show or hide small arrow which indicates direction the device is pointing relative to north."
       },
       {
+        "name": "requestsAlwaysUse",
+        "required": false,
+        "type": "bool",
+        "default": "false",
+        "description": "Request the always location permission, and listen to the location even when the app is in background\n\n@platform ios"
+      },
+      {
         "name": "minDisplacement",
         "required": false,
         "type": "number",
@@ -6641,7 +6648,7 @@
       },
       {
         "name": "setProgressEventThrottle",
-        "description": "Sets the period at which download status events will be sent over the React Native bridge.\nThe default is 500ms.",
+        "description": "Sets the period at which download status events will be sent over the React Native bridge.\nThe default is 300ms.",
         "params": [
           {
             "name": "throttleValue",
