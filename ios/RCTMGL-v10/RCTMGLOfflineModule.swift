@@ -17,7 +17,6 @@ class RCTMGLOfflineModule: RCTEventEmitter {
   var hasListeners = false
   var legacyPackTimestamp : Double = 0.0
   var legacyPackState : Int = -1
-  var progressEventThrottle : Double = 500
   
   enum Callbacks : String {
     case error = "MapboOfflineRegionError"
@@ -350,7 +349,7 @@ class RCTMGLOfflineModule: RCTEventEmitter {
             return true;
         }
         
-    if ((CACurrentMediaTime() * 1000) - self.legacyPackTimestamp > self.progressEventThrottle) {
+    if ((CACurrentMediaTime() * 1000) - self.legacyPackTimestamp > self.progressEventThrottle.waitBetweenEvents ?? 500) {
             return true;
         }
         
@@ -567,11 +566,6 @@ class RCTMGLOfflineModule: RCTEventEmitter {
   @objc
   func setTileCountLimitLegacy(_ limit: NSNumber) {
     self.offlineManagerLegacy.setOfflineMapboxTileCountLimitForLimit(limit.uint64Value)
-  }
-  
-  @objc
-  func setProgressEventThrottle(_ throttleValue: NSNumber) {
-    self.progressEventThrottle = Double(truncating: throttleValue)
   }
   
   @objc
