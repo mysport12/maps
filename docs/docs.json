@@ -308,7 +308,7 @@
       {
         "name": "filter",
         "required": false,
-        "type": "array",
+        "type": "FilterExpression",
         "default": "none",
         "description": "Filter only the features in the source layer that satisfy a condition that you define"
       },
@@ -329,15 +329,12 @@
       {
         "name": "style",
         "required": false,
-        "type": "union",
+        "type": "BackgroundLayerStyleProps",
         "default": "none",
         "description": "Customizable style attributes"
       }
     ],
-    "composes": [
-      "../utils"
-    ],
-    "fileNameWithExt": "BackgroundLayer.js",
+    "fileNameWithExt": "BackgroundLayer.tsx",
     "name": "BackgroundLayer",
     "styles": [
       {
@@ -945,7 +942,7 @@
       {
         "name": "filter",
         "required": false,
-        "type": "array",
+        "type": "FilterExpression",
         "default": "none",
         "description": "Filter only the features in the source layer that satisfy a condition that you define"
       },
@@ -966,15 +963,12 @@
       {
         "name": "style",
         "required": false,
-        "type": "union",
+        "type": "CircleLayerStyleProps",
         "default": "none",
         "description": "Customizable style attributes"
       }
     ],
-    "composes": [
-      "../utils"
-    ],
-    "fileNameWithExt": "CircleLayer.js",
+    "fileNameWithExt": "CircleLayer.tsx",
     "name": "CircleLayer",
     "styles": [
       {
@@ -1303,20 +1297,20 @@
       {
         "name": "filter",
         "required": false,
-        "type": "array",
+        "type": "FilterExpression",
         "default": "none",
         "description": "Filter only the features in the source layer that satisfy a condition that you define"
       },
       {
         "name": "minZoomLevel",
-        "required": false,
+        "required": true,
         "type": "number",
         "default": "none",
         "description": "The minimum zoom level at which the layer gets parsed and appears."
       },
       {
         "name": "maxZoomLevel",
-        "required": false,
+        "required": true,
         "type": "number",
         "default": "none",
         "description": "The maximum zoom level at which the layer gets parsed and appears."
@@ -1324,15 +1318,12 @@
       {
         "name": "style",
         "required": false,
-        "type": "union",
+        "type": "FillExtrusionLayerStyleProps",
         "default": "none",
         "description": "Customizable style attributes"
       }
     ],
-    "composes": [
-      "../utils"
-    ],
-    "fileNameWithExt": "FillExtrusionLayer.js",
+    "fileNameWithExt": "FillExtrusionLayer.tsx",
     "name": "FillExtrusionLayer",
     "styles": [
       {
@@ -1572,7 +1563,7 @@
       {
         "name": "filter",
         "required": false,
-        "type": "array",
+        "type": "FilterExpression",
         "default": "none",
         "description": "Filter only the features in the source layer that satisfy a condition that you define"
       },
@@ -1593,15 +1584,12 @@
       {
         "name": "style",
         "required": false,
-        "type": "union",
+        "type": "FillLayerStyleProps",
         "default": "none",
         "description": "Customizable style attributes"
       }
     ],
-    "composes": [
-      "../utils"
-    ],
-    "fileNameWithExt": "FillLayer.js",
+    "fileNameWithExt": "FillLayer.tsx",
     "name": "FillLayer",
     "styles": [
       {
@@ -1850,7 +1838,7 @@
       {
         "name": "filter",
         "required": false,
-        "type": "array",
+        "type": "FilterExpression",
         "default": "none",
         "description": "Filter only the features in the source layer that satisfy a condition that you define"
       },
@@ -1871,15 +1859,12 @@
       {
         "name": "style",
         "required": false,
-        "type": "union",
+        "type": "HeatmapLayerStyleProps",
         "default": "none",
         "description": "Customizable style attributes"
       }
     ],
-    "composes": [
-      "../utils"
-    ],
-    "fileNameWithExt": "HeatmapLayer.js",
+    "fileNameWithExt": "HeatmapLayer.tsx",
     "name": "HeatmapLayer",
     "styles": [
       {
@@ -3390,19 +3375,19 @@
       {
         "name": "androidRenderMode",
         "required": false,
-        "type": "enum",
+        "type": "'normal' \\| 'compass' \\| 'gps'",
         "default": "none",
         "description": "Android render mode.\n\n - normal: just a circle\n - compass: triangle with heading\n - gps: large arrow\n\n@platform android"
       },
       {
         "name": "iosShowsUserHeadingIndicator",
         "required": false,
-        "type": "bool",
+        "type": "boolean",
         "default": "none",
         "description": "iOS only. A Boolean value indicating whether the user location annotation may display a permanent heading indicator.\n\n@platform ios"
       }
     ],
-    "fileNameWithExt": "NativeUserLocation.js",
+    "fileNameWithExt": "NativeUserLocation.tsx",
     "name": "NativeUserLocation"
   },
   "PointAnnotation": {
@@ -3664,7 +3649,7 @@
       {
         "name": "filter",
         "required": false,
-        "type": "array",
+        "type": "FilterExpression",
         "default": "none",
         "description": "Filter only the features in the source layer that satisfy a condition that you define"
       },
@@ -3684,16 +3669,13 @@
       },
       {
         "name": "style",
-        "required": false,
-        "type": "union",
+        "required": true,
+        "type": "RasterLayerStyleProps",
         "default": "none",
         "description": "Customizable style attributes"
       }
     ],
-    "composes": [
-      "../utils"
-    ],
-    "fileNameWithExt": "RasterLayer.js",
+    "fileNameWithExt": "RasterLayer.tsx",
     "name": "RasterLayer",
     "styles": [
       {
@@ -4264,22 +4246,19 @@
       {
         "name": "filter",
         "required": false,
-        "type": "array",
+        "type": "FilterExpression",
         "default": "none",
         "description": "Filter only the features in the source layer that satisfy a condition that you define"
       },
       {
         "name": "style",
         "required": false,
-        "type": "union",
+        "type": "SkyLayerStyleProps",
         "default": "none",
         "description": "Customizable style attributes"
       }
     ],
-    "composes": [
-      "../utils"
-    ],
-    "fileNameWithExt": "SkyLayer.js",
+    "fileNameWithExt": "SkyLayer.tsx",
     "name": "SkyLayer",
     "styles": [
       {
