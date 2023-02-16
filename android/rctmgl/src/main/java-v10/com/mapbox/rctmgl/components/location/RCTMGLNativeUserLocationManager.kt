@@ -17,6 +17,21 @@ class RCTMGLNativeUserLocationManager : ViewGroupManager<RCTMGLNativeUserLocatio
         Logger.w("RCTMGLNativeUserLocationManager", "setAndroidRenderMode is deprecated in v10");
     }
 
+    @ReactProp(name = "nativeBearingImage")
+    fun setNativeBearingImage(userLocation: RCTMGLNativeUserLocation?, image: ReadableMap) {
+        userLocation.setNativeBearingImage(image);
+    }
+
+    @ReactProp(name = "nativeShadowImage")
+    fun setNativeShadowImage(userLocation: RCTMGLNativeUserLocation?, image: ReadableMap) {
+        userLocation.setNativeShadowImage(image);
+    }
+
+    @ReactProp(name = "nativeTopImage")
+    fun setNativeTopImage(userLocation: RCTMGLNativeUserLocation?, image: ReadableMap) {
+        userLocation.setNativeTopImage(image);
+    }
+
     @Nonnull
     override fun createViewInstance(@Nonnull reactContext: ThemedReactContext): RCTMGLNativeUserLocation {
         return RCTMGLNativeUserLocation(reactContext)
