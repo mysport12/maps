@@ -17,14 +17,12 @@ class RCTMGLNativeUserLocation(context: Context?) : AbstractMapFeature(context),
     private var mNativeBearingImage : String? = null
     private var mNativeShadowImage : String? = null
     private var mNativeTopImage : String? = null
-    private var mRenderMode : RenderMode = RenderMode.COMPASS
 
     override fun addToMap(mapView: RCTMGLMapView) {
         super.addToMap(mapView)
         mEnabled = true
         mapView.getMapboxMap()
         mapView.getMapAsync(this)
-        setRenderMode(mRenderMode)
         mMapView?.locationComponentManager?.setNativeBearingImage(mNativeBearingImage)
         mMapView?.locationComponentManager?.setNativeShadowImage(mNativeShadowImage)
         mMapView?.locationComponentManager?.setNativeTopImage(mNativeTopImage)
@@ -77,10 +75,5 @@ class RCTMGLNativeUserLocation(context: Context?) : AbstractMapFeature(context),
             mMapView?.locationComponentManager?.setNativeTopImage(uri)
         }
         mNativeTopImage = uri
-    }
-
-    fun setRenderMode(renderMode: RenderMode) {
-        mRenderMode = renderMode
-        mMapView?.locationComponentManager?.setRenderMode(renderMode)
     }
 }
