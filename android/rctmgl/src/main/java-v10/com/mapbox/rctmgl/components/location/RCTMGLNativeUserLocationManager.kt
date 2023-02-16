@@ -1,5 +1,6 @@
 package com.mapbox.rctmgl.components.location
 
+import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.ViewGroupManager
 import com.facebook.react.uimanager.annotations.ReactProp
@@ -19,17 +20,17 @@ class RCTMGLNativeUserLocationManager : ViewGroupManager<RCTMGLNativeUserLocatio
 
     @ReactProp(name = "nativeBearingImage")
     fun setNativeBearingImage(userLocation: RCTMGLNativeUserLocation?, image: ReadableMap) {
-        userLocation.setNativeBearingImage(image);
+        userLocation?.setNativeBearingImage(image);
     }
 
     @ReactProp(name = "nativeShadowImage")
     fun setNativeShadowImage(userLocation: RCTMGLNativeUserLocation?, image: ReadableMap) {
-        userLocation.setNativeShadowImage(image);
+        userLocation?.setNativeShadowImage(image);
     }
 
     @ReactProp(name = "nativeTopImage")
     fun setNativeTopImage(userLocation: RCTMGLNativeUserLocation?, image: ReadableMap) {
-        userLocation.setNativeTopImage(image);
+        userLocation?.setNativeTopImage(image);
     }
 
     @Nonnull
