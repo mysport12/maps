@@ -3,16 +3,25 @@ package com.mapbox.rctmgl.components.location
 import android.annotation.SuppressLint
 import android.content.Context
 import com.facebook.react.bridge.ReadableMap
+import androidx.appcompat.content.res.AppCompatResources
 import com.mapbox.rctmgl.components.mapview.OnMapReadyCallback
 import com.mapbox.maps.MapboxMap
 import com.mapbox.android.core.permissions.PermissionsManager
 import com.mapbox.maps.Style
+import com.mapbox.maps.plugin.PuckBearingSource
+import com.mapbox.rctmgl.R
 import com.mapbox.rctmgl.components.AbstractMapFeature
 import com.mapbox.rctmgl.components.mapview.RCTMGLMapView
 
-class RCTMGLNativeUserLocation(context: Context?) : AbstractMapFeature(context), OnMapReadyCallback, Style.OnStyleLoaded {
+enum class RenderMode {
+    GPS, COMPASS, NORMAL
+}
+
+class RCTMGLNativeUserLocation(context: Context) : AbstractMapFeature(context), OnMapReadyCallback, Style.OnStyleLoaded {
     private var mEnabled = true
     private var mMap: MapboxMap? = null
+    private var mRenderMode : RenderMode = RenderMode.NORMAL;
+    private var mContext : Context = context
 
     private var mNativeBearingImage : String? = null
     private var mNativeShadowImage : String? = null
@@ -27,6 +36,7 @@ class RCTMGLNativeUserLocation(context: Context?) : AbstractMapFeature(context),
         mMapView?.locationComponentManager?.setNativeShadowImage(mNativeShadowImage)
         mMapView?.locationComponentManager?.setNativeTopImage(mNativeTopImage)
         mMapView?.locationComponentManager?.showNativeUserLocation(true)
+        applyChanges()
     }
 
     override fun removeFromMap(mapView: RCTMGLMapView) {
@@ -40,6 +50,12 @@ class RCTMGLNativeUserLocation(context: Context?) : AbstractMapFeature(context),
     override fun onMapReady(mapboxMap: MapboxMap) {
         mMap = mapboxMap
         mapboxMap.getStyle(this)
+        applyChanges()
+    }
+
+    fun setAndroidRenderMode(renderMode: RenderMode) {
+        mRenderMode = renderMode;
+        applyChanges();
     }
 
     @SuppressLint("MissingPermission")
@@ -49,7 +65,7 @@ class RCTMGLNativeUserLocation(context: Context?) : AbstractMapFeature(context),
             return
         }
 
-        mMapView?.locationComponentManager?.update(style)
+        mMapView?.locationComponentManager?.update()
         mMapView?.locationComponentManager?.showNativeUserLocation(mEnabled)
     }
 
@@ -75,5 +91,21 @@ class RCTMGLNativeUserLocation(context: Context?) : AbstractMapFeature(context),
             mMapView?.locationComponentManager?.setNativeTopImage(uri)
         }
         mNativeTopImage = uri
+        
+    fun applyChanges() {
+        mMapView?.locationComponentManager?.let {
+            // emulate https://docs.mapbox.com/android/legacy/maps/guides/location-component/
+            when (mRenderMode) {
+                RenderMode.NORMAL ->
+                    it.update { it.copy(bearingImage =  null, puckBearingSource = null)}
+                RenderMode.GPS -> it.update {
+                    it.copy(bearingImage =  AppCompatResources.getDrawable(
+                        mContext, R.drawable.mapbox_user_bearing_icon
+                    ), puckBearingSource = PuckBearingSource.COURSE) }
+                RenderMode.COMPASS -> it.update{ it.copy(bearingImage=  AppCompatResources.getDrawable(
+                    mContext, R.drawable.mapbox_user_puck_icon
+                ), puckBearingSource = PuckBearingSource.HEADING) }
+            }
+        }
     }
 }
