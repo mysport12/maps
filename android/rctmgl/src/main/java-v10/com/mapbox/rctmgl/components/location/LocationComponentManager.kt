@@ -13,6 +13,7 @@ import com.mapbox.maps.plugin.PuckBearingSource
 import com.mapbox.maps.plugin.lifecycle.lifecycle
 import com.mapbox.rctmgl.R
 import com.mapbox.rctmgl.location.LocationManager
+import com.mapbox.rctmgl.utils.ResourceUtils
 
 /**
  * The LocationComponent on android implements display of user's current location.
