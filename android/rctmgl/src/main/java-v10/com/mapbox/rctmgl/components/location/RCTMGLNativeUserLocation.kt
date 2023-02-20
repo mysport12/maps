@@ -95,6 +95,7 @@ class RCTMGLNativeUserLocation(context: Context) : AbstractMapFeature(context), 
         }
         mNativeTopImage = uri
         applyChanges()
+    }
 
     fun applyChanges() {
         mMapView?.locationComponentManager?.let {
