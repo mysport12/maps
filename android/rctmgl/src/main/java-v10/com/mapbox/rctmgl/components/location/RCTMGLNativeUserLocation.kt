@@ -113,7 +113,7 @@ class RCTMGLNativeUserLocation(context: Context) : AbstractMapFeature(context), 
                 }
                 RenderMode.COMPASS -> it.update{
                     it.copy(
-                        bearingImage = if (mNativeBearingImage != null) ResourceUtils.getDrawableByName(mContext, mNativeBearingImage) else AppCompatResources.getDrawable(mContext, R.drawable.mapbox_user_puck_icon),
+                        bearingImage = if (mNativeBearingImage != null) ResourceUtils.getDrawableByName(mContext, mNativeBearingImage) else AppCompatResources.getDrawable(mContext, R.drawable.mapbox_user_bearing_icon),
                         shadowImage = if (mNativeShadowImage != null) ResourceUtils.getDrawableByName(mContext, mNativeShadowImage) else AppCompatResources.getDrawable(mContext, R.drawable.mapbox_user_icon_shadow),
                         topImage = if (mNativeTopImage != null) ResourceUtils.getDrawableByName(mContext, mNativeTopImage) else AppCompatResources.getDrawable(mContext, R.drawable.mapbox_user_icon),
                         puckBearingSource = PuckBearingSource.HEADING
