@@ -143,6 +143,26 @@ class LocationComponentManager(mapView: RCTMGLMapView, context: Context) {
         }
     }
 
+    fun setNativeBearingImage(name: String?) {
+        mNeedsFullUpdate = true
+        update {
+            it.copy(bearingImage = if (name != null) ResourceUtils.getDrawableByName(mContext, name) else null)
+        }       
+    }
+
+    fun setNativeShadowImage(name: String?) {
+        mNeedsFullUpdate = true
+        update {
+            it.copy(shadowImage = if (name != null) ResourceUtils.getDrawableByName(mContext, name) else null)
+        }       
+    }
+
+    fun setNativeTopImage(name: String?) {
+        mNeedsFullUpdate = true
+        update {
+            it.copy(topImage = if (name != null) ResourceUtils.getDrawableByName(mContext, name) else null)
+        }       
+    }
 
     fun showNativeUserLocation(showUserLocation: Boolean) {
         update {
