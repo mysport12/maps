@@ -6279,6 +6279,54 @@
     "fileNameWithExt": "VectorSource.js",
     "name": "VectorSource"
   },
+  "coordinates": {
+    "name": "coordinates",
+    "fileNameWithExt": "locationManager.tsx",
+    "description": "Coorinates sent by locationManager",
+    "props": [],
+    "styles": [],
+    "methods": []
+  },
+  "location": {
+    "name": "location",
+    "fileNameWithExt": "locationManager.tsx",
+    "description": "Location sent by locationManager",
+    "props": [],
+    "styles": [],
+    "methods": []
+  },
+  "locationManager": {
+    "name": "locationManager",
+    "fileNameWithExt": "locationManager.tsx",
+    "description": "LocationManager is a singleton, see ",
+    "props": [],
+    "styles": [],
+    "methods": [
+      {
+        "name": "setLocationEventThrottle",
+        "description": "Sets the period at which location events will be sent over the React Native bridge.\nThe default is 0, aka no limit. [V10, iOS only]",
+        "params": [
+          {
+            "name": "throttleValue",
+            "description": "event throttle value in ms.",
+            "type": {
+              "name": "Number"
+            },
+            "optional": false
+          }
+        ],
+        "examples": [
+          "locationManager.setLocationEventThrottle(500);"
+        ],
+        "returns": {
+          "description": "",
+          "type": {
+            "name": "void"
+          }
+        }
+      }
+    ]
+  },
   "offlineManager": {
     "name": "offlineManager",
     "fileNameWithExt": "offlineManager.js",
