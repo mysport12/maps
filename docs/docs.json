@@ -717,18 +717,18 @@
         "description": "The easing or path the camera uses to animate to a new configuration."
       },
       {
-        "name": "followUserMode",
-        "required": false,
-        "type": "UserTrackingMode",
-        "default": "none",
-        "description": "The mode used to track the user location on the map."
-      },
-      {
         "name": "followUserLocation",
         "required": false,
         "type": "boolean",
         "default": "none",
         "description": "Whether the map orientation follows the user location."
+      },
+      {
+        "name": "followUserMode",
+        "required": false,
+        "type": "UserTrackingMode",
+        "default": "none",
+        "description": "The mode used to track the user location on the map."
       },
       {
         "name": "followZoomLevel",
@@ -750,6 +750,13 @@
         "type": "number",
         "default": "none",
         "description": "The heading used when following the user location."
+      },
+      {
+        "name": "followPadding",
+        "required": false,
+        "type": "Partial",
+        "default": "none",
+        "description": "The padding used to position the user location when following."
       },
       {
         "name": "minZoomLevel",
@@ -2003,6 +2010,64 @@
       }
     ]
   },
+  "Image": {
+    "description": "",
+    "displayName": "Image",
+    "methods": [],
+    "props": [
+      {
+        "name": "name",
+        "required": true,
+        "type": "string",
+        "default": "none",
+        "description": "ID of the image"
+      },
+      {
+        "name": "sdf",
+        "required": false,
+        "type": "boolean",
+        "default": "none",
+        "description": "Make image an sdf optional - see [SDF icons](https://docs.mapbox.com/help/troubleshooting/using-recolorable-images-in-mapbox-maps/)"
+      },
+      {
+        "name": "stretchX",
+        "required": false,
+        "type": "Array",
+        "default": "none",
+        "description": "An array of two-element arrays, consisting of two numbers that represent, the from position and the to position of areas that can be stretched horizontally."
+      },
+      {
+        "name": "stretchY",
+        "required": false,
+        "type": "Array",
+        "default": "none",
+        "description": "An array of two-element arrays, consisting of two numbers that represent, the from position and the to position of areas that can be stretched vertically."
+      },
+      {
+        "name": "content",
+        "required": false,
+        "type": "tuple",
+        "default": "none",
+        "description": "An array of four numbers, with the first two specifying the left, top\ncorner, and the last two specifying the right, bottom corner. If present, and if the\nicon uses icon-text-fit, the symbol's text will be fit inside the content box."
+      },
+      {
+        "name": "scale",
+        "required": false,
+        "type": "number",
+        "default": "none",
+        "description": "Scale factor for the image."
+      },
+      {
+        "name": "children",
+        "required": true,
+        "type": "ReactElement",
+        "default": "none",
+        "description": "Single react native view rendering the image"
+      }
+    ],
+    "fileNameWithExt": "Image.tsx",
+    "name": "Image"
+  },
   "ImageSource": {
     "description": "ImageSource is a content source that is used for a georeferenced raster image to be shown on the map.\nThe georeferenced image scales and rotates as the user zooms and rotates the map",
     "displayName": "ImageSource",
@@ -2054,34 +2119,56 @@
       {
         "name": "images",
         "required": false,
-        "type": "object",
+        "type": {
+          "name": "shape",
+          "value": [
+            {
+              "name": {
+                "name": "string"
+              },
+              "required": true,
+              "type": "ImageSourcePropType",
+              "default": "none",
+              "description": "FIX ME NO DESCRIPTION"
+            }
+          ]
+        },
         "default": "none",
         "description": "Specifies the external images in key-value pairs required for the shape source.\nKeys are names - see iconImage expressions, values can be either urls-s objects\nwith format {uri: 'http://...'}` or `require('image.png')` or `import 'image.png'`"
       },
       {
         "name": "nativeAssetImages",
         "required": false,
-        "type": {
-          "name": "array",
-          "value": {
-            "type": "string"
-          }
-        },
+        "type": "Array",
         "default": "none",
-        "description": "If you have an asset under Image.xcassets on iOS and the drawables directory on android\nyou can specify an array of string names with assets as the key `['pin']`."
+        "description": "If you have an asset under Image.xcassets on iOS and the drawables directory on android\nyou can specify an array of string names with assets as the key `['pin']`.\nAdditionally object with keys sdf, and strechX, strechY is supported for [SDF icons](https://docs.mapbox.com/help/troubleshooting/using-recolorable-images-in-mapbox-maps/)"
       },
       {
         "name": "onImageMissing",
         "required": false,
-        "type": "func",
+        "type": {
+          "name": "func",
+          "funcSignature": "(imageKey:string) => void"
+        },
         "default": "none",
-        "description": "Gets called when a Layer is trying to render an image whose key is not present in\nany of the `Images` component of the Map."
+        "description": "Gets called when a Layer is trying to render an image whose key is not present in\nany of the `Images` component of the Map.\n*signature:*`(imageKey:string) => void`"
+      },
+      {
+        "name": "id",
+        "required": false,
+        "type": "string",
+        "default": "none",
+        "description": "FIX ME NO DESCRIPTION"
+      },
+      {
+        "name": "children",
+        "required": false,
+        "type": "ReactElement<T> \\| Array<TypedReactNode<T>> \\| never",
+        "default": "none",
+        "description": "FIX ME NO DESCRIPTION"
       }
     ],
-    "composes": [
-      "../utils"
-    ],
-    "fileNameWithExt": "Images.js",
+    "fileNameWithExt": "Images.tsx",
     "name": "Images"
   },
   "Light": {
@@ -5608,7 +5695,7 @@
         "type": "color",
         "values": [],
         "default": "#000000",
-        "description": "The color of the icon. This can only be used with [SDF icons](/help/troubleshooting/usingRecolorableImagesInMapboxMaps/).",
+        "description": "The color of the icon. This can only be used with [SDF icons](https://docs.mapbox.com/help/troubleshooting/using-recolorable-images-in-mapbox-maps/).",
         "requires": [
           "iconImage"
         ],
@@ -5629,7 +5716,7 @@
         "type": "color",
         "values": [],
         "default": "rgba(0, 0, 0, 0)",
-        "description": "The color of the icon's halo. Icon halos can only be used with [SDF icons](/help/troubleshooting/usingRecolorableImagesInMapboxMaps/).",
+        "description": "The color of the icon's halo. Icon halos can only be used with [SDF icons](https://docs.mapbox.com/help/troubleshooting/using-recolorable-images-in-mapbox-maps/).",
         "requires": [
           "iconImage"
         ],
@@ -6281,7 +6368,7 @@
   },
   "coordinates": {
     "name": "coordinates",
-    "fileNameWithExt": "locationManager.tsx",
+    "fileNameWithExt": "locationManager.ts",
     "description": "Coorinates sent by locationManager",
     "props": [],
     "styles": [],
@@ -6289,7 +6376,7 @@
   },
   "location": {
     "name": "location",
-    "fileNameWithExt": "locationManager.tsx",
+    "fileNameWithExt": "locationManager.ts",
     "description": "Location sent by locationManager",
     "props": [],
     "styles": [],
@@ -6297,7 +6384,7 @@
   },
   "locationManager": {
     "name": "locationManager",
-    "fileNameWithExt": "locationManager.tsx",
+    "fileNameWithExt": "locationManager.ts",
     "description": "LocationManager is a singleton, see ",
     "props": [],
     "styles": [],

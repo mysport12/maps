@@ -17,7 +17,7 @@ export const LocationModuleEventEmitter = new NativeEventEmitter(
 /**
  * Location sent by locationManager
  */
-interface Location {
+export interface Location {
   coords: Coordinates;
   timestamp?: number;
 }

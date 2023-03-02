@@ -1,6 +1,6 @@
 declare module 'react-native-mapbox-gl__maps';
 
-import { Component, ReactNode } from 'react';
+import { Component, FC, ReactNode } from 'react';
 import {
   ViewProps,
   ViewStyle,
@@ -47,6 +47,8 @@ import {
   type UserTrackingMode as _UserTrackingMode,
   type UserTrackingModeChangeCallback as _UserTrackingModeChangeCallback,
 } from './javascript/components/Camera';
+import _Images from './javascript/components/Images';
+import _Image from './javascript/components/Image';
 import { MarkerView as _MarkerView } from './javascript/components/MarkerView';
 import { PointAnnotation as _PointAnnotation } from './javascript/components/PointAnnotation';
 import { Atmosphere as _Atmosphere } from './javascript/components/Atmosphere';
@@ -77,7 +79,7 @@ import type { requestAndroidLocationPermissions as _requestAndroidLocationPermis
 import type {
   Location as _Location,
   LocationManager,
-} from './javascript/locationManager';
+} from './javascript/modules/location/locationManager';
 
 // prettier-ignore
 type ExpressionName =
@@ -177,6 +179,9 @@ declare namespace MapboxGL {
   type UserTrackingMode = _UserTrackingMode;
   type UserTrackingModeChangeCallback = _UserTrackingModeChangeCallback;
   type Location = _Location;
+
+  /** @deprecated This will be removed in a future release. Use `Location['coords']` instead. */
+  type Coordinates = Location['coords'];
 
   const offlineManager: OfflineManager;
   const snapshotManager: SnapshotManager;
@@ -332,7 +337,7 @@ declare namespace MapboxGL {
   class Light extends Component<LightProps> {}
 
   class Callout extends Component<CalloutProps> {}
-  type Style = React.FC<StyleProps>;
+  type Style = FC<StyleProps>;
 
   /**
    * Sources
@@ -351,11 +356,13 @@ declare namespace MapboxGL {
   class LineLayer extends Component<_LineLayerProps> {}
   class RasterLayer extends Component<_RasterLayerProps> {}
   class HeatmapLayer extends Component<_HeatmapLayerProps> {}
-  class Images extends Component<ImagesProps> {}
   class ImageSource extends Component<ImageSourceProps> {}
   class SkyLayer extends Component<_SkyLayerProps> {}
 
-  type Location = _Location;
+  type Images = _Images;
+  const Images = _Images;
+  type Image = _Image;
+  const Image = _Image;
 
   /**
    * Offline
@@ -489,7 +496,6 @@ export interface MapState {
 export interface MapViewProps extends ViewProps {
   animated?: boolean;
   userTrackingMode?: MapboxGL.UserTrackingModes;
-  userLocationVerticalAlignment?: number;
   contentInset?: Array<number>;
   projection?: 'mercator' | 'globe';
   style?: StyleProp<ViewStyle>;
@@ -689,12 +695,6 @@ export interface HeatmapLayerProps extends LayerBaseProps {
   style?: StyleProp<HeatmapLayerStyle>;
 }
 
-export interface ImagesProps extends ViewProps {
-  images?: { assets?: string[] } & { [key: string]: ImageSourcePropType };
-  nativeAssetImages?: string[];
-  onImageMissing?: (imageKey: string) => void;
-}
-
 export interface ImageSourceProps extends ViewProps {
   id: string;
   url?: number | string;
@@ -776,6 +776,10 @@ export import MarkerView = MapboxGL.MarkerView;
 export import PointAnnotation = MapboxGL.PointAnnotation;
 export import Callout = MapboxGL.Callout;
 
+export import Location = MapboxGL.Location;
+/** @deprecated This will be removed in a future release. Use `Location['coords']` instead. */
+export import Coordinates = MapboxGL.Coordinates;
+
 export import MapboxGLEvent = MapboxGL.MapboxGLEvent;
 export import UserTrackingMode = MapboxGL.UserTrackingMode;
 export import UserTrackingModeChangeCallback = MapboxGL.UserTrackingModeChangeCallback;
@@ -783,6 +787,8 @@ export import AnimatedPoint = MapboxGL.AnimatedPoint;
 /** @deprecated This will be removed in a future release. Use `AnimatedPoint` instead. */
 export import AnimatedMapPoint = MapboxGL.AnimatedPoint;
 export import AnimatedShape = MapboxGL.AnimatedShape;
+export import Images = MapboxGL.Images;
+export import Image = MapboxGL.Image;
 
 export const { offlineManager } = MapboxGL;
 
