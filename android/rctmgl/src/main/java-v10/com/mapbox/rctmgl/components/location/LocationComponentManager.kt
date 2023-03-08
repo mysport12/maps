@@ -27,7 +27,7 @@ class LocationComponentManager(mapView: RCTMGLMapView, context: Context) {
     private var mPuckBearingSource: PuckBearingSource? = null
     var mMapView = mapView
     var mContext = context
-    private var mState = State(showUserLocation=false, followUserLocation=false, hidden=false, tintColor= null, bearingImage = null, shadowImage = null, topImage = null, puckBearingSource =null)
+    private var mState = State(showUserLocation=false, followUserLocation=false, tintColor= null, bearingImage = null, shadowImage = null, topImage = null, puckBearingSource =null)
 
     private var mLocationManager: LocationManager = LocationManager.getInstance(context)
 
@@ -38,7 +38,6 @@ class LocationComponentManager(mapView: RCTMGLMapView, context: Context) {
     data class State(
         val showUserLocation: Boolean,
         val followUserLocation: Boolean,
-        val hidden: Boolean, // in case it isn't native
         val tintColor: Int?, // tint of location puck
         var bearingImage: Drawable?, // bearing image (background)
         var shadowImage: Drawable?, // shadow image (shadow)
@@ -47,6 +46,9 @@ class LocationComponentManager(mapView: RCTMGLMapView, context: Context) {
     ) {
         val enabled: Boolean
             get() = showUserLocation || followUserLocation
+
+        val hidden: Boolean
+            get() = followUserLocation && !showUserLocation
     }
 
     fun update(newStateCallback: (currentState: State) -> State) {
