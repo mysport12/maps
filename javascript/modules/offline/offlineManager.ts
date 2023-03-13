@@ -6,8 +6,12 @@ import {
 
 import { isUndefined, isFunction } from '../../utils';
 
+export {
+  default as OfflineCreatePackOptions,
+  type OfflineCreatePackOptionsArgs,
+} from './OfflineCreatePackOptions';
 import OfflineCreatePackOptions, {
-  OfflineCreatePackOptionsArgs,
+  type OfflineCreatePackOptionsArgs,
 } from './OfflineCreatePackOptions';
 import OfflinePack from './OfflinePack';
 
