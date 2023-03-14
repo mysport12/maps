@@ -17,6 +17,7 @@ import com.mapbox.maps.extension.style.expressions.generated.Expression
 import com.mapbox.maps.extension.style.layers.*
 import com.mapbox.maps.extension.style.layers.properties.generated.Visibility
 import com.mapbox.rctmgl.components.styles.layers.RCTLayer
+import com.mapbox.rctmgl.components.styles.sources.RCTSource
 import com.mapbox.rctmgl.modules.RCTMGLLogging
 import com.mapbox.rctmgl.utils.ExpressionParser
 import java.lang.ClassCastException
@@ -43,8 +44,17 @@ abstract class RCTLayer<T : Layer?>(protected var mContext: Context) : AbstractS
     protected var mLayer: T? = null
     protected var mHadFilter = false
 
+    protected var mExisting : Boolean? = null
+
     fun setSourceID(sourceID: String?) {
         mSourceID = sourceID
+    }
+
+    fun checkID(): String? {
+        if (iD == null) {
+            Logger.w(LOG_TAG, "iD is null in layer")
+        }
+        return iD;
     }
 
     fun setAboveLayerID(aboveLayerID: String?) {
@@ -77,13 +87,13 @@ abstract class RCTLayer<T : Layer?>(protected var mContext: Context) : AbstractS
         if (mLayer != null) {
             try {
                 removeFromMap(mMapView!!)
-                addAtIndex(mLayerIndex!!)
+                addAtIndex(layerIndex)
             } catch (e: Exception) {
                 FLog.e(
                     LOG_TAG,
                     "Set layerIndex failed probably because layer was removed."
                 )
-            }
+            }            
         }
     }
 
@@ -126,6 +136,10 @@ abstract class RCTLayer<T : Layer?>(protected var mContext: Context) : AbstractS
                 updateFilter(/* literal(true)*/all {} )
             }
         }
+    }
+
+    fun setExisting(existing: Boolean) {
+        mExisting = existing
     }
 
     fun add() {
@@ -182,7 +196,7 @@ abstract class RCTLayer<T : Layer?>(protected var mContext: Context) : AbstractS
         if (!hasInitialized()) {
             return
         }
-        if (style == null) return
+        val style = this.style ?: return
         val layerSize = style!!.styleLayers.size
         if (index >= layerSize) {
             FLog.e(
@@ -191,13 +205,16 @@ abstract class RCTLayer<T : Layer?>(protected var mContext: Context) : AbstractS
             )
             index = layerSize - 1
         }
-        style!!.addLayerAt(mLayer!!, index)
-        mMapView!!.layerAdded(mLayer!!)
+        val layer = mLayer ?: return
+        val mapView = mMapView ?: return
+        style.addLayerAt(layer, index)
+        mapView.layerAdded(layer)
     }
 
     protected fun insertLayer() {
-        if (style == null) return
-        if (style!!.getLayer(iD!!) != null) {
+        val style = this.style ?: return
+        val id = checkID() ?: return
+        if (style.styleLayerExists(id)) {
             return  // prevent adding a layer twice
         }
         if (mAboveLayerID != null) {
@@ -225,8 +242,8 @@ abstract class RCTLayer<T : Layer?>(protected var mContext: Context) : AbstractS
         // override if you want to update the filter
     }
 
-    private fun getLayerAs(style: Style?, id: String?): T? {
-        val result = style!!.getLayer(iD!!)
+    private fun getLayerAs(style: Style, id: String?): T? {
+        val result = style.getLayer(iD!!)
         return try {
             result as T?
         } catch (exception: ClassCastException) {
@@ -237,14 +254,24 @@ abstract class RCTLayer<T : Layer?>(protected var mContext: Context) : AbstractS
     override fun addToMap(mapView: RCTMGLMapView) {
         super.addToMap(mapView)
         mMap = mapView.getMapboxMap()
-        if (style == null) return
-        val existingLayer = getLayerAs(style, iD)
+        val style = style ?: return
+        val id = checkID() ?: return
+
+        val exists = style.styleLayerExists(id)
+        var existingLayer: T? = null;
+        if (exists) {
+            if (mExisting == null) {
+                Logger.e(LOG_TAG, "Layer $id seems to refer to an existing layer but existing flag is not specified, this is deprecated")
+            }
+            existingLayer = getLayerAs(style, id)
+        }
         if (existingLayer != null) {
             mLayer = existingLayer
         } else {
             mLayer = makeLayer()
             insertLayer()
         }
+
         addStyles()
         if (mFilter != null) {
             mHadFilter = true
