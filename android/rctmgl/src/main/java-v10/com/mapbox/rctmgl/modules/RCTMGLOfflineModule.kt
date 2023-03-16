@@ -258,8 +258,7 @@ class RCTMGLOfflineModule(private val mReactContext: ReactApplicationContext) :
                             }
                             countDownLatch.countDown()
                         }
-                        countDownLatch.countDown()
-                    }
+                    })
             }
         } catch (error: Error) {
             Logger.e("OS", "a")
