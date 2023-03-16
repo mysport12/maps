@@ -5,6 +5,7 @@ import android.util.Log
 import com.facebook.react.bridge.*
 import com.facebook.react.module.annotations.ReactModule
 import com.facebook.react.modules.core.RCTNativeAppEventEmitter
+import com.mapbox.bindgen.Expected
 import com.mapbox.bindgen.Value
 import com.mapbox.common.*
 import com.mapbox.geojson.FeatureCollection
