@@ -142,6 +142,10 @@ class RCTMGLLifeCycle {
     }
 }
 
+data class FeatureEntry(val feature: AbstractMapFeature?, val view: View?, var addedToMap: Boolean = false) {
+
+}
+
 open class RCTMGLMapView(private val mContext: Context, var mManager: RCTMGLMapViewManager /*, MapboxMapOptions options*/) : MapView(mContext), OnMapClickListener, OnMapLongClickListener {
     /**
      * `PointAnnotations` are rendered to a canvas, but the React Native `Image` component is
@@ -159,15 +163,17 @@ open class RCTMGLMapView(private val mContext: Context, var mManager: RCTMGLMapV
     private var mStyleURL: String? = null
     val isDestroyed = false
     private var mCamera: RCTMGLCamera? = null
-    private val mFeatures: MutableList<AbstractMapFeature> = ArrayList()
+    private val mFeatures = mutableListOf<FeatureEntry>()
     private var mQueuedFeatures: MutableList<AbstractMapFeature>? = ArrayList()
     private val mPointAnnotations: MutableMap<String, RCTMGLPointAnnotation>
     private val mCameraChangeTracker = CameraChangeTracker()
     private val mMap: MapboxMap?
 
-    // v10todo, style gets null if we add anyhing
     var savedStyle: Style? = null
         private set
+
+    private var styleLoaded = false
+
     private val mHandledMapChangedEvents: HashSet<String>? = null
     private var mAnnotationClicked = false
     private var mAnnotationDragged = false
@@ -242,8 +248,9 @@ open class RCTMGLMapView(private val mContext: Context, var mManager: RCTMGLMapV
         map.getStyle(object : Style.OnStyleLoaded {
             override fun onStyleLoaded(style: Style) {
                 savedStyle = style
+                styleLoaded = true
                 setUpImage(style)
-                addQueuedFeatures()
+                addFeaturesToMap()
                 setupLocalization(style)
             }
         })
@@ -325,7 +332,7 @@ open class RCTMGLMapView(private val mContext: Context, var mManager: RCTMGLMapV
         mMap.getStyle(onStyleLoaded)
     }
 
-    // region features
+    // region Features
     fun addFeature(childView: View?, childPosition: Int) {
         var feature: AbstractMapFeature? = null
         if (childView is RCTSource<*>) {
@@ -354,23 +361,26 @@ open class RCTMGLMapView(private val mContext: Context, var mManager: RCTMGLMapV
             feature = childView as AbstractMapFeature?
         } else if (childView is ViewGroup) {
             val children = childView
+            Logger.w(LOG_TAG, "Adding non map components as a child of a map is deprecated!")
             for (i in 0 until children.childCount) {
-                addFeature(children.getChildAt(i), childPosition)
+                addView(children.getChildAt(i), childPosition)
             }
         }
-        if (feature != null) {
-            if (mQueuedFeatures == null) {
-                feature.addToMap(this)
-                mFeatures.add(childPosition, feature)
-            } else {
-                mQueuedFeatures?.add(childPosition, feature)
-            }
+
+        val addToMap = styleLoaded
+
+
+        var entry = FeatureEntry(feature, childView, false)
+        if (addToMap) {
+            feature?.addToMap(this)
+            entry.addedToMap = true
         }
+        mFeatures.add(childPosition, entry);
     }
 
-    fun removeFeature(childPosition: Int) {
-        val feature = features()[childPosition]
-                ?: return
+    fun removeFeatureAt(childPosition: Int) {
+        val entry = mFeatures[childPosition]
+        val feature = entry.feature
         if (feature is RCTSource<*>) {
             mSources.remove(feature.iD)
         } else if (feature is RCTMGLPointAnnotation) {
@@ -382,34 +392,24 @@ open class RCTMGLMapView(private val mContext: Context, var mManager: RCTMGLMapV
         } else if (feature is RCTMGLImages) {
             mImages.remove(feature)
         }
-        feature.removeFromMap(this)
-        features().remove(feature)
-    }
-
-    private fun features(): MutableList<AbstractMapFeature> {
-        return if (mQueuedFeatures != null && mQueuedFeatures!!.size > 0) (
-            mQueuedFeatures!!
-        )
-         else {
-            mFeatures
+        if (entry.addedToMap) {
+            feature?.removeFromMap(this)
+            entry.addedToMap = false
         }
+        mFeatures.removeAt(childPosition)
     }
 
     val featureCount: Int
-        get() = features().size
+        get() = mFeatures.size
 
-    fun getFeatureAt(i: Int): AbstractMapFeature {
-        return features()[i]
+    fun getFeatureAt(i: Int): View? {
+        return mFeatures[i].view
     }
 
-    fun removeAllFeatures() {
+    fun removeAllFeatureFromMap() {
         mFeatures.forEach {
-            it.removeFromMap(this)
-        }
-        mFeatures.clear()
-        val queuedFeatures = mQueuedFeatures
-        if (queuedFeatures != null) {
-            queuedFeatures.clear()
+            it.feature?.removeFromMap(this)
+            it.addedToMap = false
         }
     }
     // endregion
@@ -421,27 +421,23 @@ open class RCTMGLMapView(private val mContext: Context, var mManager: RCTMGLMapV
         mCameraChangeTracker.setReason(CameraChangeReason.NONE)
     }
 
-    private fun removeAllSourcesFromMap() {
-        if (mSources.size == 0) {
-            return
-        }
-        for (key in mSources.keys) {
-            val source = mSources[key]
-            source?.removeFromMap(this)
-        }
-        mQueuedFeatures = null;
-    }
-
-    private fun addAllFeaturesToMap() {
-        if (mSources.size == 0) {
-            return
-        }
-        for (key in mSources.keys) {
-            val source = mSources[key]
-            source?.addToMap(this)
+    private fun removeAllFeaturesFromMap() {
+        mFeatures.forEach { it ->
+            it.feature?.removeFromMap(this)
+            it.addedToMap = false
         }
     }
 
+    private fun addFeaturesToMap() {
+        mFeatures.forEach {
+            if (!it.addedToMap) {
+                it.feature?.addToMap(this)
+                it.addedToMap = true
+            }
+        }
+    }
+
+    
     private val allTouchableSources: List<RCTSource<*>>
         private get() {
             val sources: MutableList<RCTSource<*>> = ArrayList()
@@ -508,20 +504,25 @@ open class RCTMGLMapView(private val mContext: Context, var mManager: RCTMGLMapV
     fun setReactStyleURL(styleURL: String) {
         mStyleURL = styleURL
         if (mMap != null) {
-            removeAllSourcesFromMap()
+            removeAllFeatureFromMap()
             if (isJSONValid(mStyleURL)) {
+                styleLoaded = false
                 mMap.loadStyleJson(styleURL, object : Style.OnStyleLoaded {
                     override fun onStyleLoaded(style: Style) {
+                        savedStyle = style
+                        styleLoaded = true
                         style.setProjection(Projection(mProjection))
-                        addAllFeaturesToMap()
+                        addFeaturesToMap()
                     }
                 })
             } else {
+                styleLoaded = false
                 mMap.loadStyleUri(styleURL, object : Style.OnStyleLoaded {
                     override fun onStyleLoaded(style: Style) {
                         savedStyle = style
+                        styleLoaded = true
                         style.setProjection(Projection(mProjection))
-                        addAllFeaturesToMap()
+                        addFeaturesToMap()
                     }
                 },
                         object : OnMapLoadErrorListener {
@@ -733,17 +734,6 @@ open class RCTMGLMapView(private val mContext: Context, var mManager: RCTMGLMapV
             Logger.e(LOG_TAG, "An error occurred while attempting to make the region", ex)
         }
         return GeoJSONUtils.toPointFeature(latLng, properties)
-    }
-
-    fun addQueuedFeatures() {
-        if (mQueuedFeatures != null && mQueuedFeatures!!.size > 0) {
-            for (i in mQueuedFeatures!!.indices) {
-                val feature = mQueuedFeatures!![i]
-                feature.addToMap(this)
-                mFeatures.add(feature)
-            }
-            mQueuedFeatures = null
-        }
     }
 
     private fun setupLocalization(style: Style) {
@@ -1254,7 +1244,7 @@ open class RCTMGLMapView(private val mContext: Context, var mManager: RCTMGLMapV
     }
 
     override fun onDestroy() {
-        removeAllFeatures()
+        removeAllFeaturesFromMap()
         viewAnnotationManager.removeAllViewAnnotations()
         mLocationComponentManager?.onDestroy();
 
@@ -1263,7 +1253,7 @@ open class RCTMGLMapView(private val mContext: Context, var mManager: RCTMGLMapV
     }
 
     fun onDropViewInstance() {
-        removeAllFeatures()
+        removeAllFeaturesFromMap()
         viewAnnotationManager.removeAllViewAnnotations()
         lifecycle.onDestroy()
     }
