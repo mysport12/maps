@@ -14,7 +14,6 @@ import com.mapbox.maps.*
 import com.mapbox.rctmgl.events.IEvent
 import com.mapbox.rctmgl.events.OfflineEvent
 import com.mapbox.rctmgl.events.constants.EventTypes
-import com.mapbox.turf.TurfMeasurement
 import com.mapbox.rctmgl.modules.RCTMGLModule
 import com.mapbox.rctmgl.utils.ConvertUtils
 import com.mapbox.rctmgl.utils.GeoJSONUtils
@@ -229,7 +228,7 @@ class RCTMGLOfflineModule(private val mReactContext: ReactApplicationContext) :
                     }
                 })
             }
-        }
+        })
     }
 
     private fun convertLegacyRegionsToJSON(regions: List<OfflineRegion>, promise: Promise) {
