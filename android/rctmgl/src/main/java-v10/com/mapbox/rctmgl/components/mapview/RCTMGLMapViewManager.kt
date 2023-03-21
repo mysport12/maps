@@ -23,6 +23,19 @@ import com.mapbox.rctmgl.utils.extensions.toScreenCoordinate
 import java.lang.Exception
 import java.util.HashMap
 
+fun ReadableArray.forEachString(action: (String) -> Unit) {
+    for (i in 0 until size()) {
+        action(getString(i))
+    }
+}
+
+fun ReadableArray.asArrayString(): Array<String> {
+    val result = Array<String>(size()) {
+        getString(it)
+    }
+    return result
+}
+
 open class RCTMGLMapViewManager(context: ReactApplicationContext?) :
     AbstractEventEmitter<RCTMGLMapView?>(context) {
     private val mViews: MutableMap<Int, RCTMGLMapView>
@@ -85,6 +98,13 @@ open class RCTMGLMapViewManager(context: ReactApplicationContext?) :
         mapView.setReactProjection( if (projection == "globe") ProjectionName.GLOBE else ProjectionName.MERCATOR )
     }
 
+    @ReactProp(name = "localizeLabels")
+    fun setLocalizeLabels(mapView: RCTMGLMapView, localeMap: ReadableMap?) {
+        val locale = localeMap?.getString("locale")
+        val layerIds = localeMap?.getArray("layerIds")?.toArrayList()?.mapNotNull {it?.toString()}
+        mapView.setReactLocalizeLabels(locale, layerIds)
+    }
+
     @ReactProp(name = "styleURL")
     fun setStyleURL(mapView: RCTMGLMapView, styleURL: String?) {
         mapView.setReactStyleURL(styleURL!!)
@@ -93,11 +113,6 @@ open class RCTMGLMapViewManager(context: ReactApplicationContext?) :
     @ReactProp(name = "preferredFramesPerSecond")
     fun setPreferredFramesPerSecond(mapView: RCTMGLMapView?, preferredFramesPerSecond: Int) {
         //mapView.setReactPreferredFramesPerSecond(preferredFramesPerSecond);
-    }
-
-    @ReactProp(name = "localizeLabels")
-    fun setLocalizeLabels(mapView: RCTMGLMapView?, localizeLabels: Boolean) {
-        //mapView.setLocalizeLabels(localizeLabels);
     }
 
     @ReactProp(name = "zoomEnabled")
@@ -292,6 +307,11 @@ open class RCTMGLMapViewManager(context: ReactApplicationContext?) :
             }
             METHOD_TAKE_SNAP -> {
                 mapView.takeSnap(args!!.getString(0), args!!.getBoolean(1))
+            }
+            METHOD_SET_HANDLED_MAP_EVENTS -> {
+                args?.let {
+                    mapView.setHandledMapChangedEvents(args.asArrayString());
+                }
             }
         }
         /*

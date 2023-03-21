@@ -657,7 +657,7 @@
       {
         "name": "centerCoordinate",
         "required": false,
-        "type": "Position",
+        "type": "number[] \\| [number, number]",
         "default": "none",
         "description": "The location on which the map should center."
       },
@@ -807,14 +807,14 @@
             {
               "name": "ne",
               "required": true,
-              "type": "Position",
+              "type": "union",
               "default": "none",
               "description": "FIX ME NO DESCRIPTION"
             },
             {
               "name": "sw",
               "required": true,
-              "type": "Position",
+              "type": "union",
               "default": "none",
               "description": "FIX ME NO DESCRIPTION"
             }
@@ -838,8 +838,8 @@
             },
             {
               "name": "centerCoordinate",
-              "required": false,
-              "type": "Position",
+              "required": true,
+              "type": "union",
               "default": "none",
               "description": "The location on which the map should center."
             },
@@ -3200,7 +3200,7 @@
         "required": false,
         "type": "string",
         "default": "none",
-        "description": "Style URL for map - notice, if non is set it _will_ default to `MapboxGL.StyleURL.Street`"
+        "description": "Style URL for map - notice, if non is set it _will_ default to `Mapbox.StyleURL.Street`"
       },
       {
         "name": "styleJSON",
@@ -3215,13 +3215,6 @@
         "type": "number",
         "default": "none",
         "description": "iOS: The preferred frame rate at which the map view is rendered.\nThe default value for this property is MGLMapViewPreferredFramesPerSecondDefault,\nwhich will adaptively set the preferred frame rate based on the capability of\nthe user’s device to maintain a smooth experience. This property can be set to arbitrary integer values.\n\nAndroid: The maximum frame rate at which the map view is rendered, but it can't exceed the ability of device hardware.\nThis property can be set to arbitrary integer values."
-      },
-      {
-        "name": "localizeLabels",
-        "required": false,
-        "type": "boolean",
-        "default": "false",
-        "description": "Automatically change the language of the map labels to the system’s preferred language,\nthis is not something that can be toggled on/off"
       },
       {
         "name": "zoomEnabled",
@@ -3368,6 +3361,13 @@
         "description": "[Android only] Enable/Disable use of GLSurfaceView instead of TextureView."
       },
       {
+        "name": "localizeLabels",
+        "required": false,
+        "type": "\\| {\n    /** locale code like `es` or `current` for the device's current locale */\n    locale: string;\n    /** layer id to localize. If not specified, all layers will be localized */\n    layerIds?: string[];\n  }\n\\| true",
+        "default": "none",
+        "description": "[`mapbox` (v10) implementation only]\nSet map's label locale, e.g. { \"locale\": \"es\" } will localize labels to Spanish, { \"locale\": \"current\" } will localize labels to system locale."
+      },
+      {
         "name": "onPress",
         "required": false,
         "type": {
@@ -3422,20 +3422,20 @@
         "required": false,
         "type": {
           "name": "func",
-          "funcSignature": "(state:{properties: {center: GeoJSON.Position, bounds: {ne: GeoJSON.Position, sw: GeoJSON.Position}, zoom: number, heading: number, pitch: number}, gestures: {isGestureActive: boolean, isAnimatingFromGesture: boolean}}) => void"
+          "funcSignature": "(state:{properties: {center: GeoJSON.Position, bounds: {ne: GeoJSON.Position, sw: GeoJSON.Position}, zoom: number, heading: number, pitch: number}, gestures: {isGestureActive: boolean}}) => void"
         },
         "default": "none",
-        "description": "iOS, v10 only, deprecated will be removed in next version - please use onRegionIsChanging.\n*signature:*`(state:{properties: {center: GeoJSON.Position, bounds: {ne: GeoJSON.Position, sw: GeoJSON.Position}, zoom: number, heading: number, pitch: number}, gestures: {isGestureActive: boolean, isAnimatingFromGesture: boolean}}) => void`"
+        "description": "v10 only, replaces onRegionIsChanging\n*signature:*`(state:{properties: {center: GeoJSON.Position, bounds: {ne: GeoJSON.Position, sw: GeoJSON.Position}, zoom: number, heading: number, pitch: number}, gestures: {isGestureActive: boolean}}) => void`"
       },
       {
         "name": "onMapIdle",
         "required": false,
         "type": {
           "name": "func",
-          "funcSignature": "(state:{properties: {center: GeoJSON.Position, bounds: {ne: GeoJSON.Position, sw: GeoJSON.Position}, zoom: number, heading: number, pitch: number}, gestures: {isGestureActive: boolean, isAnimatingFromGesture: boolean}}) => void"
+          "funcSignature": "(state:{properties: {center: GeoJSON.Position, bounds: {ne: GeoJSON.Position, sw: GeoJSON.Position}, zoom: number, heading: number, pitch: number}, gestures: {isGestureActive: boolean}}) => void"
         },
         "default": "none",
-        "description": "iOS, v10 only, deprecated will be removed in next version - please use onRegionDidChange\n*signature:*`(state:{properties: {center: GeoJSON.Position, bounds: {ne: GeoJSON.Position, sw: GeoJSON.Position}, zoom: number, heading: number, pitch: number}, gestures: {isGestureActive: boolean, isAnimatingFromGesture: boolean}}) => void`"
+        "description": "v10 only, replaces onRegionDidChange\n*signature:*`(state:{properties: {center: GeoJSON.Position, bounds: {ne: GeoJSON.Position, sw: GeoJSON.Position}, zoom: number, heading: number, pitch: number}, gestures: {isGestureActive: boolean}}) => void`"
       },
       {
         "name": "onWillStartLoadingMap",
@@ -4869,7 +4869,7 @@
         "required": false,
         "type": "JSX.Element \\| JSX.Element[]",
         "default": "none",
-        "description": "FIX ME NO DESCRIPTION"
+        "description": "@deprecated passed children used to create an image with id of symbol in style and also set the iconImageName property accordingly.\nThis is now deprecated, use Image component instead."
       }
     ],
     "fileNameWithExt": "SymbolLayer.tsx",
