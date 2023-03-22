@@ -5,6 +5,7 @@ import React
 class RCTMGLNativeUserLocation : UIView, RCTMGLMapComponent {
   let locationLayerId = "location-layer"
   var locationLayer : LocationIndicatorLayer? = nil
+  weak var map : RCTMGLMapView! = nil
   var visible : Bool = false
   
   @objc var nativeBearingImage : NSDictionary? = nil {
