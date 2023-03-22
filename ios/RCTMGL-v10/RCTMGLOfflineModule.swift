@@ -691,6 +691,36 @@ class RCTMGLOfflineModule: RCTEventEmitter {
       reject("migrateOfflineCache", error.localizedDescription, error)
     }
   }
+
+  func resetDatabase(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    self.tileStore.allTileRegions { result in
+      switch result {
+      case .success(let regions):
+        regions.forEach { region in
+          self.tileStore.removeTileRegion(forId: region.id)
+        }
+        self.offlineManager.allStylePacks { result in
+          switch result {
+          case .success(let packs):
+            packs.forEach { pack in
+              if let url = logged("RCTMGLOfflineModule.resetDatabase invalid styleURI",fn: { return URL(string: pack.styleURI) }),
+                 let styleUri = logged("RCTMGLOfflineModule.resetDatabase invalid styleURI2", fn: { return StyleURI(url: url) }) {
+                self.offlineManager.removeStylePack(for: styleUri)
+              }
+            }
+            resolve(nil)
+          case .failure(let error):
+            Logger.log(level:.error, message: "RCTMGLOfflineModule.resetDatabase/allStylePacks \(error.localizedDescription) \(error)")
+            reject("RCTMGLOfflineModule.resetDatabase/allStylePacks", error.localizedDescription, error)
+          }
+        }
+      case .failure(let error):
+        Logger.log(level:.error, message: "RCTMGLOfflineModule.resetDatabase/allTileRegions \(error.localizedDescription) \(error)")
+        reject("RCTMGLOfflineModule.resetDatabase/allTileRegions", error.localizedDescription, error)
+      }
+      
+    }
+  }
   
   @objc
   func getPacksLegacy(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock)
@@ -766,35 +796,6 @@ final class RegionObserver : OfflineRegionObserver {
   
   func mapboxTileCountLimitExceeded(forLimit limit: UInt64) {
     offlineModule?.offlinePackDidExceedTileLimitLegacy(name: packName, limit: limit)
-  }
-  func resetDatabase(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
-    self.tileStore.allTileRegions { result in
-      switch result {
-      case .success(let regions):
-        regions.forEach { region in
-          self.tileStore.removeTileRegion(forId: region.id)
-        }
-        self.offlineManager.allStylePacks { result in
-          switch result {
-          case .success(let packs):
-            packs.forEach { pack in
-              if let url = logged("RCTMGLOfflineModule.resetDatabase invalid styleURI",fn: { return URL(string: pack.styleURI) }),
-                 let styleUri = logged("RCTMGLOfflineModule.resetDatabase invalid styleURI2", fn: { return StyleURI(url: url) }) {
-                self.offlineManager.removeStylePack(for: styleUri)
-              }
-            }
-            resolve(nil)
-          case .failure(let error):
-            Logger.log(level:.error, message: "RCTMGLOfflineModule.resetDatabase/allStylePacks \(error.localizedDescription) \(error)")
-            reject("RCTMGLOfflineModule.resetDatabase/allStylePacks", error.localizedDescription, error)
-          }
-        }
-      case .failure(let error):
-        Logger.log(level:.error, message: "RCTMGLOfflineModule.resetDatabase/allTileRegions \(error.localizedDescription) \(error)")
-        reject("RCTMGLOfflineModule.resetDatabase/allTileRegions", error.localizedDescription, error)
-      }
-      
-    }
   }
 }
 
