@@ -23,7 +23,9 @@ open class RCTMGLMapView : MapView {
   var sources : [RCTMGLInteractiveElement] = []
   
   var handleMapChangedEvents = Set<RCTMGLEvent.EventType>()
-    
+
+  var eventListeners : [Cancelable] = []
+
   private var isPendingInitialLayout = true
   private var wasGestureActive = false
   private var isGestureActive = false
@@ -319,10 +321,14 @@ open class RCTMGLMapView : MapView {
 
 extension RCTMGLMapView {
   private func onEvery<Payload>(event: MapEvents.Event<Payload>, handler: @escaping  (RCTMGLMapView, MapEvent<Payload>) -> Void) {
-    self.mapView.mapboxMap.onEvery(event: event) { [weak self](mapEvent) in
+    let eventListener = self.mapView.mapboxMap.onEvery(event: event) { [weak self](mapEvent) in
       guard let self = self else { return }
 
       handler(self, mapEvent)
+    }
+    eventListeners.append(eventListener)
+    if eventListeners.count > 20 {
+      Logger.log(level:.warn, message: "RCTMGLMapView.onEvery, too much handler installed");
     }
   }
 
