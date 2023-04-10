@@ -570,7 +570,7 @@ extension RCTMGLCamera : ViewportStatusObserver {
     if reason == .idleRequested {
       return "idleRequested"
     } else if reason == .transitionFailed {
-      return "transitionFailied"
+      return "transitionFailed"
     } else if reason == .transitionStarted {
       return "transitionStarted"
     } else if reason == .transitionSucceeded {

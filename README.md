@@ -84,7 +84,7 @@ _See [iOS](ios/install.md) & [Android](android/install.md) setup guide for more 
 
 - [node](https://nodejs.org)
 - [npm](https://www.npmjs.com/)
-- [React Native](https://facebook.github.io/react-native/) (0.60+)
+- [React Native](https://facebook.github.io/react-native/) (0.64+)
 
 
 ## Installation
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
 
 ### Misc
 
-- [MapboxGL](/docs/MapboxGL.md)
+- [Mapbox](/docs/MapboxGL.md)
 - [CustomHttpHeaders](/docs/CustomHttpHeaders.md)
 - [Logger](/docs/Logger.md)
 
