@@ -252,35 +252,6 @@ class RCTMGLOfflineModule(private val mReactContext: ReactApplicationContext) :
         })
     }
 
-    @Throws(JSONException::class)
-    fun startPackDownload(pack: TileRegionPack) {
-        val _this = this
-        pack.cancelable = getTileStore()
-            .loadTileRegion(
-                pack.name,
-                (pack.loadOptions)!!,
-                { progress ->
-                    pack.progress = progress
-                    pack.state = TileRegionPack.ACTIVE
-                    _this.sendEvent(_this.makeStatusEvent(pack.name, progress, pack))
-                }
-            ) { region ->
-                pack.cancelable = null
-                if (region.isError) {
-                    pack.state = TileRegionPack.INACTIVE
-                    _this.sendEvent(
-                        _this.makeErrorEvent(
-                            pack.name, "TileRegionError", region.error!!
-                                .message
-                        )
-                    )
-                } else {
-                    pack.state = TileRegionPack.COMPLETE
-                    _this.sendEvent(_this.makeStatusEvent(pack.name, pack.progress, pack))
-                }
-            }
-    }
-
     @ReactMethod
     fun getPackStatus(name: String, promise: Promise) {
         val pack = tileRegionPacks[name]
@@ -301,6 +272,65 @@ class RCTMGLOfflineModule(private val mReactContext: ReactApplicationContext) :
             }
         }
 
+    }
+
+    @ReactMethod
+    fun resumePackDownload(name: String, promise: Promise) {
+        val pack = tileRegionPacks[name]
+        if (pack != null) {
+            startLoading(pack)
+            promise.resolve(null)
+        } else {
+            promise.reject("resumePackDownload", "Unknown offline pack: $name")
+        }
+    }
+
+    @ReactMethod
+    fun pausePackDownload(name: String, promise: Promise) {
+        val pack = tileRegionPacks[name]
+        if (pack != null) {
+            if (pack.cancelable != null) {
+                pack.cancelable?.cancel()
+                pack.cancelable = null
+                promise.resolve(null)
+            } else {
+                promise.reject("resumeRegionDownload", "Offline pack: $name already cancelled")
+            }
+        } else {
+            promise.reject("resumeRegionDownload", "Unknown offline region")
+        }
+    }
+
+    @ReactMethod
+    fun setTileCountLimit(tileCountLimit: Int) {
+        val offlineRegionManager = OfflineRegionManager(ResourceOptions.Builder().accessToken(RCTMGLModule.getAccessToken(mReactContext)).build())
+        offlineRegionManager.setOfflineMapboxTileCountLimit(tileCountLimit.toLong())
+    }
+
+    @ReactMethod
+    fun deletePack(name: String, promise: Promise) {
+        val pack = tileRegionPacks[name]
+
+        if (pack == null) {
+            promise.resolve(null)
+            return
+        }
+
+        if (pack.state == TileRegionPackState.INVALID) {
+            promise.reject("deletePack", "Pack: $name has already been deleted")
+            return
+        }
+
+        tileStore.removeTileRegion(name, object: TileRegionCallback {
+            override fun run(expected: Expected<TileRegionError, TileRegion>) {
+                expected.value.also {
+                    tileRegionPacks[name]!!.state = TileRegionPackState.INVALID
+                    promise.resolve(null);
+                } ?: run {
+                    promise.reject("deletePack", expected.error?.message ?: "n/a")
+                }
+            }
+        })
     }
 
     @ReactMethod
@@ -388,23 +418,6 @@ class RCTMGLOfflineModule(private val mReactContext: ReactApplicationContext) :
             },
         )
         tileRegionPacks[id]!!.cancelable = task
-    }
-
-    private fun convertLegacyRegionsToJSON(regions: List<OfflineRegion>, promise: Promise) {
-        try {
-            val result = Arguments.createArray()
-            for (region: OfflineRegion in regions) {
-                val bounds = region.tilePyramidDefinition!!.bounds
-                val metadata = String(region.metadata)
-                val map = Arguments.createMap()
-                map.putArray("bounds", GeoJSONUtils.fromCoordinateBounds(bounds))
-                map.putMap("metadata", convertJsonToMap(JSONObject(metadata)))
-                result.pushMap(map)
-            }
-            promise.resolve(result)
-        } catch (interruptedException: InterruptedException) {
-            promise.reject(interruptedException)
-        }
     }
 
     private fun convertRegionsToJSON(tileRegions: List<TileRegion>, promise: Promise) {
@@ -620,119 +633,24 @@ class RCTMGLOfflineModule(private val mReactContext: ReactApplicationContext) :
     }
 
     @ReactMethod
-    fun deletePackLegacy(name: String, promise: Promise) {
-        UiThreadUtil.runOnUiThread(object: Runnable {
-            override fun run() {
-                val legacyManger = getOfflineManagerLegacy()
-                legacyManger!!.getOfflineRegions { expected ->
-                    if (expected.isValue) {
-                        expected.value?.let { regions ->
-                            var downloadedRegionExists = false
-                            for (region in regions) {
-                                val regionName = JSONObject(String(region.metadata)).getString("name")
-                                if (regionName == name) {
-                                    downloadedRegionExists = true
-                                    region.purge { promise.resolve(null) }
-                                }
-                            }
-                            if (!downloadedRegionExists) {
-                                promise.resolve(null)
-                            }
-                        }
-                    } else {
-                        promise.reject("deletePackLegacy", expected.error!!)
-                    }
-                }
-            }
-        })
-    }
-
-    @ReactMethod
-    fun getPacksLegacy(promise: Promise) {
-        UiThreadUtil.runOnUiThread(object: Runnable {
-            override fun run() {
-                try {
-                    val legacyManger = getOfflineManagerLegacy()
-                    legacyManger!!.getOfflineRegions { regions ->
-                        if (regions.isValue) {
-                            convertLegacyRegionsToJSON((regions.value)!!, promise)
-                        } else {
-                            Log.d("OFFLINE DOWNLOAD", "regions is an error")
-//                            promise.reject("getPacksLegacy", regions.error!!)
-                        }
-                    }
-                } catch (e: Exception){
-                    e.message?.let { Log.d("OFFLINE DOWNLOAD", it) }
-                }
-            }
-        })
-    }
-
-    @ReactMethod
     fun migrateOfflineCache() {
-        try {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Old and new cache file paths
             val targetPathName = mReactContext.filesDir.absolutePath + "/.mapbox/map_data"
-            val sourcePath = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Paths.get(mReactContext.filesDir.absolutePath + "/mbgl-offline.db")
-            } else {
-                mReactContext.filesDir.absolutePath + "/mbgl-offline.db"
-            }
-            val targetPath = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Paths.get("$targetPathName/map_data.db")
-            } else {
-                "$targetPathName/map_data.db"
-            }
-            val directory = File(targetPathName)
-            if (!directory.exists()) {
+            val sourcePath = Paths.get(mReactContext.filesDir.absolutePath + "/mbgl-offline.db")
+            val targetPath = Paths.get(targetPathName + "/map_data.db")
+
+            try {
+                val directory = File(targetPathName)
                 directory.mkdirs()
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    Files.move(sourcePath as Path?, targetPath as Path?, StandardCopyOption.REPLACE_EXISTING)
-                } else {
-                    File(sourcePath as String?).renameTo(File(targetPath as String?))
-                }
-                Log.d("TAG","v10 cache directory created successfully")
+                Files.move(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING)
+                Log.d(LOG_TAG, "v10 cache directory created successfully")
+            } catch (e: Exception) {
+                Log.d(LOG_TAG, "${e}... file move unsuccessful")
             }
-        } catch (e: Exception) {
-            Log.d("TAG", "${e}... file move unsuccessful")
-        }
-    }
-
-    @ReactMethod
-    fun pausePackDownload(name: String, promise: Promise) {
-        val pack = tileRegionPacks[name]
-        if (pack != null) {
-            if (pack.cancelable != null) {
-                pack.cancelable!!.cancel()
-                pack.cancelable = null
-                promise.resolve(null)
-            } else {
-                promise.reject("resumeRegionDownload", "Offline region cancelled already")
-            }
-        }
-    }
-
-    @ReactMethod
-    fun resumePackDownload(name: String, promise: Promise) {
-        val pack = tileRegionPacks[name]
-        if (pack != null) {
-            startPackDownload(pack)
-            promise.resolve(null)
         } else {
-            promise.reject("resumeRegionDownload", "Unknown offline region")
+            Logger.w(LOG_TAG, "migrateOfflineCache only supported on api level 26 or later")
         }
-    }
-
-    @ReactMethod
-    fun setTileCountLimit(tileCountLimit: Int) {
-        val offlineRegionManager = OfflineRegionManager(ResourceOptions.Builder().accessToken(RCTMGLModule.getAccessToken(mReactContext)).build())
-        offlineRegionManager.setOfflineMapboxTileCountLimit(tileCountLimit.toLong())
-    }
-
-    @ReactMethod
-    fun setTileCountLimitLegacy(tileCountLimit: Int) {
-        val offlineManagerLegacy = getOfflineManagerLegacy()
-        offlineManagerLegacy!!.setOfflineMapboxTileCountLimit(tileCountLimit.toLong())
     }
 
     @ReactMethod
@@ -780,16 +698,88 @@ class RCTMGLOfflineModule(private val mReactContext: ReactApplicationContext) :
         )
     }
 
-    private fun makeStatusEventLegacy(
-        regionName: String,
-        status: OfflineRegionStatus
-    ): OfflineEvent {
-        return OfflineEvent(
-            OFFLINE_PROGRESS,
-            EventTypes.OFFLINE_STATUS,
-            makeRegionStatusLegacy(regionName, status)
-        )
+    private fun convertLegacyRegionsToJSON(regions: List<OfflineRegion>, promise: Promise) {
+        try {
+            val result = Arguments.createArray()
+            for (region: OfflineRegion in regions) {
+                val bounds = region.tilePyramidDefinition!!.bounds
+                val metadata = String(region.metadata)
+                val map = Arguments.createMap()
+                map.putArray("bounds", GeoJSONUtils.fromCoordinateBounds(bounds))
+                map.putMap("metadata", convertJsonToMap(JSONObject(metadata)))
+                result.pushMap(map)
+            }
+            promise.resolve(result)
+        } catch (interruptedException: InterruptedException) {
+            promise.reject(interruptedException)
+        }
     }
+
+    @ReactMethod
+    fun deletePackLegacy(name: String, promise: Promise) {
+        UiThreadUtil.runOnUiThread(object: Runnable {
+            override fun run() {
+                val legacyManger = getOfflineManagerLegacy()
+                legacyManger!!.getOfflineRegions { expected ->
+                    if (expected.isValue) {
+                        expected.value?.let { regions ->
+                            var downloadedRegionExists = false
+                            for (region in regions) {
+                                val regionName = JSONObject(String(region.metadata)).getString("name")
+                                if (regionName == name) {
+                                    downloadedRegionExists = true
+                                    region.purge { promise.resolve(null) }
+                                }
+                            }
+                            if (!downloadedRegionExists) {
+                                promise.resolve(null)
+                            }
+                        }
+                    } else {
+                        promise.reject("deletePackLegacy", expected.error!!)
+                    }
+                }
+            }
+        })
+    }
+
+    @ReactMethod
+    fun getPacksLegacy(promise: Promise) {
+        UiThreadUtil.runOnUiThread(object: Runnable {
+            override fun run() {
+                try {
+                    val legacyManger = getOfflineManagerLegacy()
+                    legacyManger!!.getOfflineRegions { regions ->
+                        if (regions.isValue) {
+                            convertLegacyRegionsToJSON((regions.value)!!, promise)
+                        } else {
+                            Log.d("OFFLINE DOWNLOAD", "regions is an error")
+    //                            promise.reject("getPacksLegacy", regions.error!!)
+                        }
+                    }
+                } catch (e: Exception){
+                    e.message?.let { Log.d("OFFLINE DOWNLOAD", it) }
+                }
+            }
+        })
+    }
+
+    @ReactMethod
+    fun setTileCountLimitLegacy(tileCountLimit: Int) {
+        val offlineManagerLegacy = getOfflineManagerLegacy()
+        offlineManagerLegacy!!.setOfflineMapboxTileCountLimit(tileCountLimit.toLong())
+    }
+
+    private fun makeStatusEventLegacy(
+            regionName: String,
+            status: OfflineRegionStatus
+        ): OfflineEvent {
+            return OfflineEvent(
+                OFFLINE_PROGRESS,
+                EventTypes.OFFLINE_STATUS,
+                makeRegionStatusLegacy(regionName, status)
+            )
+        }
 
     private fun makeRegionStatusLegacy(
         regionName: String,
@@ -827,20 +817,6 @@ class RCTMGLOfflineModule(private val mReactContext: ReactApplicationContext) :
         val map = Arguments.createMap()
         map.putArray("bounds", GeoJSONUtils.fromLatLngBounds(bounds))
         map.putString("metadata", metadataStr)
-        return map
-    }
-
-    private fun fromOfflineRegion(region: Geometry): WritableMap {
-        val map = Arguments.createMap()
-        val bbox = TurfMeasurement.bbox(region)
-        val bounds = Arguments.createArray()
-        for (d: Double in bbox) {
-            bounds.pushDouble(d)
-        }
-        map.putArray("bounds", bounds)
-        map.putMap("geometry", GeoJSONUtils.fromGeometry(region))
-
-        //map.putString("metadata", new String(region.getMetadata()));
         return map
     }
 
@@ -894,39 +870,6 @@ class RCTMGLOfflineModule(private val mReactContext: ReactApplicationContext) :
         return array
     }
 
-    /*
-    private OfflineRegion getRegionByName(String name, OfflineRegion[] offlineRegions) {
-        if (name == null || name.isEmpty()) {
-            return null;
-        }
-
-        for (OfflineRegion region : offlineRegions) {
-            boolean isRegion = false;
-
-            try {
-                byte[] byteMetadata = region.getMetadata();
-
-                if (byteMetadata != null) {
-                    JSONObject metadata = new JSONObject(new String(byteMetadata));
-                    isRegion = name.equals(metadata.getString("name"));
-                }
-            } catch (JSONException e) {
-                Log.w(REACT_CLASS, e.getLocalizedMessage());
-            }
-
-            if (isRegion) {
-                return region;
-            }
-        }
-
-        return null;
-    }*/
-
-    /*
-    private void activateFileSource() {
-        FileSource fileSource = FileSource.getInstance(mReactContext);
-        fileSource.activate();
-    }*/
     companion object {
         const val REACT_CLASS = "RCTMGLOfflineModule"
         const val LOG_TAG = REACT_CLASS
@@ -951,7 +894,3 @@ fun TileRegion.toPercentage(): Double {
 fun TileRegion.hasCompleted(): Boolean {
     return (completedResourceCount == requiredResourceCount)
 }
-
-
-
-
