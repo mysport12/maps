@@ -877,6 +877,8 @@ class RCTMGLOfflineModule(private val mReactContext: ReactApplicationContext) :
             }
         }
         return array
+    }
+    
     private fun toJSONObjectSupportingLegacyMetadata(value: Value): JSONObject? {
         // see https://github.com/rnmapbox/maps/issues/2803
         try {
