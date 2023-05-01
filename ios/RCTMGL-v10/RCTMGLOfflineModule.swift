@@ -208,7 +208,7 @@ class RCTMGLOfflineModule: RCTEventEmitter {
         self.tileStore.tileRegionMetadata(forId: name) { result in
           switch result {
           case .success(let metadata):
-            var pack = TileRegionPack(
+            let pack = TileRegionPack(
               name: name,
               progress: self.toProgress(region: region),
               metadata: logged("RCTMGLOfflineModule.getPackStatus") { metadata as? [String:Any] } ?? [:]
@@ -295,9 +295,9 @@ class RCTMGLOfflineModule: RCTEventEmitter {
       reject("migrateOfflineCache", error.localizedDescription, error)
     }
   }
-  
+
   @objc
-  func resetDatabase(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+  func resetDatabase(_ resolve: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
     self.tileStore.allTileRegions { result in
       switch result {
       case .success(let regions):
@@ -316,12 +316,12 @@ class RCTMGLOfflineModule: RCTEventEmitter {
             resolve(nil)
           case .failure(let error):
             Logger.log(level:.error, message: "RCTMGLOfflineModule.resetDatabase/allStylePacks \(error.localizedDescription) \(error)")
-            reject("RCTMGLOfflineModule.resetDatabase/allStylePacks", error.localizedDescription, error)
+            rejecter("RCTMGLOfflineModule.resetDatabase/allStylePacks", error.localizedDescription, error)
           }
         }
       case .failure(let error):
         Logger.log(level:.error, message: "RCTMGLOfflineModule.resetDatabase/allTileRegions \(error.localizedDescription) \(error)")
-        reject("RCTMGLOfflineModule.resetDatabase/allTileRegions", error.localizedDescription, error)
+        rejecter("RCTMGLOfflineModule.resetDatabase/allTileRegions", error.localizedDescription, error)
       }
     }
   }
