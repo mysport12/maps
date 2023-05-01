@@ -4,7 +4,7 @@ import {
   EventSubscription,
 } from 'react-native';
 
-import { isUndefined, isFunction } from '../../utils';
+import { isUndefined, isFunction, isAndroid } from '../../utils';
 
 export {
   default as OfflineCreatePackOptions,
