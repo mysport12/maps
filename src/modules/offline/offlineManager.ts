@@ -507,7 +507,7 @@ class OfflineManager {
   }
 
   _onProgress(e: ProgressEvent): void {
-    const { name, percentage, state } = e.payload;
+    const { name, state } = e.payload;
 
     if (!this._hasListeners(name, this._progressListeners)) {
       return;

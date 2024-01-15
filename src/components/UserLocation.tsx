@@ -252,20 +252,11 @@ class UserLocation extends React.Component<Props, UserLocationState> {
   }
 
   _renderNative() {
-    const {
-      androidRenderMode,
-      nativeBearingImage,
-      nativeShadowImage,
-      nativeTopImage,
-      showsUserHeadingIndicator,
-    } = this.props;
+    const { androidRenderMode, showsUserHeadingIndicator } = this.props;
 
     const props = {
       androidRenderMode,
       iosShowsUserHeadingIndicator: showsUserHeadingIndicator,
-      nativeBearingImage,
-      nativeShadowImage,
-      nativeTopImage,
     };
     return <NativeUserLocation {...props} />;
   }
