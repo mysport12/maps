@@ -50,7 +50,7 @@ Array
 An array of tile URL templates. If multiple endpoints are specified, clients may use any combination of endpoints.
 Example: https://example.com/vector-tiles/{z}/{x}/{y}.pbf
 
-
+[Third Party Vector Source](../examples/LineLayer/ThirdPartyVectorSource)
   
 ### minZoomLevel
 
@@ -101,10 +101,10 @@ func
 Source press listener, gets called when a user presses one of the children layers only
 if that layer has a higher z-index than another source layers
 
-@param {Object} event
-@param {Object[]} event.features - the geojson features that have hit by the press (might be multiple)
-@param {Object} event.coordinates - the coordinates of the click
-@param {Object} event.point - the point of the click
+- `event`: `Object` 
+- `event.features`: `Object[]`  - the geojson features that have hit by the press (might be multiple)
+- `event.coordinates`: `Object`  - the coordinates of the click
+- `event.point`: `Object`  - the point of the click
 *signature:*`(event:OnPressEvent) =&gt; void`
 
 

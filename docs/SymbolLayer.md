@@ -20,7 +20,7 @@ SymbolLayer is a style layer that renders icon and text labels at points or alon
 string
 ```
 _required_
-A string that uniquely identifies the layer in the style to which it is added.
+A string that uniquely identifies the source in the style to which it is added.
 
 
   
@@ -42,7 +42,7 @@ The source from which to obtain the data to style.
 If the source has not yet been added to the current style, the behavior is undefined.
 Inferred from parent source only if the layer is a direct child to it.
 
-  _defaults to:_ `MapboxGL.StyleSource.DefaultSourceID`
+  _defaults to:_ `Mapbox.StyleSource.DefaultSourceID`
 
   
 ### sourceLayerID
@@ -84,7 +84,7 @@ Inserts a layer at a specified index
 ### filter
 
 ```tsx
-Expression
+FilterExpression
 ```
 Filter only the features in the source layer that satisfy a condition that you define
 
@@ -108,12 +108,24 @@ The maximum zoom level at which the layer gets parsed and appears.
 
 
   
+### slot
+
+```tsx
+'bottom' | 'middle' | 'top'
+```
+The slot this layer is assigned to. If specified, and a slot with that name exists, it will be placed at that position in the layer order.
+
+v11 only
+
+
+  
 ### style
 
 ```tsx
 SymbolLayerStyleProps
 ```
-FIX ME NO DESCRIPTION
+_required_
+Customizable style attributes
 
 
   
@@ -271,7 +283,7 @@ Name: `symbolSortKey`
 Mapbox spec: [symbol-sort-key](https://docs.mapbox.com/style-spec/reference/layers/#layout-symbol-symbol-sort-key)
 
 #### Description
-Sorts features in ascending order based on this value. Features with lower sort keys are drawn and placed first.  When `iconAllowOverlap` or `textAllowOverlap` is `false`, features with a lower sort key will have priority during placement. When `iconAllowOverlap` or `textAllowOverlap` is set to `true`, features with a higher sort key will overlap over features with a lower sort key.
+Sorts features in ascending order based on this value. Features with lower sort keys are drawn and placed first. When `iconAllowOverlap` or `textAllowOverlap` is `false`, features with a lower sort key will have priority during placement. When `iconAllowOverlap` or `textAllowOverlap` is set to `true`, features with a higher sort key will overlap over features with a lower sort key.
 
 #### Type
 `number`
@@ -459,7 +471,7 @@ Scales the icon to fit around the associated text.
 
 #### Expression
 
-Parameters: `zoom`
+Parameters: `zoom, feature`
 
 ___
 
@@ -485,7 +497,7 @@ Size of the additional area added to dimensions determined by `iconTextFit`, in 
 
 #### Expression
 
-Parameters: `zoom`
+Parameters: `zoom, feature`
 
 ___
 
@@ -1271,6 +1283,9 @@ Whether this layer is displayed.
 **none** - The layer is not shown.<br />
 
 
+#### Expression
+
+Parameters: ``
 
 ___
 
@@ -1299,7 +1314,7 @@ The opacity at which the icon will be drawn.
 
 #### Expression
 
-Parameters: `zoom, feature, feature-state`
+Parameters: `zoom, feature, feature-state, measure-light`
 ___
 
 ### iconOpacityTransition
@@ -1341,7 +1356,7 @@ The color of the icon. This can only be used with [SDF icons](https://docs.mapbo
 
 #### Expression
 
-Parameters: `zoom, feature, feature-state`
+Parameters: `zoom, feature, feature-state, measure-light`
 ___
 
 ### iconColorTransition
@@ -1383,7 +1398,7 @@ The color of the icon's halo. Icon halos can only be used with [SDF icons](https
 
 #### Expression
 
-Parameters: `zoom, feature, feature-state`
+Parameters: `zoom, feature, feature-state, measure-light`
 ___
 
 ### iconHaloColorTransition
@@ -1431,7 +1446,7 @@ Distance of halo to the icon outline.
 
 #### Expression
 
-Parameters: `zoom, feature, feature-state`
+Parameters: `zoom, feature, feature-state, measure-light`
 ___
 
 ### iconHaloWidthTransition
@@ -1479,7 +1494,7 @@ Fade out the halo towards the outside.
 
 #### Expression
 
-Parameters: `zoom, feature, feature-state`
+Parameters: `zoom, feature, feature-state, measure-light`
 ___
 
 ### iconHaloBlurTransition
@@ -1599,7 +1614,7 @@ The opacity at which the text will be drawn.
 
 #### Expression
 
-Parameters: `zoom, feature, feature-state`
+Parameters: `zoom, feature, feature-state, measure-light`
 ___
 
 ### textOpacityTransition
@@ -1641,7 +1656,7 @@ The color with which the text will be drawn.
 
 #### Expression
 
-Parameters: `zoom, feature, feature-state`
+Parameters: `zoom, feature, feature-state, measure-light`
 ___
 
 ### textColorTransition
@@ -1683,7 +1698,7 @@ The color of the text's halo, which helps it stand out from backgrounds.
 
 #### Expression
 
-Parameters: `zoom, feature, feature-state`
+Parameters: `zoom, feature, feature-state, measure-light`
 ___
 
 ### textHaloColorTransition
@@ -1731,7 +1746,7 @@ Distance of halo to the font outline. Max text halo width is 1/4 of the fontSize
 
 #### Expression
 
-Parameters: `zoom, feature, feature-state`
+Parameters: `zoom, feature, feature-state, measure-light`
 ___
 
 ### textHaloWidthTransition
@@ -1779,7 +1794,7 @@ The halo's fadeout distance towards the outside.
 
 #### Expression
 
-Parameters: `zoom, feature, feature-state`
+Parameters: `zoom, feature, feature-state, measure-light`
 ___
 
 ### textHaloBlurTransition

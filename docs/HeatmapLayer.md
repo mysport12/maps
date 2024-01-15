@@ -20,7 +20,7 @@ HeatmapLayer is a style layer that renders one or more filled circles on the map
 string
 ```
 _required_
-A string that uniquely identifies the layer in the style to which it is added.
+A string that uniquely identifies the source in the style to which it is added.
 
 
   
@@ -42,7 +42,7 @@ The source from which to obtain the data to style.
 If the source has not yet been added to the current style, the behavior is undefined.
 Inferred from parent source only if the layer is a direct child to it.
 
-  _defaults to:_ `MapboxGL.StyleSource.DefaultSourceID`
+  _defaults to:_ `Mapbox.StyleSource.DefaultSourceID`
 
   
 ### sourceLayerID
@@ -50,8 +50,7 @@ Inferred from parent source only if the layer is a direct child to it.
 ```tsx
 string
 ```
-Identifier of the layer within the source identified by the sourceID property
-from which the receiver obtains the data to style.
+Identifier of the layer within the source identified by the sourceID property from which the receiver obtains the data to style.
 
 
   
@@ -109,6 +108,17 @@ The maximum zoom level at which the layer gets parsed and appears.
 
 
   
+### slot
+
+```tsx
+'bottom' | 'middle' | 'top'
+```
+The slot this layer is assigned to. If specified, and a slot with that name exists, it will be placed at that position in the layer order.
+
+v11 only
+
+
+  
 ### style
 
 ```tsx
@@ -153,6 +163,9 @@ Whether this layer is displayed.
 **none** - The layer is not shown.<br />
 
 
+#### Expression
+
+Parameters: ``
 
 ___
 
@@ -178,7 +191,7 @@ Radius of influence of one heatmap point in pixels. Increasing the value makes t
 
 #### Expression
 
-Parameters: `zoom, feature, feature-state`
+Parameters: `zoom, feature, feature-state, measure-light`
 ___
 
 ### heatmapRadiusTransition
@@ -220,7 +233,7 @@ A measure of how much an individual point contributes to the heatmap. A value of
 
 #### Expression
 
-Parameters: `zoom, feature, feature-state`
+Parameters: `zoom, feature, feature-state, measure-light`
 
 ___
 
@@ -272,7 +285,7 @@ Name: `heatmapColor`
 Mapbox spec: [heatmap-color](https://docs.mapbox.com/style-spec/reference/layers/#paint-heatmap-heatmap-color)
 
 #### Description
-Defines the color of each pixel based on its density value in a heatmap.  Should be an expression that uses `["heatmapDensity"]` as input.
+Defines the color of each pixel based on its density value in a heatmap. Should be an expression that uses `["heatmapDensity"]` as input.
 
 #### Type
 `color`

@@ -1,22 +1,29 @@
 const path = require('path');
 
+const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 const exclusionList = require('metro-config/src/defaults/exclusionList');
 const escape = require('escape-string-regexp');
 
-const libPackageJson = require('../package.json');
-
 const root = path.resolve(__dirname, '..');
+
+const libPackageJson = require('../package.json');
 
 const libPeerDependencies = Object.keys(libPackageJson.peerDependencies)
   .concat(['@babel/runtime'])
   .concat(Object.keys(libPackageJson.dependencies));
 
-module.exports = {
+const defaultConfig = getDefaultConfig(__dirname);
+
+/**
+ * Metro configuration
+ * https://facebook.github.io/metro/docs/configuration
+ *
+ * @type {import('metro-config').MetroConfig}
+ */
+const config = {
   projectRoot: __dirname,
   watchFolders: [root],
 
-  // We need to make sure that only one version is loaded for peerDependencies
-  // So we exclude them at the root, and alias them to the versions in example's node_modules
   resolver: {
     blacklistRE: exclusionList(
       libPeerDependencies.map(
@@ -29,6 +36,8 @@ module.exports = {
       acc[name] = path.join(__dirname, 'node_modules', name);
       return acc;
     }, {}),
+
+    assetExts: [...defaultConfig.resolver.assetExts, 'gltf', 'glb'],
   },
 
   transformer: {
@@ -40,3 +49,5 @@ module.exports = {
     }),
   },
 };
+
+module.exports = mergeConfig(defaultConfig, config);

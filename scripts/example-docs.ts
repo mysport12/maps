@@ -1,10 +1,11 @@
 /**
- * @file Generates markdown for each example. Reads docs/examples.json, <docRepo>/screenshots/screenshots.json and generates <docRepo>/docs/examples/
+ * @file Generates markdown for each example. Reads docs/examples.json, <docRepo>/examples-screenshots/screenshots.json and generates <docRepo>/docs/examples/
  */
 
 import * as path from 'path';
 import * as fs from 'fs';
 import { execSync } from 'child_process';
+import Os from 'os';
 
 // eslint-disable-next-line import/order
 import {
@@ -51,17 +52,29 @@ examples.forEach(({ groupName, examples, metadata }) => {
 
     const basename = path.basename(name);
 
-    const exampleScreenshots = screenshots[groupName][name];
+    if (screenshots[groupName] == null) {
+      console.log(` => error: "${groupName}" is not in screenshots.json`);
+    }
+    const exampleScreenshots = (screenshots[groupName] || {})[name];
 
+    const screenshotImages = (exampleScreenshots || {}).images || [];
     fs.mkdirSync(destGroupDir, { recursive: true });
-    const images: { title: string; filename: string }[] =
-      exampleScreenshots.images.map((imagePath) => {
+    const images: { title: string; filename: string }[] = screenshotImages.map(
+      (imagePath) => {
         const imageName = path.basename(imagePath);
         const imageDestPath = path.join(destGroupDir, imageName);
         fs.copyFileSync(path.join(docSiteRootPath, imagePath), imageDestPath);
-        execSync(`sips -Z 640 ${imageDestPath}`);
+        if (Os.platform() === 'darwin') {
+          execSync(`sips -Z 640 ${imageDestPath}`);
+        } else {
+          execSync(
+            `convert -resize x640 -define png:exclude-chunks=date,time ${imageDestPath} ${imageDestPath}`,
+          );
+        }
+
         return { title: imageName, filename: imageName };
-      });
+      },
+    );
 
     const md = `---
 title: ${title}

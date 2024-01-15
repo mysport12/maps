@@ -40,7 +40,7 @@ string
 ```
 An HTTP(S) URL, absolute file URL, or local file URL relative to the current application’s resource bundle.
 
-
+[Dynamic URL](../examples/Map/DynamicUrl)
   
 ### shape
 
@@ -156,14 +156,14 @@ func
 Source press listener, gets called when a user presses one of the children layers only
 if that layer has a higher z-index than another source layers
 
-@param {Object} event
-@param {Object[]} event.features - the geojson features that have hit by the press (might be multiple)
-@param {Object} event.coordinates - the coordinates of the click
-@param {Object} event.point - the point of the click
+- `event`: `Object` 
+- `event.features`: `Object[]`  - the geojson features that have hit by the press (might be multiple)
+- `event.coordinates`: `Object`  - the coordinates of the click
+- `event.point`: `Object`  - the point of the click
 @return void
 *signature:*`(event:OnPressEvent) =&gt; void`
 
-[Custom Icon](../examples/SymbolCircleLayer/CustomIcon)
+[Custom Icon](../examples/SymbolCircleLayer/CustomIcon), [Custom Icon Native Asset](../examples/SymbolCircleLayer/CustomIconNativeAsset)
   
 ### hitbox
 
@@ -252,4 +252,4 @@ const collection = await shapeSource.getClusterChildren(clusterId);
 | `event` | `NativeSyntheticEvent` | `Yes` | undefined |
 
 
-[Custom Icon](../examples/SymbolCircleLayer/CustomIcon)
+[Custom Icon](../examples/SymbolCircleLayer/CustomIcon), [Custom Icon Native Asset](../examples/SymbolCircleLayer/CustomIconNativeAsset)

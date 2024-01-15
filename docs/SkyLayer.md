@@ -41,7 +41,7 @@ string
 The source from which to obtain the data to style.
 If the source has not yet been added to the current style, the behavior is undefined.
 
-  _defaults to:_ `MapboxGL.StyleSource.DefaultSourceID`
+  _defaults to:_ `Mapbox.StyleSource.DefaultSourceID`
 
   
 ### aboveLayerID
@@ -128,6 +128,9 @@ Whether this layer is displayed.
 **none** - The layer is not shown.<br />
 
 
+#### Expression
+
+Parameters: ``
 
 ___
 

@@ -14,7 +14,6 @@ class FeatureEntry {
   }
 }
 
-
 #if RNMBX_11
 extension QueriedRenderedFeature {
   var feature : Feature { return queriedFeature.feature }
@@ -98,80 +97,103 @@ class RNMBXCameraChanged : RNMBXEvent, RCTEvent {
 }
 
 @objc(RNMBXMapView)
-open class RNMBXMapView : MapView {
+open class RNMBXMapView: UIView {
+  var imageManager: ImageManager = ImageManager()
+
   var tapDelegate: IgnoreRNMBXMakerViewGestureDelegate? = nil
-
+  
   var eventDispatcher: RCTEventDispatcherProtocol
-
-  var compassEnabled: Bool = false
-  var compassFadeWhenNorth: Bool = false
+  
   var reactOnPress : RCTBubblingEventBlock?
   var reactOnLongPress : RCTBubblingEventBlock?
   var reactOnMapChange : RCTBubblingEventBlock?
-
+  
   @objc
   var onCameraChanged: RCTDirectEventBlock?
-
+  
   var styleLoaded: Bool = false
   var styleLoadWaiters : [(MapboxMap)->Void] = []
-
+  
   var features: [FeatureEntry] = []
-
+  
   weak var reactCamera : RNMBXCamera?
   var images : [RNMBXImages] = []
   var sources : [RNMBXInteractiveElement] = []
   
   var handleMapChangedEvents = Set<RNMBXEvent.EventType>()
-
+  
   var eventListeners : [Cancelable] = []
-
+  
   private var isPendingInitialLayout = true
   private var wasGestureActive = false
   private var isGestureActive = false
-
+  
   var layerWaiters : [String:[(String) -> Void]] = [:]
+
+  @objc
+  public var deselectAnnotationOnTap: Bool = false
   
-  #if RNMBX_11
+#if RNMBX_11
   var cancelables = Set<AnyCancelable>()
-  #endif
+#endif
   
-  lazy var pointAnnotationManager : PointAnnotationManager = {
-    let result = PointAnnotationManager(annotations: annotations, mapView: mapView)
+  lazy var pointAnnotationManager : RNMBXPointAnnotationManager = {
+    let result = RNMBXPointAnnotationManager(annotations: mapView.annotations, mapView: mapView)
     self._removeMapboxLongPressGestureRecognizer()
     return result
   }()
-
+  
   lazy var calloutAnnotationManager : MapboxMaps.PointAnnotationManager = {
-    return annotations.makePointAnnotationManager(id: "RNMBX-mapview-callouts")
+    return mapView.annotations.makePointAnnotationManager(id: "RNMBX-mapview-callouts")
   }()
   
-  var mapView : MapView {
-    get { return self }
+  var _mapView: MapView! = nil
+  func createMapView() {
+#if RNMBX_11
+    _mapView = MapView(frame: self.bounds, mapInitOptions:  MapInitOptions())
+#else
+    let resourceOptions = ResourceOptions(accessToken: RNMBXModule.accessToken!)
+    _mapView = MapView(frame: frame, mapInitOptions: MapInitOptions(resourceOptions: resourceOptions))
+#endif
+    _mapView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    addSubview(_mapView)
+    
+    _mapView.gestures.delegate = self
+    setupEvents()
+  }
+  
+  var mapView : MapView! {
+    get { return _mapView }
+  }
+  var mapboxMap: MapboxMap! {
+    get { _mapView.mapboxMap }
   }
 
   @objc public func addToMap(_ subview: UIView) {
-    if let mapComponent = subview as? RNMBXMapComponent {
-      let style = mapView.mapboxMap.style
-      var addToMap = false
-      if mapComponent.waitForStyleLoad() {
-        if (self.styleLoaded) {
+    withMapView {
+      if let mapComponent = subview as? RNMBXMapComponent {
+        let style = self.mapView.mapboxMap.style
+        var addToMap = false
+        if mapComponent.waitForStyleLoad() {
+          if (self.styleLoaded) {
+            addToMap = true
+          }
+        } else {
           addToMap = true
         }
+        
+        let entry = FeatureEntry(feature: mapComponent, view: subview, addedToMap: false)
+        if (addToMap) {
+          mapComponent.addToMap(self, style: style)
+          entry.addedToMap = true
+        }
+        self.features.append(entry)
       } else {
-        addToMap = true
+        subview.reactSubviews()?.forEach { self.addToMap($0) }
       }
-
-      let entry = FeatureEntry(feature: mapComponent, view: subview, addedToMap: false)
-      if (addToMap) {
-        mapComponent.addToMap(self, style: style)
-        entry.addedToMap = true
+      if let source = subview as? RNMBXInteractiveElement {
+        self.sources.append(source)
       }
-      features.append(entry)
-    } else {
-      subview.reactSubviews()?.forEach { addToMap($0) }
-    }
-    if let source = subview as? RNMBXInteractiveElement {
-      sources.append(source)
     }
   }
   
@@ -181,8 +203,8 @@ open class RNMBXMapView : MapView {
       if let entryIndex = entryIndex {
         var entry = features[entryIndex]
         if (entry.addedToMap) {
-            mapComponent.removeFromMap(self, reason: .OnDestroy)
-            entry.addedToMap = false
+          mapComponent.removeFromMap(self, reason: .OnDestroy)
+          entry.addedToMap = false
         }
         features.remove(at: entryIndex)
       }
@@ -205,30 +227,20 @@ open class RNMBXMapView : MapView {
   }
 
   @objc public required init(frame:CGRect, eventDispatcher: RCTEventDispatcherProtocol) {
-    #if RNMBX_11
     self.eventDispatcher = eventDispatcher
-    super.init(frame: frame, mapInitOptions: MapInitOptions())
-    #else
-    let resourceOptions = ResourceOptions(accessToken: RNMBXModule.accessToken!)
-    self.eventDispatcher = eventDispatcher
-    super.init(frame: frame, mapInitOptions: MapInitOptions(resourceOptions: resourceOptions))
-    #endif
-
-    self.mapView.gestures.delegate = self
-
-    setupEvents()
+    super.init(frame: frame)
   }
   
   public required init (coder: NSCoder) {
-      fatalError("not implemented")
+    fatalError("not implemented")
   }
   
   func layerAdded (_ layer: Layer) {
-      // TODO
+    // TODO
   }
   
   func waitForLayerWithID(_ layerId: String, _  callback: @escaping (_ layerId: String) -> Void) {
-    let style = mapboxMap.style;
+    let style = mapView.mapboxMap.style;
     if style.layerExists(withId: layerId) {
       callback(layerId)
     } else {
@@ -241,40 +253,141 @@ open class RNMBXMapView : MapView {
     if let camera = reactCamera {
       if (isPendingInitialLayout) {
         isPendingInitialLayout = false;
-
+        
         camera.initialLayout()
       }
     }
   }
-
+  
   
   // MARK: - React Native properties
-
+  let changes : PropertyChanges<RNMBXMapView> = PropertyChanges()
+  var mapViewWaiters : [()->Void] = []
+  
+  enum Property : String {
+    case projection
+    case localizeLabels
+    case attribution
+    case logo
+    case compass
+    case scaleBar
+    case onLongPress
+    case onPress
+    case scrollEnabled
+    case rotateEnabled
+    case pitchEnabled
+    case onMapChange
+    case styleURL
+    case gestureSettings
+    
+    func apply(_ map: RNMBXMapView) -> Void {
+      switch self {
+      case .projection:
+        map.applyProjection()
+      case .localizeLabels:
+        map.applyLocalizeLabels()
+      case .attribution:
+        map.applyAttribution()
+      case .logo:
+        map.applyLogo()
+      case .compass:
+        map.applyCompass()
+      case .scaleBar:
+        map.applyScaleBar()
+      case .onLongPress:
+        map.applyOnLongPress()
+      case .onPress:
+        map.applyOnPress()
+      case .scrollEnabled:
+        map.applyScrollEnabled()
+      case .rotateEnabled:
+        map.applyRotateEnabled()
+      case .onMapChange:
+        map.applyOnMapChange()
+      case .styleURL:
+        map.applyStyleURL()
+      case .pitchEnabled:
+        map.applyPitchEnabled()
+      case .gestureSettings:
+        map.applyGestureSettings()
+      }
+    }
+  }
+  
+  func changed(_ property: Property) {
+    changes.add(name: property.rawValue, update: property.apply)
+  }
+  
+  func withMapView(callback: @escaping () -> Void) {
+    if _mapView != nil {
+      callback()
+    } else {
+      mapViewWaiters.append(callback)
+    }
+  }
+  
+  var projection: StyleProjection?
+  
   @objc public func setReactProjection(_ value: String?) {
     if let value = value {
-      let projection = StyleProjection(name: value == "globe" ? .globe : .mercator)
-      logged("RNMBXMapView.setReactProjection") {
+      projection = StyleProjection(name: value == "globe" ? .globe : .mercator)
+    } else {
+      projection = nil
+    }
+    changed(.projection)
+  }
+  
+  func applyProjection() {
+    logged("RNMBXMapView.setReactProjection") {
+      if let projection = projection {
         try self.mapboxMap.style.setProjection(projection)
       }
     }
   }
-
+  
+  var locale: (layerIds: [String]?, locale: Locale)? = nil
+  
   @objc public func setReactLocalizeLabels(_ value: NSDictionary?) {
+    if let value = value {
+      let localeString = value["locale"] as! String
+      let layerIds = value["layerIds"] as! [String]?
+      let locale = localeString == "current" ? Locale.current : Locale(identifier: localeString)
+      self.locale = (layerIds, locale)
+    }
+    changed(.localizeLabels)
+  }
+  
+  func applyLocalizeLabels() {
     onMapStyleLoaded { _ in
-      if let value = value {
-        logged("RNMBXMapVIew.setReactLocalizeLabels") {
-          let localeString = value["locale"] as! String
-          let layerIds = value["layerIds"] as! [String]?
-          let locale = localeString == "current" ? Locale.current : Locale(identifier: localeString)
-          try self.mapboxMap.style.localizeLabels(into: locale, forLayerIds: layerIds)
+      logged("RNMBXMapView.\(#function)") {
+        if let locale = self.locale {
+          try self.mapboxMap.style.localizeLabels(into: locale.locale, forLayerIds: locale.layerIds)
         }
       }
     }
   }
   
-  @objc public func setReactGestureSettings(_ value: NSDictionary?) {
-    if let value = value, let gestures = self.mapView.gestures {
-      var options = gestures.options
+  struct GestureSettings {
+    var doubleTapToZoomInEnabled: Bool? = nil;
+    var doubleTouchToZoomOutEnabled: Bool? = nil;
+    var pinchPanEnabled: Bool? = nil;
+    var pinchZoomEnabled: Bool? = nil;
+    var pitchEnabled: Bool? = nil;
+    var quickZoomEnabled: Bool? = nil;
+    var rotateEnabled: Bool? = nil;
+    var panEnabled: Bool? = nil;
+    var panDecelerationFactor: CGFloat? = nil;
+    #if RNMBX_11
+    var simultaneousRotateAndPinchZoomEnabled: Bool? = nil;
+    #endif
+  }
+  
+  var gestureSettings = GestureSettings()
+  
+  @objc
+  public func setReactGestureSettings(_ value: NSDictionary?) {
+    if let value = value {
+      var options = gestureSettings
       if let doubleTapToZoomInEnabled = value["doubleTapToZoomInEnabled"] as? NSNumber {
         options.doubleTapToZoomInEnabled = doubleTapToZoomInEnabled.boolValue
       }
@@ -288,10 +401,10 @@ open class RNMBXMapView : MapView {
         options.pinchZoomEnabled = pinchZoomEnabled.boolValue
       }
       /* android only
-      if let pinchZoomDecelerationEnabled = value["pinchZoomDecelerationEnabled"] as? NSNumber {
-        options.pinchZoomDecelerationEnabled = pinchZoomDecelerationEnabled.boolValue
-      }
-      */
+       if let pinchZoomDecelerationEnabled = value["pinchZoomDecelerationEnabled"] as? NSNumber {
+       options.pinchZoomDecelerationEnabled = pinchZoomDecelerationEnabled.boolValue
+       }
+       */
       if let pitchEnabled = value["pitchEnabled"] as? NSNumber {
         options.pitchEnabled = pitchEnabled.boolValue
       }
@@ -302,68 +415,188 @@ open class RNMBXMapView : MapView {
         options.rotateEnabled = rotateEnabled.boolValue
       }
       /* android only
-      if let rotateDecelerationEnabled = value["rotateDecelerationEnabled"] as? NSNumber {
-        options.rotateDecelerationEnabled = rotateDecelerationEnabled.boolValue
-      }*/
+       if let rotateDecelerationEnabled = value["rotateDecelerationEnabled"] as? NSNumber {
+       options.rotateDecelerationEnabled = rotateDecelerationEnabled.boolValue
+       }*/
       if let panEnabled = value["panEnabled"] as? NSNumber {
         options.panEnabled = panEnabled.boolValue
       }
       if let panDecelerationFactor = value["panDecelerationFactor"] as? NSNumber {
         options.panDecelerationFactor = panDecelerationFactor.CGFloat
       }
-      #if RNMBX_11
+#if RNMBX_11
       if let simultaneousRotateAndPinchZoomEnabled = value["simultaneousRotateAndPinchZoomEnabled"] as? NSNumber {
         options.simultaneousRotateAndPinchZoomEnabled = simultaneousRotateAndPinchZoomEnabled.boolValue
       }
-      #endif
+#endif
       /* android only
-      if let zoomAnimationAmount = value["zoomAnimationAmount"] as? NSNumber {
-        options.zoomAnimationAmount = zoomAnimationAmount.CGFloat
-      }*/
+       if let zoomAnimationAmount = value["zoomAnimationAmount"] as? NSNumber {
+       options.zoomAnimationAmount = zoomAnimationAmount.CGFloat
+       }*/
+      gestureSettings = options
+      
+      changed(.gestureSettings)
+    }
+  }
+  
+  func applyGestureSettings() {
+    if let gestures = self.mapView?.gestures {
+      var options = gestures.options
+      let settings = gestureSettings
+      if let doubleTapToZoomInEnabled = settings.doubleTapToZoomInEnabled as? Bool {
+        options.doubleTapToZoomInEnabled = doubleTapToZoomInEnabled
+      }
+      if let doubleTouchToZoomOutEnabled = settings.doubleTouchToZoomOutEnabled as? Bool {
+        options.doubleTouchToZoomOutEnabled = doubleTouchToZoomOutEnabled
+      }
+      if let pinchPanEnabled = settings.pinchPanEnabled as? Bool {
+        options.pinchPanEnabled = pinchPanEnabled
+      }
+      if let pinchZoomEnabled = settings.pinchZoomEnabled as? Bool {
+        options.pinchZoomEnabled = pinchZoomEnabled
+      }
+      if let pitchEnabled = settings.pitchEnabled as? Bool {
+        options.pitchEnabled = pitchEnabled
+      }
+      if let quickZoomEnabled = settings.quickZoomEnabled as? Bool {
+        options.quickZoomEnabled = quickZoomEnabled
+      }
+      if let rotateEnabled = settings.rotateEnabled as? Bool {
+        options.rotateEnabled = rotateEnabled
+      }
+      /* android only
+       if let rotateDecelerationEnabled = value["rotateDecelerationEnabled"] as? NSNumber {
+       options.rotateDecelerationEnabled = rotateDecelerationEnabled.boolValue
+       }*/
+      if let panEnabled = settings.panEnabled as? Bool {
+        options.panEnabled = panEnabled
+      }
+      if let panDecelerationFactor = settings.panDecelerationFactor as? CGFloat {
+        options.panDecelerationFactor = panDecelerationFactor
+      }
+#if RNMBX_11
+      if let simultaneousRotateAndPinchZoomEnabled = settings.simultaneousRotateAndPinchZoomEnabled as? Bool {
+        options.simultaneousRotateAndPinchZoomEnabled = simultaneousRotateAndPinchZoomEnabled
+      }
+#endif
+      /* android only
+       if let zoomAnimationAmount = value["zoomAnimationAmount"] as? NSNumber {
+       options.zoomAnimationAmount = zoomAnimationAmount.CGFloat
+       }*/
       if options != gestures.options {
         gestures.options = options
       }
     }
   }
   
+  var attributionEnabled: OrnamentVisibility? = nil
+  var attributionOptions: (position: OrnamentPosition, margins: CGPoint)? = nil
+  
   @objc public func setReactAttributionEnabled(_ value: Bool) {
-    mapView.ornaments.options.attributionButton.visibility = value ? .visible : .hidden
+    attributionEnabled = value ? .visible : .hidden
+    changed(.attribution)
+  }
+  
+  func applyAttribution() {
+    if let visibility = attributionEnabled {
+      mapView.ornaments.options.attributionButton.visibility = visibility
+    }
+    if let options = attributionOptions {
+      mapView.ornaments.options.attributionButton.position = options.position
+      mapView.ornaments.options.attributionButton.margins = options.margins
+    }
   }
   
   @objc public func setReactAttributionPosition(_ position: [String: NSNumber]) {
-    if let ornamentOptions = self.getOrnamentOptionsFromPosition(position) {
-      mapView.ornaments.options.attributionButton.position = ornamentOptions.position
-      mapView.ornaments.options.attributionButton.margins = ornamentOptions.margins
-    }
+    attributionOptions = self.getOrnamentOptionsFromPosition(position)
+    changed(.attribution)
   }
   
+  var logoEnabled: OrnamentVisibility? = nil
+  var logoOptions: (position: OrnamentPosition, margins: CGPoint)? = nil
+  
   @objc public func setReactLogoEnabled(_ value: Bool) {
-    mapView.ornaments.options.logo.visibility = value ? .visible : .hidden
+    logoEnabled = value ? .visible : .hidden
+    changed(.logo)
   }
   
   @objc public func setReactLogoPosition(_ position: [String: NSNumber]) {
-    if let ornamentOptions = self.getOrnamentOptionsFromPosition(position) {
-      mapView.ornaments.options.logo.position = ornamentOptions.position
-      mapView.ornaments.options.logo.margins = ornamentOptions.margins
+    logoOptions = self.getOrnamentOptionsFromPosition(position)
+    changed(.logo)
+  }
+  
+  func applyLogo() {
+    if let visibility = logoEnabled {
+      mapView.ornaments.options.logo.visibility = visibility
+    }
+    if let options = logoOptions {
+      mapView.ornaments.options.logo.position = options.position
+      mapView.ornaments.options.logo.margins = options.margins
     }
   }
   
+  var compassEnabled: Bool = false
+  var compassPosition: OrnamentPosition? = nil
+  var compassMargins: CGPoint? = nil
+  var compassFadeWhenNorth: Bool = false
+  var compassImage: String?
+
   @objc public func setReactCompassEnabled(_ value: Bool) {
     compassEnabled = value
-    mapView.ornaments.options.compass.visibility = value ? compassFadeWhenNorth ? .adaptive : .visible : .hidden
+    changed(.compass)
   }
-  
+
   @objc public func setReactCompassFadeWhenNorth(_ value: Bool) {
     compassFadeWhenNorth = value
-    if (compassEnabled) {
-      mapView.ornaments.options.compass.visibility = value ? .adaptive : .visible
-    }
+    changed(.compass)
   }
   
   @objc public func setReactCompassPosition(_ position: [String: NSNumber]) {
-    if let ornamentOptions = self.getOrnamentOptionsFromPosition(position) {
-      mapView.ornaments.options.compass.position = ornamentOptions.position
-      mapView.ornaments.options.compass.margins = ornamentOptions.margins
+    if let compassOptions = self.getOrnamentOptionsFromPosition(position) {
+      compassPosition = compassOptions.position
+      compassMargins = compassOptions.margins
+      changed(.compass)
+    }
+  }
+
+  @objc public func setReactCompassViewPosition(_ position: NSInteger) {
+    compassPosition = toOrnamentPositon(Int(truncating: NSNumber(value: position)))
+    changed(.compass)
+  }
+  
+  @objc public func setReactCompassViewMargins(_ margins: CGPoint) {
+    compassMargins = margins
+    changed(.compass)
+  }
+
+  @objc public func setReactCompassImage(_ image: String) {
+    compassImage = image.isEmpty ? nil : image
+    changed(.compass)
+  }
+    
+  func applyCompass() {
+    var visibility: OrnamentVisibility = .hidden
+    if compassEnabled {
+      visibility = compassFadeWhenNorth ? .adaptive : .visible
+    }
+    mapView.ornaments.options.compass.visibility = visibility
+    
+    if let position = compassPosition {
+      mapView.ornaments.options.compass.position = position
+    }
+    if let margina = compassMargins {
+      mapView.ornaments.options.compass.margins = margina
+    }
+    
+    if let compassImage = compassImage {
+      onMapStyleLoaded { map in
+        let img = map.style.image(withId: compassImage)
+        self.mapView.ornaments.options.compass.image = img
+      }
+    } else {
+      // Does not currently reset the image to the default.
+      // See https://github.com/mapbox/mapbox-maps-ios/issues/1673.
+      self.mapView.ornaments.options.compass.image = nil
     }
   }
   
@@ -389,42 +622,43 @@ open class RNMBXMapView : MapView {
       return .topLeading
     }
   }
-  
-  @objc public func setReactCompassViewPosition(_ position: NSInteger) {
-    mapView.ornaments.options.compass.position = toOrnamentPositon(Int(truncating: NSNumber(value: position)))
-  }
-  
-  @objc public func setReactCompassViewMargins(_ margins: CGPoint) {
-    mapView.ornaments.options.compass.margins = margins;
-  }
 
-  @objc public func setReactCompassImage(_ image: String) {
-    compassImage = image.isEmpty ? nil : image
-    refreshCompassImage()
-  }
+  var scaleBarEnabled: Bool? = nil
+  var scaleBarPosition: OrnamentPosition? = nil
+  var scaleBarMargins: CGPoint? = nil
   
-  private func refreshCompassImage() {
-    if let compassImage = compassImage {
-      onMapStyleLoaded { map in
-        let img = map.style.image(withId: compassImage)
-        self.mapView.ornaments.options.compass.image = img
-      }
-    } else {
-      // Does not currently reset the image to the default.
-      // See https://github.com/mapbox/mapbox-maps-ios/issues/1673.
-      self.mapView.ornaments.options.compass.image = nil
-    }
-  }
-
   @objc public func setReactScaleBarEnabled(_ value: Bool) {
-    self.mapView.ornaments.options.scaleBar.visibility = value ? .visible : .hidden
+    scaleBarEnabled = value
+    changed(.scaleBar)
   }
   
   @objc public func setReactScaleBarPosition(_ position: [String: NSNumber]) {
     if let ornamentOptions = self.getOrnamentOptionsFromPosition(position) {
-      mapView.ornaments.options.scaleBar.position = ornamentOptions.position
-      mapView.ornaments.options.scaleBar.margins = ornamentOptions.margins
+      scaleBarPosition = ornamentOptions.position
+      scaleBarMargins = ornamentOptions.margins
     }
+  }
+  
+  func applyScaleBar() {
+    if let enabled = scaleBarEnabled {
+      mapView.ornaments.options.scaleBar.visibility = enabled ? .visible : .hidden
+    }
+    if let position = scaleBarPosition {
+      mapView.ornaments.options.scaleBar.position = position
+    }
+    if let margins = scaleBarMargins {
+      mapView.ornaments.options.scaleBar.margins = margins
+    }
+  }
+
+  @objc override public func didSetProps(_ props: [String]) {
+    if (_mapView == nil) {
+      createMapView()
+      
+      mapViewWaiters.forEach { $0() }
+      mapViewWaiters.removeAll()
+    }
+    changes.apply(self)
   }
 
   @objc public func setReactZoomEnabled(_ value: Bool) {
@@ -433,17 +667,41 @@ open class RNMBXMapView : MapView {
     self.mapView.gestures.options.pinchZoomEnabled = value
   }
 
+  var scrollEnabled: Bool? = nil
   @objc public func setReactScrollEnabled(_ value: Bool) {
-    self.mapView.gestures.options.panEnabled = value
-    self.mapView.gestures.options.pinchPanEnabled = value
+    self.scrollEnabled = value
+    changed(.scrollEnabled)
+  }
+  
+  func applyScrollEnabled() {
+    if let value = scrollEnabled {
+      self.mapView.gestures.options.panEnabled = value
+      self.mapView.gestures.options.pinchPanEnabled = value
+    }
   }
 
+  var rotateEnabled: Bool? = nil
   @objc public func setReactRotateEnabled(_ value: Bool) {
-    self.mapView.gestures.options.rotateEnabled = value
+    rotateEnabled = value
+    changed(.rotateEnabled)
+  }
+  
+  func applyRotateEnabled() {
+    if let value = rotateEnabled {
+      self.mapView.gestures.options.rotateEnabled = value
+    }
   }
 
+  
+  var pitchEnabled: Bool? = nil
   @objc public func setReactPitchEnabled(_ value: Bool) {
-    self.mapView.gestures.options.pitchEnabled = value
+    self.pitchEnabled = value
+    changed(.pitchEnabled)
+  }
+  func applyPitchEnabled() {
+    if let value = pitchEnabled {
+      self.mapView.gestures.options.pitchEnabled = value
+    }
   }
 
   private func removeAllFeaturesFromMap(reason: RemovalReason) {
@@ -472,11 +730,17 @@ open class RNMBXMapView : MapView {
       addFeaturesToMap(style: style)
   }
   
+  var reactStyleURL: String? = nil
   @objc public func setReactStyleURL(_ value: String?) {
+    self.reactStyleURL = value
+    changed(.styleURL)
+  }
+  
+  public func applyStyleURL() {
     var initialLoad = !self.styleLoaded
     if !initialLoad { refreshComponentsBeforeStyleChange() }
     self.styleLoaded = false
-    if let value = value {
+    if let value = reactStyleURL {
       if let _ = URL(string: value) {
           if let styleURI = StyleURI(rawValue: value) {
               mapView.mapboxMap.loadStyleURI(styleURI)
@@ -572,7 +836,10 @@ extension RNMBXMapView {
 
   @objc public func setReactOnMapChange(_ value: @escaping RCTBubblingEventBlock) {
     self.reactOnMapChange = value
+    changed(.onMapChange)
+  }
 
+  func applyOnMapChange() {
     self.onEvery(event: .cameraChanged, handler: { (self, cameraEvent) in
       self.wasGestureActive = self.isGestureActive
       if self.handleMapChangedEvents.contains(.regionIsChanging) {
@@ -610,7 +877,7 @@ extension RNMBXMapView {
   }
   
   private func buildStateObject() -> [String: Any] {
-    let cameraOptions = CameraOptions(cameraState: cameraState)
+    let cameraOptions = CameraOptions(cameraState: mapView.cameraState)
     let bounds = mapView.mapboxMap.coordinateBounds(for: cameraOptions)
     
     return [
@@ -636,7 +903,7 @@ extension RNMBXMapView {
   }
 
   private func buildRegionObject() -> [String: Any] {
-    let cameraOptions = CameraOptions(cameraState: cameraState)
+    let cameraOptions = CameraOptions(cameraState: mapView.cameraState)
     let bounds = mapView.mapboxMap.coordinateBounds(for: cameraOptions)
     let boundsArray : JSONArray = [
       [.number(bounds.northeast.longitude),.number(bounds.northeast.latitude)],
@@ -795,7 +1062,10 @@ extension RNMBXMapView {
   
   @objc public func setReactOnPress(_ value: @escaping RCTBubblingEventBlock) {
     self.reactOnPress = value
-
+    changed(.onPress)
+  }
+  
+  func applyOnPress() {
     let singleTapGestureRecognizer = self.mapView.gestures.singleTapGestureRecognizer
 
     singleTapGestureRecognizer.removeTarget(pointAnnotationManager.manager, action: nil)
@@ -807,9 +1077,14 @@ extension RNMBXMapView {
 
   @objc public func setReactOnLongPress(_ value: @escaping RCTBubblingEventBlock) {
     self.reactOnLongPress = value
-
-    let longPressGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(doHandleLongPress(_:)))
-    self.mapView.addGestureRecognizer(longPressGestureRecognizer)
+    changed(.onLongPress)
+  }
+  
+  func applyOnLongPress() {
+    if (reactOnLongPress != nil) {
+      let longPressGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(doHandleLongPress(_:)))
+      self.mapView.addGestureRecognizer(longPressGestureRecognizer)
+    }
   }
 }
 
@@ -886,11 +1161,29 @@ extension RNMBXMapView: GestureManagerDelegate {
     return orderedLayers.lazy.reversed().compactMap { layersToSource[$0.id] }.first ?? sources.first
   }
   
+  
+  
+  func _tapEvent(_ tapPoint: CGPoint) -> RNMBXEvent {
+    let location = self.mapboxMap.coordinate(for: tapPoint)
+    var geojson = Feature(geometry: .point(Point(location)));
+    geojson.properties = [
+      "screenPointX": .number(Double(tapPoint.x)),
+      "screenPointY": .number(Double(tapPoint.y))
+    ]
+    let event = RNMBXEvent(type:.tap, payload: logged("reactOnPress") { try geojson.toJSON() })
+    return event
+  }
+  
   @objc
   func doHandleTap(_ sender: UITapGestureRecognizer) {
     let tapPoint = sender.location(in: self)
     pointAnnotationManager.handleTap(sender) { (_: UITapGestureRecognizer) in
       DispatchQueue.main.async {
+        if (self.deselectAnnotationOnTap) {
+          if (self.pointAnnotationManager.deselectCurrentlySelected(deselectAnnotationOnTap: true)) {
+            return
+          }
+        }
         let touchableSources = self.touchableSources()
         self.doHandleTapInSources(sources: touchableSources, tapPoint: tapPoint, hits: [:], touchedSources: []) { (hits, touchedSources) in
           
@@ -922,14 +1215,7 @@ extension RNMBXMapView: GestureManagerDelegate {
             
           } else {
             if let reactOnPress = self.reactOnPress {
-              let location = self.mapboxMap.coordinate(for: tapPoint)
-              var geojson = Feature(geometry: .point(Point(location)));
-              geojson.properties = [
-                "screenPointX": .number(Double(tapPoint.x)),
-                "screenPointY": .number(Double(tapPoint.y))
-              ]
-              let event = RNMBXEvent(type:.tap, payload: logged("reactOnPress") { try geojson.toJSON() })
-              self.fireEvent(event: event, callback: reactOnPress)
+              self.fireEvent(event: self._tapEvent(tapPoint), callback: reactOnPress)
             }
           }
         }
@@ -1069,7 +1355,7 @@ extension RNMBXMapView {
   }
 }
 
-class PointAnnotationManager : AnnotationInteractionDelegate {
+class RNMBXPointAnnotationManager : AnnotationInteractionDelegate {
   weak var selected : RNMBXPointAnnotation? = nil
   private var draggedAnnotation: PointAnnotation?
   
@@ -1077,6 +1363,50 @@ class PointAnnotationManager : AnnotationInteractionDelegate {
     // We handle taps ourselfs
     //   onTap(annotations: annotations)
   }
+  
+  func deselectCurrentlySelected(deselectAnnotationOnTap: Bool = false) -> Bool {
+    if let selected = selected {
+      selected.doDeselect(deselectAnnotationOnMapTap: deselectAnnotationOnTap)
+      self.selected = nil
+      return true
+    }
+    return false
+  }
+  
+  func onAnnotationClick(pointAnnotation: RNMBXPointAnnotation) {
+    let oldSelected = selected
+    var newSelected: RNMBXPointAnnotation? = pointAnnotation
+    
+    if (newSelected == oldSelected) {
+      newSelected = nil
+    }
+    
+    deselectCurrentlySelected()
+
+    if let newSelected = newSelected {
+      newSelected.doSelect()
+      selected = newSelected
+    }
+  }
+  
+  func lookup(_ annotation: PointAnnotation) -> RNMBXPointAnnotation? {
+    guard let userInfo = annotation.userInfo else {
+        return nil
+    }
+    if let rnmbxPointAnnotationWeakRef = userInfo[RNMBXPointAnnotation.key] as? WeakRef<RNMBXPointAnnotation> {
+      if let rnmbxPointAnnotation = rnmbxPointAnnotationWeakRef.object {
+        return rnmbxPointAnnotation
+      }
+    }
+    #if RNMBX_11
+    // see https://github.com/rnmapbox/maps/issues/3121
+    if let rnmbxPointAnnotation = annotations.object(forKey: annotation.id as NSString) {
+      return rnmbxPointAnnotation;
+    }
+    #endif
+    return nil
+  }
+  
 
   func onTap(annotations: [Annotation]) {
     guard annotations.count > 0 else {
@@ -1084,34 +1414,9 @@ class PointAnnotationManager : AnnotationInteractionDelegate {
     }
     
     for annotation in annotations {
-      if let pointAnnotation = annotation as? PointAnnotation,
-         let userInfo = pointAnnotation.userInfo {
-        
-        if let RNMBXPointAnnotation = userInfo[RNMBXPointAnnotation.key] as? WeakRef<RNMBXPointAnnotation> {
-          if let pt = RNMBXPointAnnotation.object {
-            let position = pt.superview?.convert(pt.layer.position, to: nil)
-            let location = pt.map?.mapboxMap.coordinate(for: position!)
-            var geojson = Feature(geometry: .point(Point(location!)))
-            geojson.identifier = .string(pt.id)
-            geojson.properties = [
-              "screenPointX": .number(Double(position!.x)),
-              "screenPointY": .number(Double(position!.y))
-            ]
-            let event = RNMBXEvent(type:.tap, payload: logged("doHandleTap") { try geojson.toJSON() })
-            if let selected = selected {
-              guard let onDeselected = pt.onDeselected else {
-                return
-              }
-              onDeselected(event.toJSON())
-              selected.onDeselect()
-            }
-            guard let onSelected = pt.onSelected else {
-              return
-            }
-            onSelected(event.toJSON())
-            pt.onSelect()
-            selected = pt
-          }
+      if let annotation = annotation as? PointAnnotation {
+        if let pointAnnotation = lookup(annotation) {
+          onAnnotationClick(pointAnnotation: pointAnnotation)
         }
       }
     }
@@ -1176,41 +1481,36 @@ class PointAnnotationManager : AnnotationInteractionDelegate {
     
     for annotation in annotations {
       if let pointAnnotation = annotation as? PointAnnotation,
-         let userInfo = pointAnnotation.userInfo {
-        
-        if let RNMBXPointAnnotation = userInfo[RNMBXPointAnnotation.key] as? WeakRef<RNMBXPointAnnotation> {
-          if let pt = RNMBXPointAnnotation.object {
+         let pt = lookup(pointAnnotation) {
             let position = pt.superview?.convert(pt.layer.position, to: nil)
             var geojson = Feature(geometry: .point(Point(targetPoint)))
-            geojson.identifier = .string(pt.id)
-            geojson.properties = [
-              "screenPointX": .number(Double(position!.x)),
-              "screenPointY": .number(Double(position!.y))
-            ]
-            let event = RNMBXEvent(type:.longPress, payload: logged("doHandleLongPress") { try geojson.toJSON() })
-            switch (dragState) {
-            case .began:
-              guard let onDragStart = pt.onDragStart else {
-                return
-              }
-              onDragStart(event.toJSON())
-            case .changed:
-              guard let onDrag = pt.onDrag else {
-                return
-              }
-              onDrag(event.toJSON())
-              return
-            case .ended:
-              guard let onDragEnd = pt.onDragEnd else {
-                return
-              }
-              onDragEnd(event.toJSON())
-              return
-            default:
+          geojson.identifier = .string(pt.id)
+          geojson.properties = [
+            "screenPointX": .number(Double(position!.x)),
+            "screenPointY": .number(Double(position!.y))
+          ]
+          let event = RNMBXEvent(type:.longPress, payload: logged("doHandleLongPress") { try geojson.toJSON() })
+          switch (dragState) {
+          case .began:
+            guard let onDragStart = pt.onDragStart else {
               return
             }
+            onDragStart(event.toJSON())
+          case .changed:
+            guard let onDrag = pt.onDrag else {
+              return
+            }
+            onDrag(event.toJSON())
+            return
+          case .ended:
+            guard let onDragEnd = pt.onDragEnd else {
+              return
+            }
+            onDragEnd(event.toJSON())
+            return
+          default:
+            return
           }
-        }
       }
     }
   }
@@ -1244,7 +1544,7 @@ class PointAnnotationManager : AnnotationInteractionDelegate {
                   }
                   // Find if any `queriedFeatureIds` match an annotation's `id`
                 let draggedAnnotations = self.manager.annotations.filter { queriedFeatureIds.contains($0.id) }
-                let enabledAnnotations = draggedAnnotations.filter { ($0.userInfo?[RNMBXPointAnnotation.key] as? WeakRef<RNMBXPointAnnotation>)?.object?.draggable ?? false }
+                let enabledAnnotations = draggedAnnotations.filter { self.lookup($0)?.draggable ?? false }
                   // If `tappedAnnotations` is not empty, call delegate
                   if !enabledAnnotations.isEmpty {
                     self.draggedAnnotation = enabledAnnotations.first!
@@ -1285,9 +1585,19 @@ class PointAnnotationManager : AnnotationInteractionDelegate {
     manager.annotations.removeAll(where: {$0.id == annotation.id})
   }
   
-  func add(_ annotation: PointAnnotation) {
+  #if RNMBX_11
+  var annotations = NSMapTable<NSString, RNMBXPointAnnotation>.init(
+        keyOptions: .copyIn,
+        valueOptions: .weakMemory
+    )
+  #endif
+  
+  func add(_ annotation: PointAnnotation, _ rnmbxPointAnnotation: RNMBXPointAnnotation) {
     manager.annotations.append(annotation)
     manager.refresh()
+    #if RNMBX_11
+    annotations.setObject(rnmbxPointAnnotation, forKey: annotation.id as NSString)
+    #endif
   }
   
   func update(_ annotation: PointAnnotation) {

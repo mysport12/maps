@@ -13,9 +13,9 @@ import com.facebook.react.uimanager.ViewManagerDelegate
 import com.facebook.react.viewmanagers.RNMBXMarkerViewManagerDelegate
 import com.facebook.react.viewmanagers.RNMBXMarkerViewManagerInterface
 import com.mapbox.maps.ScreenCoordinate
-import com.mapbox.maps.viewannotation.OnViewAnnotationUpdatedListener
 import com.mapbox.maps.viewannotation.ViewAnnotationManager
 import com.rnmapbox.rnmbx.components.mapview.RNMBXMapView
+import com.rnmapbox.rnmbx.v11compat.annotation.*
 
 class RNMBXMarkerViewManager(reactApplicationContext: ReactApplicationContext) :
     AbstractEventEmitter<RNMBXMarkerView>(reactApplicationContext),
@@ -49,6 +49,11 @@ class RNMBXMarkerViewManager(reactApplicationContext: ReactApplicationContext) :
         markerView.setAllowOverlap(allowOverlap.asBoolean())
     }
 
+    @ReactProp(name = "allowOverlapWithPuck")
+    override fun setAllowOverlapWithPuck(markerView: RNMBXMarkerView, allowOverlapWithPuck: Dynamic) {
+        markerView.setAllowOverlapWithPuck(allowOverlapWithPuck.asBoolean())
+    }
+
     @ReactProp(name = "isSelected")
     override fun setIsSelected(markerView: RNMBXMarkerView, isSelected: Dynamic) {
         markerView.setIsSelected(isSelected.asBoolean())
@@ -69,7 +74,7 @@ class RNMBXMarkerViewManager(reactApplicationContext: ReactApplicationContext) :
         fun markerViewContainerSizeFixer(mapView: RNMBXMapView, viewAnnotationManager: ViewAnnotationManager) {
             // see https://github.com/rnmapbox/maps/issues/2376
             viewAnnotationManager.addOnViewAnnotationUpdatedListener(object :
-                OnViewAnnotationUpdatedListener {
+                OnViewAnnotationUpdatedListener() {
                 override fun onViewAnnotationVisibilityUpdated(view: View, visible: Boolean) {
                     val parent = view.parent
                     if (parent is FrameLayout) {
@@ -79,13 +84,7 @@ class RNMBXMarkerViewManager(reactApplicationContext: ReactApplicationContext) :
                     }
                 }
 
-                override fun onViewAnnotationPositionUpdated(
-                    view: View,
-                    leftTopCoordinate: ScreenCoordinate,
-                    width: Int,
-                    height: Int
-                ) {
-                }
+
             })
         }
     }

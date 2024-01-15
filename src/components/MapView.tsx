@@ -297,7 +297,7 @@ type Props = ViewProps & {
 
   /**
    * [`mapbox` (v10) implementation only]
-   * Set map's label locale, e.g. { "locale": "es" } will localize labels to Spanish, { "locale": "current" } will localize labels to system locale.
+   * Set map's label locale, e.g. `{ "locale": "es" }` will localize labels to Spanish, `{ "locale": "current" }` will localize labels to system locale.
    */
   localizeLabels?: LocalizeLabels;
 
@@ -427,6 +427,12 @@ type Props = ViewProps & {
    * The emitted frequency of regiondidchange events
    */
   regionDidChangeDebounceTime?: number;
+
+  /**
+   * Set to true to deselect any selected annotation when the map is tapped. If set to true you will not receive
+   * the onPress event for the taps that deselect the annotation. Default is false.
+   */
+  deselectAnnotationOnTap?: boolean;
 };
 
 type CallbablePropKeys =
@@ -904,14 +910,6 @@ class MapView extends NativeBridgeComponent(
       sourceId,
       sourceLayerId,
     ]);
-  }
-
-  /**
-   * Show the attribution and telemetry action sheet.
-   * If you implement a custom attribution button, you should add this action to the button.
-   */
-  showAttribution() {
-    return this._runNative<void>('showAttribution');
   }
 
   _decodePayload<T>(payload: T | string): T {

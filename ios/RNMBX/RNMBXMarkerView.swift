@@ -22,7 +22,6 @@ class RNMBXMarkerViewParentViewAnnotation : UIView {
     if actSize.width != size.width || actSize.height != size.height {
       let dx = ((size.width/2.0) - newOffset.dx) - ((actSize.width/2.0) - oldOffset.dx)
       let dy = ((size.height/2.0) + newOffset.dy) - ((actSize.height/2.0) + oldOffset.dy)
-      print(" => size=\(size) actSize=\(actSize) newOffset=\(newOffset) oldOffset=\(oldOffset)  dx=\(dx) dy=\(dy)")
       var frame = self.frame
       frame = frame.offsetBy(dx: -dx, dy: -dy)
       frame.size = size
@@ -61,6 +60,12 @@ public class RNMBXMarkerView: UIView, RNMBXMapComponent {
     }
   }
   
+  @objc public var allowOverlapWithPuck: Bool = false {
+    didSet {
+      update()
+    }
+  }
+  
   @objc public var isSelected: Bool = false {
     didSet {
       update()
@@ -70,7 +75,7 @@ public class RNMBXMarkerView: UIView, RNMBXMapComponent {
   // MARK: - Derived variables
   
   var annotationManager: ViewAnnotationManager? {
-    self.map?.viewAnnotations
+    self.map?.mapView?.viewAnnotations
   }
 
   var point: Point? {
@@ -228,7 +233,7 @@ public class RNMBXMarkerView: UIView, RNMBXMapComponent {
     let size = self.bounds.size
     let offset = calcOffset(size: size)
   
-    let options = ViewAnnotationOptions(
+    var options = ViewAnnotationOptions(
       geometry: geometry,
       width: size.width,
       height: size.height,
@@ -237,6 +242,9 @@ public class RNMBXMarkerView: UIView, RNMBXMapComponent {
       offsetY: offset.dy,
       selected: isSelected
     )
+    #if RNMBX_11
+    options.allowOverlapWithPuck = allowOverlapWithPuck
+    #endif
     return options
   }
   

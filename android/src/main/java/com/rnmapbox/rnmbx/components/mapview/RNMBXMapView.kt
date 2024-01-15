@@ -39,14 +39,14 @@ import com.mapbox.maps.plugin.annotation.AnnotationConfig
 import com.mapbox.maps.plugin.annotation.annotations
 import com.mapbox.maps.plugin.annotation.generated.*
 import com.mapbox.maps.plugin.attribution.attribution
-import com.mapbox.maps.plugin.attribution.generated.AttributionSettings
 import com.mapbox.maps.plugin.compass.compass
-import com.mapbox.maps.plugin.compass.generated.CompassSettings
 import com.mapbox.maps.plugin.delegates.listeners.*
 import com.mapbox.maps.plugin.gestures.*
-import com.mapbox.maps.plugin.logo.generated.LogoSettings
+import com.mapbox.maps.plugin.locationcomponent.DefaultLocationProvider
+import com.mapbox.maps.plugin.locationcomponent.LocationConsumer
+import com.mapbox.maps.plugin.locationcomponent.LocationProvider
+import com.mapbox.maps.plugin.locationcomponent.location
 import com.mapbox.maps.plugin.logo.logo
-import com.mapbox.maps.plugin.scalebar.generated.ScaleBarSettings
 import com.mapbox.maps.plugin.scalebar.scalebar
 import com.mapbox.maps.viewannotation.ViewAnnotationManager
 import com.rnmapbox.rnmbx.R
@@ -65,26 +65,27 @@ import com.rnmapbox.rnmbx.components.styles.layers.RNMBXLayer
 import com.rnmapbox.rnmbx.components.styles.light.RNMBXLight
 import com.rnmapbox.rnmbx.components.styles.sources.RNMBXSource
 import com.rnmapbox.rnmbx.components.styles.terrain.RNMBXTerrain
-import com.rnmapbox.rnmbx.events.AndroidCallbackEvent
+import com.rnmapbox.rnmbx.events.CameraChangeEvent
 import com.rnmapbox.rnmbx.events.IEvent
 import com.rnmapbox.rnmbx.events.MapChangeEvent
-import com.rnmapbox.rnmbx.events.CameraChangeEvent
 import com.rnmapbox.rnmbx.events.MapClickEvent
 import com.rnmapbox.rnmbx.events.constants.EventTypes
 import com.rnmapbox.rnmbx.utils.*
 import com.rnmapbox.rnmbx.utils.extensions.toReadableArray
 import com.rnmapbox.rnmbx.v11compat.annotation.AnnotationID
 import com.rnmapbox.rnmbx.v11compat.annotation.INVALID_ANNOTATION_ID
-import org.json.JSONException
-import org.json.JSONObject
 import java.util.*
 
 import com.mapbox.maps.MapboxMap.*;
+import com.rnmapbox.rnmbx.components.images.ImageManager
 
 import com.rnmapbox.rnmbx.v11compat.event.*
 import com.rnmapbox.rnmbx.v11compat.feature.*
 import com.rnmapbox.rnmbx.v11compat.mapboxmap.*
 import com.rnmapbox.rnmbx.v11compat.ornamentsettings.*
+import org.json.JSONException
+import org.json.JSONObject
+import java.util.*
 
 fun <T> MutableList<T>.removeIf21(predicate: (T) -> Boolean): Boolean {
     var removed = false
@@ -203,10 +204,23 @@ open class RNMBXMapView(private val mContext: Context, var mManager: RNMBXMapVie
      */
     public var offscreenAnnotationViewContainer: ViewGroup? = null
 
+
+    public var imageManager = ImageManager()
+
     private val mSources: MutableMap<String, RNMBXSource<*>>
     private val mImages: MutableList<RNMBXImages>
-    private var mPointAnnotationManager: PointAnnotationManager? = null
-    private var mActiveMarkerID: AnnotationID = INVALID_ANNOTATION_ID
+    public val pointAnnotationManager: RNMBXPointAnnotationManager by lazy {
+        val gesturesPlugin: GesturesPlugin = mapView.gestures
+        gesturesPlugin.removeOnMapClickListener(this)
+        gesturesPlugin.removeOnMapLongClickListener(this)
+
+        val result = RNMBXPointAnnotationManager(mapView)
+
+        gesturesPlugin.addOnMapClickListener(this)
+        gesturesPlugin.addOnMapLongClickListener(this)
+
+        result
+    }
     private var mProjection: ProjectionName = ProjectionName.MERCATOR
     private var mLocaleString: String? = null
     private var mLocaleLayerIds: List<String>? = null
@@ -215,7 +229,6 @@ open class RNMBXMapView(private val mContext: Context, var mManager: RNMBXMapVie
     private var mCamera: RNMBXCamera? = null
     private val mFeatures = mutableListOf<FeatureEntry>()
     private var mQueuedFeatures: MutableList<AbstractMapFeature>? = ArrayList()
-    private val mPointAnnotations: MutableMap<String, RNMBXPointAnnotation>
     private val mCameraChangeTracker = CameraChangeTracker()
     private lateinit var mMap: MapboxMap
 
@@ -229,8 +242,6 @@ open class RNMBXMapView(private val mContext: Context, var mManager: RNMBXMapVie
     private var styleLoaded = false
 
     private var mHandledMapChangedEvents: HashSet<String>? = null
-    private var mAnnotationClicked = false
-    private var mAnnotationDragged = false
     private var mLocationComponentManager: LocationComponentManager? = null
     var tintColor: Int? = null
         private set
@@ -251,6 +262,8 @@ open class RNMBXMapView(private val mContext: Context, var mManager: RNMBXMapVie
             updateRequestDisallowInterceptTouchEvent(oldValue, value)
         }
 
+    var deselectAnnotationOnTap = false
+
     fun getMapboxMap(): MapboxMap {
         return mapView.getMapboxMap()
     }
@@ -259,66 +272,6 @@ open class RNMBXMapView(private val mContext: Context, var mManager: RNMBXMapVie
         super.setId(id)
         mManager.tagAssigned(id)
     }
-
-    val pointAnnotationManager: PointAnnotationManager?
-        get() {
-            if (mPointAnnotationManager == null) {
-                val _this = this
-                val gesturesPlugin: GesturesPlugin = mapView.gestures
-                gesturesPlugin.removeOnMapClickListener(_this)
-                gesturesPlugin.removeOnMapLongClickListener(_this)
-
-                mPointAnnotationManager = mapView.annotations.createPointAnnotationManager(AnnotationConfig(layerId = "RNMBX-mapview-annotations"))
-                mPointAnnotationManager?.addClickListener(OnPointAnnotationClickListener { pointAnnotation ->
-                        onMarkerClick(pointAnnotation)
-                        false
-                    }
-                )
-                mPointAnnotationManager?.addDragListener(object : OnPointAnnotationDragListener {
-                    override fun onAnnotationDragStarted(_annotation: Annotation<*>) {
-                        mAnnotationDragged = true;
-                        var reactAnnotation: RNMBXPointAnnotation? = null
-                        for (key in mPointAnnotations.keys) {
-                            val annotation = mPointAnnotations[key]
-                            val curMarkerID = annotation?.mapboxID
-                            if (_annotation.id == curMarkerID) {
-                                reactAnnotation = annotation
-                            }
-                        }
-                        reactAnnotation?.let { it.onDragStart() }
-                    }
-
-                   override fun onAnnotationDrag(_annotation: Annotation<*>) {
-                        var reactAnnotation: RNMBXPointAnnotation? = null
-                        for (key in mPointAnnotations.keys) {
-                            val annotation = mPointAnnotations[key]
-                            val curMarkerID = annotation?.mapboxID
-                            if (_annotation.id == curMarkerID) {
-                                reactAnnotation = annotation
-                            }
-                        }
-                        reactAnnotation?.let { it.onDrag() }
-                    }
-
-                    override fun onAnnotationDragFinished(_annotation: Annotation<*>) {
-                        mAnnotationDragged = false;
-                        var reactAnnotation: RNMBXPointAnnotation? = null
-                        for (key in mPointAnnotations.keys) {
-                            val annotation = mPointAnnotations[key]
-                            val curMarkerID = annotation?.mapboxID
-                            if (_annotation.id == curMarkerID) {
-                                reactAnnotation = annotation
-                            }
-                        }
-                        reactAnnotation?.let { it.onDragEnd() }
-                    }
-                })
-                gesturesPlugin.addOnMapClickListener(_this)
-                gesturesPlugin.addOnMapLongClickListener(_this)
-
-            }
-            return mPointAnnotationManager
-        }
 
     private fun styleLoaded(style: Style) {
         savedStyle = style
@@ -474,7 +427,7 @@ open class RNMBXMapView(private val mContext: Context, var mManager: RNMBXMapVie
             feature = childView
         } else if (childView is RNMBXPointAnnotation) {
             val annotation = childView
-            mPointAnnotations[annotation.iD.toString()] = annotation
+            pointAnnotationManager.add(annotation)
             feature = childView
         } else if (childView is RNMBXMarkerView) {
             feature = childView
@@ -510,10 +463,7 @@ open class RNMBXMapView(private val mContext: Context, var mManager: RNMBXMapVie
             mSources.remove(feature.iD)
         } else if (feature is RNMBXPointAnnotation) {
             val annotation = feature
-            if (annotation.mapboxID == mActiveMarkerID) {
-                mActiveMarkerID = INVALID_ANNOTATION_ID
-            }
-            mPointAnnotations.remove(annotation.iD)
+            pointAnnotationManager.remove(annotation)
         } else if (feature is RNMBXImages) {
             mImages.remove(feature)
         }
@@ -779,11 +729,13 @@ open class RNMBXMapView(private val mContext: Context, var mManager: RNMBXMapVie
 
     override fun onMapClick(point: Point): Boolean {
         val _this = this
-        /*if (mPointAnnotationManager != nil) {
-            getAnnotations()
-        }*/if (mAnnotationClicked) {
-            mAnnotationClicked = false
+        if (pointAnnotationManager.getAndClearAnnotationClicked()) {
             return true
+        }
+        if (deselectAnnotationOnTap) {
+            if (pointAnnotationManager.deselectSelectedAnnotation()) {
+                return true
+            }
         }
         val screenPoint = mMap?.pixelForCoordinate(point)
         val touchableSources = allTouchableSources
@@ -813,8 +765,7 @@ open class RNMBXMapView(private val mContext: Context, var mManager: RNMBXMapVie
 
     override fun onMapLongClick(point: Point): Boolean {
         val _this = this
-        if (mAnnotationDragged) {
-            mAnnotationDragged = false
+        if (pointAnnotationManager.getAndClearAnnotationDragged()) {
             return true
         }
         val screenPoint = mMap?.pixelForCoordinate(point)
@@ -824,35 +775,6 @@ open class RNMBXMapView(private val mContext: Context, var mManager: RNMBXMapVie
         }
 
         return false
-    }
-
-    fun onMarkerClick(symbol: PointAnnotation) {
-        mAnnotationClicked = true
-        val selectedMarkerID = symbol.id
-        var activeAnnotation: RNMBXPointAnnotation? = null
-        var nextActiveAnnotation: RNMBXPointAnnotation? = null
-        for (key in mPointAnnotations.keys) {
-            val annotation = mPointAnnotations[key]
-            val curMarkerID = annotation?.mapboxID
-            if (mActiveMarkerID == curMarkerID) {
-                activeAnnotation = annotation
-            }
-            if (selectedMarkerID == curMarkerID && mActiveMarkerID != curMarkerID) {
-                nextActiveAnnotation = annotation
-            }
-        }
-        activeAnnotation?.let { deselectAnnotation(it) }
-        nextActiveAnnotation?.let { selectAnnotation(it) }
-    }
-
-    fun selectAnnotation(annotation: RNMBXPointAnnotation) {
-        mActiveMarkerID = annotation.mapboxID
-        annotation.onSelect(true)
-    }
-
-    fun deselectAnnotation(annotation: RNMBXPointAnnotation) {
-        mActiveMarkerID = INVALID_ANNOTATION_ID
-        annotation.onDeselect()
     }
 
     interface FoundLayerCallback {
@@ -1262,7 +1184,6 @@ open class RNMBXMapView(private val mContext: Context, var mManager: RNMBXMapVie
 
         mSources = HashMap()
         mImages = ArrayList()
-        mPointAnnotations = HashMap()
     }
 
     // region Ornaments
@@ -1604,6 +1525,156 @@ fun OrnamentSettings.setPosAndMargins(posAndMargins: ReadableMap?) {
     }
     this.position = position
     this.margins = margins
+}
+
+class RNMBXPointAnnotationManager(val mapView: MapView) {
+    val manager: PointAnnotationManager;
+    var annotationClicked = false
+    var annotationDragged = false
+
+    var selected: RNMBXPointAnnotation? = null
+
+    val annotations: MutableMap<String, RNMBXPointAnnotation> = hashMapOf()
+
+    init {
+        manager = mapView.annotations.createPointAnnotationManager(AnnotationConfig(layerId = "RNMBX-mapview-annotations"))
+        manager.addClickListener(OnPointAnnotationClickListener { pointAnnotation ->
+            onAnnotationClick(pointAnnotation)
+            false
+        })
+    }
+
+    fun getAndClearAnnotationClicked(): Boolean {
+        if (annotationClicked) {
+            annotationClicked = false
+            return true
+        }
+        return false
+    }
+
+    fun getAndClearAnnotationDragged(): Boolean {
+        if (annotationDragged) {
+            annotationDragged = false
+            return true
+        }
+        return false
+    }
+
+    fun lookup(point: PointAnnotation): RNMBXPointAnnotation? {
+        for (annotation in annotations.values) {
+            if (point.id == annotation.mapboxID) {
+                return annotation;
+            }
+        }
+        Logger.e(LOG_TAG, "Failed to find RNMBXPointAnntoation for ${point.id}")
+        return null;
+    }
+
+    fun onAnnotationClick(pointAnnotation: RNMBXPointAnnotation) {
+        var oldSelected: RNMBXPointAnnotation? = selected
+        var newSelected: RNMBXPointAnnotation? = pointAnnotation
+
+        annotationClicked = true
+
+        if (newSelected == oldSelected) {
+            newSelected = null
+        }
+
+        manager.addDragListener(object : OnPointAnnotationDragListener {
+            override fun onAnnotationDragStarted(_annotation: Annotation<*>) {
+                annotationDragged = true;
+                var reactAnnotation: RNMBXPointAnnotation? = null
+                for (key in annotations.keys) {
+                    val annotation = annotations[key]
+                    val curMarkerID = annotation?.mapboxID
+                    if (_annotation.id == curMarkerID) {
+                        reactAnnotation = annotation
+                    }
+                }
+                reactAnnotation?.let { it.onDragStart() }
+            }
+
+            override fun onAnnotationDrag(_annotation: Annotation<*>) {
+                var reactAnnotation: RNMBXPointAnnotation? = null
+                for (key in annotations.keys) {
+                    val annotation = annotations[key]
+                    val curMarkerID = annotation?.mapboxID
+                    if (_annotation.id == curMarkerID) {
+                        reactAnnotation = annotation
+                    }
+                }
+                reactAnnotation?.let { it.onDrag() }
+            }
+
+            override fun onAnnotationDragFinished(_annotation: Annotation<*>) {
+                annotationDragged = false;
+                var reactAnnotation: RNMBXPointAnnotation? = null
+                for (key in annotations.keys) {
+                    val annotation = annotations[key]
+                    val curMarkerID = annotation?.mapboxID
+                    if (_annotation.id == curMarkerID) {
+                        reactAnnotation = annotation
+                    }
+                }
+                reactAnnotation?.let { it.onDragEnd() }
+            }
+        })
+
+        oldSelected?.let { deselectAnnotation(it) }
+        newSelected?.let { selectAnnotation(it) }
+
+    }
+
+    fun onAnnotationClick(point: PointAnnotation) {
+        lookup(point)?.let {
+            onAnnotationClick(it)
+        }
+    }
+
+    fun deselectSelectedAnnotation(): Boolean {
+        selected?.let {
+            deselectAnnotation(it)
+            return true
+        }
+        return false
+    }
+
+    fun selectAnnotation(annotation: RNMBXPointAnnotation) {
+        selected = annotation
+        annotation.doSelect(true)
+    }
+
+    fun deselectAnnotation(annotation: RNMBXPointAnnotation) {
+        selected = null
+        annotation.doDeselect()
+    }
+
+    fun remove(annotation: RNMBXPointAnnotation) {
+        if (annotation == selected) {
+            selected = null
+        }
+        annotations.remove(annotation.iD)
+    }
+
+    fun delete(annotation: PointAnnotation) {
+        manager.delete(annotation)
+    }
+
+    fun update(annotation: PointAnnotation) {
+        manager.update(annotation)
+    }
+
+    fun create(options: PointAnnotationOptions): PointAnnotation {
+        return manager.create(options)
+    }
+
+    fun add(annotation: RNMBXPointAnnotation) {
+        annotations[annotation.iD!!] = annotation
+    }
+
+    companion object {
+        const val LOG_TAG = "RNMBXPointAnnotationManager";
+    }
 }
 
 

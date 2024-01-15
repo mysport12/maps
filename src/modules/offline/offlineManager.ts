@@ -272,7 +272,6 @@ class OfflineManager {
    * @return {void}
    */
   async migrateOfflineCache(): Promise<void> {
-    await this._initialize();
     await MapboxOfflineManager.migrateOfflineCache();
   }
 
@@ -300,8 +299,9 @@ class OfflineManager {
    * @return {void}
    */
   async resetDatabase(): Promise<void> {
-    await this._initialize();
     await MapboxOfflineManager.resetDatabase();
+    this._offlinePacks = {};
+    await this._initialize(true);
   }
 
   /**
@@ -490,8 +490,8 @@ class OfflineManager {
     }
   }
 
-  async _initialize(): Promise<boolean> {
-    if (this._hasInitialized) {
+  async _initialize(forceInit?: boolean): Promise<boolean> {
+    if (this._hasInitialized && !forceInit) {
       return true;
     }
 

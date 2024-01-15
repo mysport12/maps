@@ -30,7 +30,7 @@ The distance from the edges of the map view’s frame to the edges of the map vi
 ```
 The projection used when rendering the map
 
-
+[Globe Projection](../examples/V10/GlobeProjection)
   
 ### styleURL
 
@@ -120,7 +120,7 @@ Enable/Disable attribution on map. For iOS you need to add MGLMapboxMetricsEnabl
 to your Info.plist
 
   _defaults to:_ `true`
-
+[Ornaments](../examples/Map/Ornaments)
   
 ### attributionPosition
 
@@ -129,7 +129,7 @@ OrnamentPositonProp
 ```
 Adds attribution offset, e.g. `{top: 8, left: 8}` will put attribution button in top-left corner of the map. By default on Android, the attribution with information icon (i) will be on the bottom left, while on iOS the mapbox logo will be on bottom left with information icon (i) on bottom right. Read more about mapbox attribution [here](https://docs.mapbox.com/help/getting-started/attribution/)
 
-
+[Ornaments](../examples/Map/Ornaments)
   
 ### tintColor
 
@@ -148,7 +148,7 @@ boolean
 Enable/Disable the logo on the map.
 
   _defaults to:_ `true`
-
+[Ornaments](../examples/Map/Ornaments)
   
 ### logoPosition
 
@@ -157,7 +157,7 @@ OrnamentPositonProp
 ```
 Adds logo offset, e.g. `{top: 8, left: 8}` will put the logo in top-left corner of the map
 
-
+[Ornaments](../examples/Map/Ornaments)
   
 ### compassEnabled
 
@@ -167,7 +167,7 @@ boolean
 Enable/Disable the compass from appearing on the map
 
   _defaults to:_ `false`
-
+[Ornaments](../examples/Map/Ornaments)
   
 ### compassFadeWhenNorth
 
@@ -177,7 +177,7 @@ boolean
 [`mapbox` (v10) implementation only] Enable/Disable if the compass should fade out when the map is pointing north
 
   _defaults to:_ `false`
-
+[Ornaments](../examples/Map/Ornaments)
   
 ### compassPosition
 
@@ -186,7 +186,7 @@ OrnamentPositonProp
 ```
 [`mapbox` (v10) implementation only] Adds compass offset, e.g. `{top: 8, left: 8}` will put the compass in top-left corner of the map
 
-
+[Ornaments](../examples/Map/Ornaments)
   
 ### compassViewPosition
 
@@ -216,7 +216,7 @@ string
 ```
 [iOS, `mapbox` (v10) implementation only] A string referencing an image key. Requires an `Images` component.
 
-
+[Ornaments](../examples/Map/Ornaments)
   
 ### scaleBarEnabled
 
@@ -226,7 +226,7 @@ boolean
 [`mapbox` (v10) implementation only] Enable/Disable the scale bar from appearing on the map
 
   _defaults to:_ `true`
-
+[Ornaments](../examples/Map/Ornaments)
   
 ### scaleBarPosition
 
@@ -235,7 +235,7 @@ OrnamentPositonProp
 ```
 [`mapbox` (v10) implementation only] Adds scale bar offset, e.g. `{top: 8, left: 8}` will put the scale bar in top-left corner of the map
 
-
+[Ornaments](../examples/Map/Ornaments)
   
 ### surfaceView
 
@@ -270,9 +270,9 @@ when embedded into a scroll view
 | true
 ```
 [`mapbox` (v10) implementation only]
-Set map's label locale, e.g. { "locale": "es" } will localize labels to Spanish, { "locale": "current" } will localize labels to system locale.
+Set map's label locale, e.g. `{ "locale": "es" }` will localize labels to Spanish, `{ "locale": "current" }` will localize labels to system locale.
 
-
+[Localize Labels](../examples/Map/LocalizeLabels)
   
 ### gestureSettings
 
@@ -311,7 +311,7 @@ func
 Map press listener, gets called when a user presses the map
 *signature:*`(feature:GeoJSON.Feature) =&gt; void`
 
-
+[Show Click](../examples/Map/ShowClick)
   
 ### onLongPress
 
@@ -332,10 +332,10 @@ func
 
 This event is triggered whenever the currently displayed map region is about to change.
 
-@param {PointFeature} feature - The geojson point feature at the camera center, properties contains zoomLevel, visibleBounds
+- `feature`: `PointFeature`  - The geojson point feature at the camera center, properties contains zoomLevel, visibleBounds
 *signature:*`(feature:GeoJSON.Feature) =&gt; void`
 
-
+[Show Region Did Change](../examples/Map/ShowRegionDidChange)
   
 ### onRegionIsChanging
 
@@ -344,10 +344,10 @@ func
 ```
 This event is triggered whenever the currently displayed map region is changing.
 
-@param {PointFeature} feature - The geojson point feature at the camera center, properties contains zoomLevel, visibleBounds
+- `feature`: `PointFeature`  - The geojson point feature at the camera center, properties contains zoomLevel, visibleBounds
 *signature:*`(feature:GeoJSON.Feature) =&gt; void`
 
-
+[Show Region Did Change](../examples/Map/ShowRegionDidChange)
   
 ### onRegionDidChange
 
@@ -356,10 +356,10 @@ func
 ```
 This event is triggered whenever the currently displayed map region finished changing.
 
-@param {PointFeature} feature - The geojson point feature at the camera center, properties contains zoomLevel, visibleBounds
+- `feature`: `PointFeature`  - The geojson point feature at the camera center, properties contains zoomLevel, visibleBounds
 *signature:*`(feature:GeoJSON.Feature) =&gt; void`
 
-
+[Show Region Did Change](../examples/Map/ShowRegionDidChange)
   
 ### onCameraChanged
 
@@ -379,7 +379,7 @@ func
 v10 only, replaces onRegionDidChange
 *signature:*`(state:{properties: {center: GeoJSON.Position, bounds: {ne: GeoJSON.Position, sw: GeoJSON.Position}, zoom: number, heading: number, pitch: number}, gestures: {isGestureActive: boolean}, timestamp: number}) =&gt; void`
 
-
+[Map Handlers](../examples/V10/MapHandlers)
   
 ### onWillStartLoadingMap
 
@@ -407,7 +407,7 @@ This is triggered when the map has successfully loaded a new map style.
 func
 ```
 This event is triggered when the map has failed to load a new map style. On v10 it's deprecated and replaced by onMapLoadingError
-@deprecated use onMapLoadingError
+**DEPRECATED** use onMapLoadingError
 *signature:*`() =&gt; void`
 
 
@@ -521,6 +521,16 @@ The emitted frequency of regiondidchange events
 
   _defaults to:_ `500`
 
+  
+### deselectAnnotationOnTap
+
+```tsx
+boolean
+```
+Set to true to deselect any selected annotation when the map is tapped. If set to true you will not receive
+the onPress event for the taps that deselect the annotation. Default is false.
+
+[Show Point Annotations](../examples/Annotations/ShowPointAnnotation)
   
 
 
@@ -702,7 +712,7 @@ Queries the currently loaded data for elevation at a geographical location.<br/>
 | `coordinate` | `Position` | `Yes` | the coordinates to query elevation at |
 
 
-### setSourceVisibility(visible, sourceId[, sourceLayerId])
+[Query Terrain Elevation](../examples/V10/QueryTerrainElevation)### setSourceVisibility(visible, sourceId[, sourceLayerId])
 
 Sets the visibility of all the layers referencing the specified `sourceLayerId` and/or `sourceId`
 
@@ -718,16 +728,6 @@ Sets the visibility of all the layers referencing the specified `sourceLayerId` 
 ```javascript
 await this._map.setSourceVisibility(false, 'composite', 'building')
 ```
-
-
-### showAttribution()
-
-Show the attribution and telemetry action sheet.<br/>If you implement a custom attribution button, you should add this action to the button.
-
-#### arguments
-| Name | Type | Required | Description  |
-| ---- | :--: | :------: | :----------: |
-
 
 
 
