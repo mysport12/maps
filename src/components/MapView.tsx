@@ -83,6 +83,7 @@ export type MapState = {
   gestures: {
     isGestureActive: boolean;
   };
+  timestamp?: number;
 };
 
 /**
@@ -100,6 +101,7 @@ type LocalizeLabels =
 type Props = ViewProps & {
   /**
    * The distance from the edges of the map view’s frame to the edges of the map view’s logical viewport.
+   * @deprecated use Camera `padding` instead
    */
   contentInset?: number | number[];
 
@@ -410,7 +412,12 @@ class MapView extends NativeBridgeComponent(
     regionDidChangeDebounceTime: 500,
   };
 
-  deprecationLogged: { regionDidChange: boolean; regionIsChanging: boolean } = {
+  deprecationLogged: {
+    contentInset: boolean;
+    regionDidChange: boolean;
+    regionIsChanging: boolean;
+  } = {
+    contentInset: false,
     regionDidChange: false,
     regionIsChanging: false,
   };
@@ -458,6 +465,7 @@ class MapView extends NativeBridgeComponent(
     this._onLongPress = this._onLongPress.bind(this);
     this._onChange = this._onChange.bind(this);
     this._onLayout = this._onLayout.bind(this);
+    this._onCameraChanged = this._onCameraChanged.bind(this);
 
     // debounced map change methods
     this._onDebouncedRegionWillChange = debounce(
@@ -846,6 +854,10 @@ class MapView extends NativeBridgeComponent(
     this.setState({ region: payload });
   }
 
+  _onCameraChanged(e: NativeSyntheticEvent<{ payload: MapState }>) {
+    this.props.onCameraChanged?.(e.nativeEvent.payload);
+  }
+
   _onChange(
     e: NativeSyntheticEvent<{
       type: string;
@@ -954,6 +966,15 @@ class MapView extends NativeBridgeComponent(
       return;
     }
 
+    if (MGLModule.MapboxV10) {
+      if (!this.deprecationLogged.contentInset) {
+        console.warn(
+          '@rnmapbox/maps: contentInset is deprecated, use Camera padding instead.',
+        );
+        this.deprecationLogged.contentInset = true;
+      }
+    }
+
     if (!Array.isArray(this.props.contentInset)) {
       return [this.props.contentInset];
     }
@@ -1017,6 +1038,7 @@ class MapView extends NativeBridgeComponent(
       onLongPress: this._onLongPress,
       onMapChange: this._onChange,
       onAndroidCallback: isAndroid() ? this._onAndroidCallback : undefined,
+      onCameraChanged: this._onCameraChanged,
     };
 
     let mapView = null;
@@ -1046,9 +1068,13 @@ class MapView extends NativeBridgeComponent(
   }
 }
 
-type NativeProps = Omit<Props, 'onPress' | 'onLongPress'> & {
+type NativeProps = Omit<
+  Props,
+  'onPress' | 'onLongPress' | 'onCameraChanged'
+> & {
   onPress(event: NativeSyntheticEvent<{ payload: GeoJSON.Feature }>): void;
   onLongPress(event: NativeSyntheticEvent<{ payload: GeoJSON.Feature }>): void;
+  onCameraChanged(event: NativeSyntheticEvent<{ payload: MapState }>): void;
 };
 
 type RCTMGLMapViewRefType = Component<NativeProps> & Readonly<NativeMethods>;
