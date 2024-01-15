@@ -267,8 +267,8 @@ Sets any camera properties, with default fallbacks if unspecified.
 #### arguments
 | Name | Type | Required | Description  |
 | ---- | :--: | :------: | :----------: |
-| `config` | `CameraStop \| CameraStops` | `Yes` | null |
-| `ignoreFollowUserLocation` | `boolean` | `No` | null |
+| `config` | `CameraStop \| CameraStops` | `Yes` | undefined |
+| `ignoreFollowUserLocation` | `boolean` | `No` | undefined |
 
 
 

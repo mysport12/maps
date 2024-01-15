@@ -23,6 +23,21 @@ class RNMBXNativeUserLocationManager : ViewGroupManager<RNMBXNativeUserLocation>
         }
     }
 
+    @ReactProp(name = "nativeBearingImage")
+    fun setNativeBearingImage(userLocation: RCTMGLNativeUserLocation?, image: ReadableMap) {
+        userLocation?.setNativeBearingImage(image);
+    }
+
+    @ReactProp(name = "nativeShadowImage")
+    fun setNativeShadowImage(userLocation: RCTMGLNativeUserLocation?, image: ReadableMap) {
+        userLocation?.setNativeShadowImage(image);
+    }
+
+    @ReactProp(name = "nativeTopImage")
+    fun setNativeTopImage(userLocation: RCTMGLNativeUserLocation?, image: ReadableMap) {
+        userLocation?.setNativeTopImage(image);
+    }
+
     @ReactProp(name = "iosShowsUserHeadingIndicator")
     override fun setIosShowsUserHeadingIndicator(view: RNMBXNativeUserLocation, value: Dynamic) {
         // iOS only

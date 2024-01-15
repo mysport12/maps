@@ -563,7 +563,6 @@
         "params": [
           {
             "name": "config",
-            "description": null,
             "type": {
               "name": "CameraStop \\| CameraStops"
             },
@@ -571,7 +570,6 @@
           },
           {
             "name": "ignoreFollowUserLocation",
-            "description": null,
             "type": {
               "name": "boolean"
             },
