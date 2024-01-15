@@ -16,6 +16,7 @@ import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.ViewTreeLifecycleOwner
 import com.facebook.react.bridge.*
 import com.mapbox.android.gestures.*
+import com.mapbox.bindgen.Value
 import com.mapbox.geojson.Feature
 import com.mapbox.geojson.FeatureCollection
 import com.mapbox.geojson.Point
@@ -511,7 +512,7 @@ open class RCTMGLMapView(private val mContext: Context, var mManager: RCTMGLMapV
         }
     }
 
-    
+
     private val allTouchableSources: List<RCTSource<*>>
         private get() {
             val sources: MutableList<RCTSource<*>> = ArrayList()
@@ -825,7 +826,7 @@ open class RCTMGLMapView(private val mContext: Context, var mManager: RCTMGLMapV
             val boundsMap = WritableNativeMap()
             boundsMap.putArray("ne", bounds.northeast.toReadableArray())
             boundsMap.putArray("sw", bounds.southwest.toReadableArray())
-            
+
             properties.putMap("bounds", boundsMap)
         } catch (ex: Exception) {
             Logger.e(LOG_TAG, "An error occurred while attempting to make the region", ex)
@@ -894,52 +895,52 @@ open class RCTMGLMapView(private val mContext: Context, var mManager: RCTMGLMapV
 
     // region Callbacks
 
-    fun getCenter(callbackID: String?) {
+    fun getCenter(response: CommandResponse) {
         var center = mMap!!.cameraState!!.center
 
-        sendResponse(callbackID, {
+        response.success {
             val array: WritableArray = WritableNativeArray()
             array.pushDouble(center.longitude())
             array.pushDouble(center.latitude())
             it.putArray("center", array)
-        })
+        }
     }
 
-    fun getZoom(callbackID: String?) {
+    fun getZoom(response: CommandResponse) {
         var zoom = mMap!!.cameraState!!.zoom
 
-        sendResponse(callbackID, {
+        response.success {
             it.putDouble("zoom", zoom)
-        })
+        }
     }
 
     private fun getDisplayDensity(): Float {
         return mContext.resources.displayMetrics.density
     }
 
-    fun getCoordinateFromView(callbackID: String?, pixel: ScreenCoordinate) {
+    fun getCoordinateFromView(pixel: ScreenCoordinate, response: CommandResponse) {
         val density: Float = getDisplayDensity()
         val screenCoordinate = ScreenCoordinate(pixel.x * density, pixel.y * density)
 
         val coordinate = mMap!!.coordinateForPixel(screenCoordinate)
 
-        sendResponse(callbackID, {
+        response.success {
             it.putArray("coordinateFromView", coordinate.toReadableArray())
-        })
+        }
     }
 
-    fun getPointInView(callbackID: String?, coordinate: Point) {
+    fun getPointInView(coordinate: Point, response: CommandResponse) {
         val point = mMap!!.pixelForCoordinate(coordinate)
 
-        sendResponse(callbackID, {
+        response.success {
             val array: WritableArray = WritableNativeArray()
             array.pushDouble(point.x)
             array.pushDouble(point.y)
             it.putArray("pointInView", array)
-        })
+        }
     }
 
-    fun queryRenderedFeaturesAtPoint(callbackID: String?, point: PointF, filter: Expression?, layerIDs: List<String>?) {
+    fun queryRenderedFeaturesAtPoint(point: PointF, filter: Expression?, layerIDs: List<String>?, response: CommandResponse) {
         if (mMap == null) {
             Logger.e("queryRenderedFeaturesAtPoint", "mapbox map is null")
             return
@@ -954,18 +955,18 @@ open class RCTMGLMapView(private val mContext: Context, var mManager: RCTMGLMapV
                 for (i in features.value!!) {
                     featuresList.add(i.feature)
                 }
-                sendResponse(callbackID) {
+                response.success {
                     it.putString("data", FeatureCollection.fromFeatures(featuresList).toJson())
                 }
             } else {
-                Logger.e("queryRenderedFeaturesAtPoint", features.error ?: "n/a")
+                response.error(features.error ?: "n/a")
             }
         }
     }
 
-    fun queryRenderedFeaturesInRect(callbackID: String?, rect: RectF, filter: Expression?, layerIDs: List<String>?) {
+    fun queryRenderedFeaturesInRect(rect: RectF?, filter: Expression?, layerIDs: List<String>?, response: CommandResponse) {
         val size = mMap!!.getMapOptions().size
-        val screenBox = if (rect.isEmpty()) ScreenBox(ScreenCoordinate(0.0, 0.0), ScreenCoordinate(size?.width!!.toDouble(), size?.height!!.toDouble())) else ScreenBox(
+        val screenBox = if (rect == null) ScreenBox(ScreenCoordinate(0.0, 0.0), ScreenCoordinate(size?.width!!.toDouble(), size?.height!!.toDouble())) else ScreenBox(
                 ScreenCoordinate(rect.right.toDouble(), rect.bottom.toDouble() ),
                 ScreenCoordinate(rect.left.toDouble(), rect.top.toDouble()),
         )
@@ -979,80 +980,79 @@ open class RCTMGLMapView(private val mContext: Context, var mManager: RCTMGLMapV
                     featuresList.add(i.feature)
                 }
 
-                val payload: WritableMap = WritableNativeMap()
-                payload.putString("data", FeatureCollection.fromFeatures(featuresList).toJson())
-
-                var event = AndroidCallbackEvent(this, callbackID, payload)
-                mManager.handleEvent(event)
+                response.success {
+                   it.putString("data", FeatureCollection.fromFeatures(featuresList).toJson())
+                }
             } else {
-                Logger.e("queryRenderedFeaturesInRect", features.error ?: "n/a")
+                response.error(features.error ?: "n/a")
             }
         }
     }
 
-    fun sendResponse(callbackID: String?, buildPayload: (map: WritableMap) -> Unit) {
-        val payload: WritableMap = WritableNativeMap()
-        buildPayload(payload)
-        var event = AndroidCallbackEvent(this, callbackID, payload)
-        mManager.handleEvent(event)
+    fun querySourceFeatures(sourceId: String, filter: Expression?, sourceLayerIDs: List<String>?, response: CommandResponse) {
+        mMap?.querySourceFeatures(
+                sourceId,
+                SourceQueryOptions(sourceLayerIDs, (filter ?: Value.nullValue()) as Value),
+        ) { features ->
+            if (features.isValue) {
+                val featuresList = ArrayList<Feature?>()
+                for (i in features.value!!) {
+                    featuresList.add(i.feature)
+                }
+
+                response.success {
+                    it.putString("data", FeatureCollection.fromFeatures(featuresList).toJson())
+                }
+            } else {
+                response.error(features.error ?: "n/a")
+            }
+        }
     }
 
-    fun getVisibleBounds(callbackID: String?) {
+    fun getVisibleBounds(response: CommandResponse) {
         val bounds = mMap!!.coordinateBoundsForCamera(mMap!!.cameraState.toCameraOptions())
 
-        sendResponse(callbackID, {
+        response.success {
             it.putArray("visibleBounds", bounds.toReadableArray())
-        })
+        }
     }
 
-    fun takeSnap(callbackID: String?, writeToDisk: Boolean) {
+    fun takeSnap(writeToDisk: Boolean, response: CommandResponse) {
         mapView.snapshot { snapshot ->
             if (snapshot == null) {
-                Logger.e("takeSnap", "snapshot failed")
-
-                sendResponse(callbackID, {
-                    it.putNull("data")
-                    it.putString("error", "no snapshot")
-                })
+                response.error("snapshot failed")
             } else {
                 val uri: String = if (writeToDisk) BitmapUtils.createTempFile(
                     mContext,
                     snapshot
                 ) else BitmapUtils.createBase64(snapshot)
 
-                sendResponse(callbackID, {
+                response.success {
                     it.putString("uri", uri)
-                })
+                }
             }
         }
     }
 
-    fun queryTerrainElevation(callbackID: String?, longitude: Double, latitude: Double) {
+    fun queryTerrainElevation(longitude: Double, latitude: Double, response: CommandResponse) {
         val result = mMap?.getElevation(Point.fromLngLat(longitude, latitude))
 
-        sendResponse(callbackID, {response ->
-            if (result != null) {
-                response.putDouble("data", result)
-            } else {
-                Logger.e("queryTerrainElevation", "no elevation data")
-
-                response.putNull("data")
-                response.putString("error", "no elevation")
+        if (result != null) {
+            response.success {
+                it.putDouble("data", result)
             }
-        })
+        } else {
+            response.error("no elevation data")
+        }
     }
 
-    fun clearData(callbackID: String?) {
+    fun clearData(response: CommandResponse) {
         mapView.getMapboxMap().clearData { expected ->
-            sendResponse(callbackID) { response ->
-                if (expected.isError()) {
-                    response.putNull("data")
-                    response.putString("error", expected.error!!.toString())
-                }   else {
-                    response.putBoolean("data", true)
-                }
+            if (expected.isError()) {
+                response.error(expected.error!!.toString())
+            } else {
+                response.success { it.putBoolean("data", true) }
             }
-
         }
     }
 

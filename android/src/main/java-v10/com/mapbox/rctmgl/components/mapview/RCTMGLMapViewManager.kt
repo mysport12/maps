@@ -10,19 +10,16 @@ import com.facebook.react.uimanager.LayoutShadowNode
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.annotations.ReactProp
 import com.mapbox.rctmgl.events.constants.EventKeys
-import com.mapbox.maps.MapboxMap
 import com.facebook.react.common.MapBuilder
-import com.mapbox.maps.MapInitOptions
 import com.mapbox.maps.extension.style.layers.properties.generated.ProjectionName
-import com.mapbox.maps.plugin.compass.compass
 import com.mapbox.maps.plugin.gestures.gestures
 import com.mapbox.maps.plugin.logo.logo
+import com.mapbox.rctmgl.events.AndroidCallbackEvent
 import com.mapbox.rctmgl.utils.ConvertUtils
 import com.mapbox.rctmgl.utils.ExpressionParser
-import com.mapbox.rctmgl.utils.GeoJSONUtils
 import com.mapbox.rctmgl.utils.Logger
 import com.mapbox.rctmgl.utils.extensions.toCoordinate
-import com.mapbox.rctmgl.utils.extensions.toReadableArray
+import com.mapbox.rctmgl.utils.extensions.toRectF
 import com.mapbox.rctmgl.utils.extensions.toScreenCoordinate
 import java.lang.Exception
 import java.util.HashMap
@@ -38,6 +35,11 @@ fun ReadableArray.asArrayString(): Array<String> {
         getString(it)
     }
     return result
+}
+
+interface CommandResponse {
+    fun success(builder: (WritableMap) -> Unit)
+    fun error(message: String)
 }
 
 open class RCTMGLMapViewManager(context: ReactApplicationContext) :
@@ -259,31 +261,52 @@ open class RCTMGLMapViewManager(context: ReactApplicationContext) :
         );
     }
 
+    fun sendResponse(mapView: RCTMGLMapView, callbackId: String, responseBuilder: (WritableMap) -> Unit) {
+        val payload: WritableMap = WritableNativeMap()
+        responseBuilder(payload)
+        var event = AndroidCallbackEvent(mapView, callbackId, payload)
+        handleEvent(event)
+    }
+
     override fun receiveCommand(mapView: RCTMGLMapView, command: String, args: ReadableArray?) {
+        val callbackId = args!!.getString(0);
         // allows method calls to work with componentDidMount
         val mapboxMap = mapView.getMapboxMap()
             ?: //            mapView.enqueuePreRenderMapMethod(commandID, args);
             return
+        val response = object : CommandResponse {
+            override fun success(builder: (WritableMap) -> Unit) {
+                sendResponse(mapView, callbackId, builder)
+            }
+
+            override fun error(message: String) {
+                Logger.e(REACT_CLASS, "Command: ${command} failed with: ${message}")
+                sendResponse(mapView, callbackId) {
+                    it.putNull("data")
+                    it.putString("error", message)
+                }
+            }
+        }
         when (command) {
             "queryTerrainElevation" -> {
                 val coords = args!!.getArray(1)
                 mapView.queryTerrainElevation(
-                    args.getString(0),
                     coords.getDouble(0),
-                    coords.getDouble(1)
+                    coords.getDouble(1),
+                    response
                 )
             }
             "getZoom" -> {
-                mapView.getZoom(args!!.getString(0));
+                mapView.getZoom(response)
             }
             "getCenter" -> {
-                mapView.getCenter(args!!.getString(0));
+                mapView.getCenter(response)
             }
             "getPointInView" -> {
-                mapView.getPointInView(args!!.getString(0), args.getArray(1).toCoordinate())
+                mapView.getPointInView(args.getArray(1).toCoordinate(), response)
             }
             "getCoordinateFromView" -> {
-                mapView.getCoordinateFromView(args!!.getString(0), args.getArray(1).toScreenCoordinate());
+                mapView.getCoordinateFromView(args.getArray(1).toScreenCoordinate(), response)
             }
             "setSourceVisibility" -> {
                 mapView!!.setSourceVisibility(
@@ -294,26 +317,35 @@ open class RCTMGLMapViewManager(context: ReactApplicationContext) :
             }
             "queryRenderedFeaturesAtPoint" -> {
                 mapView.queryRenderedFeaturesAtPoint(
-                    args!!.getString(0),
                     ConvertUtils.toPointF(args!!.getArray(1)),
                     ExpressionParser.from(args!!.getArray(2)),
-                    ConvertUtils.toStringList(args!!.getArray(3))
-                );
+                    ConvertUtils.toStringList(args!!.getArray(3)),
+                    response
+                )
             }
             "queryRenderedFeaturesInRect" -> {
                 val layerIds = ConvertUtils.toStringList(args!!.getArray(3))
                 mapView.queryRenderedFeaturesInRect(
-                        args!!.getString(0),
-                        ConvertUtils.toRectF(args.getArray(1)),
+                        if ((args.getArray(1)?.size() ?: 0) == 0) null else  args.getArray(1).toRectF(),
                         ExpressionParser.from(args!!.getArray(2)),
-                        if (layerIds.size == 0) null else layerIds
+                        if (layerIds.size == 0) null else layerIds,
+                        response
+                )
+            }
+            "querySourceFeatures" -> {
+                val sourceLayerIds = ConvertUtils.toStringList(args!!.getArray(3))
+                mapView.querySourceFeatures(
+                        args!!.getString(1),
+                        ExpressionParser.from(args!!.getArray(2)),
+                        if (sourceLayerIds.size == 0) null else sourceLayerIds,
+                        response
                 );
             }
             "getVisibleBounds" -> {
-                mapView.getVisibleBounds(args!!.getString(0));
+                mapView.getVisibleBounds(response)
             }
             "takeSnap" -> {
-                mapView.takeSnap(args!!.getString(0), args!!.getBoolean(1))
+                mapView.takeSnap(args!!.getBoolean(1), response)
             }
             "setHandledMapChangedEvents" -> {
                 args?.let {
@@ -321,7 +353,7 @@ open class RCTMGLMapViewManager(context: ReactApplicationContext) :
                 }
             }
             "clearData" -> {
-                mapView.clearData(args!!.getString(0))
+                mapView.clearData(response)
             }
             else -> {
                 Logger.w("RCTMGLMapView.receiveCommand", "unexpected command: ${command}")
