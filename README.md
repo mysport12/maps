@@ -74,12 +74,12 @@ _See [iOS](ios/install.md) & [Android](android/install.md) setup guide for using
 
 - [node](https://nodejs.org)
 - [npm](https://www.npmjs.com/)
-- [React Native](https://facebook.github.io/react-native/) (0.64+)
+- [React Native](https://facebook.github.io/react-native/) (0.70+, older versions from 0.64+ might or might not work)
 
 
 ## Installation
 
-Check our [Installation insructions](https://rnmapbox.github.io/docs/install)
+Check our [Installation instructions](https://rnmapbox.github.io/docs/install)
 
 ### Getting Started
 For more information, check out our [Getting Started](/docs/GettingStarted.md) section
