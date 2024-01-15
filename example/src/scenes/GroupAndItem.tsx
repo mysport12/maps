@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import type { BaseExampleProps } from 'src/examples/common/BaseExamplePropTypes';
 
 import MapHeader from '../examples/common/MapHeader';
 import Page, { PageProps } from '../examples/common/Page';
@@ -47,6 +48,7 @@ import QuerySourceFeatures from '../examples/FillRasterLayer/QuerySourceFeatures
 import WatercolorRasterTiles from '../examples/FillRasterLayer/WatercolorRasterTiles';
 // LINE LAYER
 import GradientLine from '../examples/LineLayer/GradientLine';
+import DrawPolyline from '../examples/LineLayer/DrawPolyline';
 // MAP
 import ChangeLayerColor from '../examples/Map/ChangeLayerColor';
 import CreateOfflineRegion from '../examples/Map/CreateOfflineRegion';
@@ -65,17 +67,9 @@ import MapAndRNNavigation from '../examples/Map/MapAndRNNavigation';
 import DynamicUrl from '../examples/Map/DynamicUrl';
 import LocalizeLabels from '../examples/Map/LocalizeLabels';
 // SYMBOLCIRCLELAYER
-import CustomIcon from '../examples/SymbolCircleLayer/CustomIcon';
-import DataDrivenCircleColors from '../examples/SymbolCircleLayer/DataDrivenCircleColors';
-import Earthquakes from '../examples/SymbolCircleLayer/Earthquakes';
-import ShapeSourceIcon from '../examples/SymbolCircleLayer/ShapeSourceIcon';
-import SdfIcons from '../examples/SymbolCircleLayer/SdfIcons';
+import * as SymbolCircleLayer from '../examples/SymbolCircleLayer';
 // USERLOCATION
-import SetDisplacement from '../examples/UserLocation/SetDisplacement';
-import SetTintColor from '../examples/UserLocation/SetTintColor';
-import UserLocationRenderMode from '../examples/UserLocation/UserLocationRenderMode';
-import UserLocationPadding from '../examples/UserLocation/UserLocationPadding';
-import UserLocationUpdates from '../examples/UserLocation/UserLocationUpdates';
+import * as UserLocation from '../examples/UserLocation';
 // MISC
 import BugReportExample from '../examples/BugReportExample';
 import BugReportExampleTS from '../examples/BugReportExampleTS';
@@ -87,8 +81,36 @@ import MapHandlers from '../examples/V10/MapHandlers';
 import Markers from '../examples/V10/Markers';
 import QueryTerrainElevation from '../examples/V10/QueryTerrainElevation';
 import TerrainSkyAtmosphere from '../examples/V10/TerrainSkyAtmosphere';
+// V11
+import StyleImportConfig from '../examples/V11/StyleImportConfig';
 
 const MostRecentExampleKey = '@recent_example';
+
+//type with all uppercase letters from A-Z
+type UpercaseLetter =
+  | 'A'
+  | 'B'
+  | 'C'
+  | 'D'
+  | 'E'
+  | 'F'
+  | 'G'
+  | 'H'
+  | 'I'
+  | 'J'
+  | 'K'
+  | 'L'
+  | 'M'
+  | 'N'
+  | 'O'
+  | 'P'
+  | 'Q'
+  | 'R'
+  | 'S'
+  | 'T'
+  | 'X'
+  | 'Y'
+  | 'Z';
 
 const styles = StyleSheet.create({
   exampleList: {
@@ -111,11 +133,9 @@ const styles = StyleSheet.create({
 
 type NavigationType = 'Group' | 'Item';
 
-type ItemComponent = React.ComponentType<{
-  label: string;
-  onDismissExample: () => void;
-  navigation: ItemProps['navigation'];
-}>;
+type ItemComponentProps = BaseExampleProps;
+
+type ItemComponent = React.ComponentType<Partial<ItemComponentProps>>;
 
 interface ExampleNode {
   label: string;
@@ -202,7 +222,7 @@ type RootStackParamList = {
 };
 
 type GroupProps = NativeStackScreenProps<RootStackParamList, 'Group'>;
-type ItemProps = NativeStackScreenProps<RootStackParamList, 'Item'>;
+export type ItemProps = NativeStackScreenProps<RootStackParamList, 'Item'>;
 
 class ExampleGroup implements ExampleNode {
   label: string;
@@ -247,6 +267,49 @@ class ExampleGroup implements ExampleNode {
   updateIfNeeded(_updated: () => void): void {}
 }
 
+const PageWrapper = (Component: ItemComponent) => (props: BaseExampleProps) =>
+  (
+    <Page
+      label={props.label}
+      onDismissExample={props.onDismissExample}
+      navigation={props.navigation}
+    >
+      <Component {...props} />
+    </Page>
+  );
+
+function example(
+  Component: ItemComponent & {
+    metadata?: {
+      title?: string;
+      tags?: string[];
+      docs?: string;
+      page?: boolean;
+    };
+  },
+  title: string | undefined = undefined,
+) {
+  return new ExampleItem(
+    Component?.metadata?.title ?? title ?? 'n/a',
+    Component?.metadata?.page ? Component : PageWrapper(Component),
+  );
+}
+
+function exampleGroup(
+  group: { [key: `${UpercaseLetter}${string}`]: ItemComponent } & {
+    metadata: { title: string };
+  },
+) {
+  const { metadata, ...components } = group;
+
+  return new ExampleGroup(
+    metadata.title,
+    Object.entries(components).map(([key, value]) => {
+      return example(value, key);
+    }),
+  );
+}
+
 const BugReportPage =
   (Klass: React.ComponentType<PageProps>) =>
   ({ ...props }: PageProps) =>
@@ -267,6 +330,7 @@ const Examples = new ExampleGroup('React Native Mapbox', [
     new ExampleItem('Camera Animation', CameraAnimation),
     new ExampleItem('Map Handlers', MapHandlers),
   ]),
+  new ExampleGroup('V11', [example(StyleImportConfig)]),
   new ExampleGroup('Map', [
     new ExampleItem('Show Map', ShowMap),
     new ExampleItem('Show Map With Local Style.JSON', ShowMapLocalStyle),
@@ -281,7 +345,6 @@ const Examples = new ExampleGroup('React Native Mapbox', [
     new ExampleItem('Change Layer Color', ChangeLayerColor),
     new ExampleItem('Source Layer Visiblity', SourceLayerVisibility),
     new ExampleItem('Style JSON', StyleJson),
-    new ExampleItem('Set Tint Color', SetTintColor),
     new ExampleItem('Ornaments', Ornaments),
     new ExampleItem('Map and rn-navigation', MapAndRNNavigation),
     new ExampleItem('Dynamic Url', DynamicUrl),
@@ -300,19 +363,8 @@ const Examples = new ExampleGroup('React Native Mapbox', [
     new ExampleItem('Get Center', GetCenter),
     new ExampleItem('Compass View', CompassView),
   ]),
-  new ExampleGroup('User Location', [
-    new ExampleItem('User Location Render Mode', UserLocationRenderMode),
-    new ExampleItem('User Location Updates', UserLocationUpdates),
-    new ExampleItem('User Location Padding', UserLocationPadding),
-    new ExampleItem('Set Displacement', SetDisplacement),
-  ]),
-  new ExampleGroup('Symbol/CircleLayer', [
-    new ExampleItem('Custom Icon', CustomIcon),
-    new ExampleItem('Clustering Earthquakes', Earthquakes),
-    new ExampleItem('Shape Source From Icon', ShapeSourceIcon),
-    new ExampleItem('Data Driven Circle Colors', DataDrivenCircleColors),
-    new ExampleItem('SDF Icons', SdfIcons),
-  ]),
+  exampleGroup(UserLocation),
+  exampleGroup(SymbolCircleLayer),
   new ExampleGroup('Fill/RasterLayer', [
     new ExampleItem('GeoJSON Source', GeoJSONSource),
     new ExampleItem('Watercolor Raster Tiles', WatercolorRasterTiles),
@@ -329,6 +381,7 @@ const Examples = new ExampleGroup('React Native Mapbox', [
   ]),
   new ExampleGroup('LineLayer', [
     new ExampleItem('GradientLine', GradientLine),
+    example(DrawPolyline),
   ]),
   new ExampleGroup('Annotations', [
     new ExampleItem('Marker Positions & Anchors', Markers),
