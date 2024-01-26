@@ -227,26 +227,26 @@ export const Camera = memo(
   forwardRef<CameraRef, CameraProps>(
     (props: CameraProps, ref: React.ForwardedRef<CameraRef>) => {
       const {
-        allowUpdates = true,
+        centerCoordinate,
+        bounds,
+        heading,
+        pitch,
+        zoomLevel,
+        padding,
         animationDuration,
         animationMode,
-        bounds,
-        centerCoordinate,
-        defaultSettings,
-        followHeading,
-        followPadding,
-        followPitch,
+        minZoomLevel,
+        maxZoomLevel,
+        maxBounds,
         followUserLocation,
         followUserMode,
         followZoomLevel,
-        heading,
-        maxBounds,
-        maxZoomLevel,
-        minZoomLevel,
+        followPitch,
+        followHeading,
+        followPadding,
+        defaultSettings,
+        allowUpdates = true,
         onUserTrackingModeChange,
-        padding,
-        pitch,
-        zoomLevel,
       } = props;
 
       const nativeCamera = useRef<typeof NativeCameraView>(
@@ -389,8 +389,12 @@ export const Camera = memo(
         }
 
         if (!config.type)
+          // @ts-expect-error The compiler doesn't understand that the `config` union type is guaranteed
+          // to be an object type.
           config = {
             ...config,
+            // @ts-expect-error Allows JS files to pass in an invalid config (lacking the `type` property),
+            // which would raise a compilation error in TS files.
             type: config.stops ? 'CameraStops' : 'CameraStop',
           };
 

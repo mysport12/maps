@@ -75,6 +75,11 @@ const Ornaments = () => {
     [OrnamentType.ScaleBar]: OrnamentPosition.TopLeft,
   });
 
+  const [compassImage, setCompassImage] = useState<CompassImage | undefined>();
+  const [compassFadeWhenNorth, setCompassFadeWhenNorth] = useState<
+    boolean | undefined
+  >(undefined);
+
   const handlePressVisibility = (ornamentType: OrnamentType): void => {
     setVisibility((prevState) => {
       let newValue;
@@ -119,6 +124,8 @@ const Ornaments = () => {
         attributionPosition={POSITIONS[position[OrnamentType.Attribution]]}
         compassEnabled={visibility[OrnamentType.Compass]}
         compassPosition={POSITIONS[position[OrnamentType.Compass]]}
+        compassImage={compassImage}
+        compassFadeWhenNorth={compassFadeWhenNorth}
         scaleBarEnabled={visibility[OrnamentType.ScaleBar]}
         scaleBarPosition={POSITIONS[position[OrnamentType.ScaleBar]]}
       >
@@ -136,6 +143,8 @@ const Ornaments = () => {
           onPressPosition={handlePressPosition}
         />
 
+        <Divider style={styles.divider} />
+
         <Text>Attribution</Text>
         <OrnamentButtons
           ornamentType={OrnamentType.Attribution}
@@ -144,6 +153,8 @@ const Ornaments = () => {
           onPressVisibility={handlePressVisibility}
           onPressPosition={handlePressPosition}
         />
+
+        <Divider style={styles.divider} />
 
         <Text>Compass</Text>
         <OrnamentButtons

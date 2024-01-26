@@ -7,25 +7,8 @@ public class RNMBXNativeUserLocation: UIView, RNMBXMapComponent {
   var imageManager: ImageManager? = nil
   
   let locationLayerId = "location-layer"
+
   var locationLayer : LocationIndicatorLayer? = nil
-  weak var map : RCTMGLMapView! = nil
-  var visible : Bool = false
-  
-  @objc var nativeBearingImage : NSDictionary? = nil {
-    didSet {
-      if let map = self.map { _applySettings(map) }
-    }
-  }
-  @objc var nativeShadowImage : NSDictionary? = nil {
-    didSet {
-      if let map = self.map { _applySettings(map) }
-    }
-  }
-  @objc var nativeTopImage : NSDictionary? = nil {
-    didSet {
-      if let map = self.map { _applySettings(map) }
-    }
-  }
 
   @objc
   public var iosShowsUserHeadingIndicator : Bool = false {

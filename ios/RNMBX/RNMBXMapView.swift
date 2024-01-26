@@ -816,20 +816,20 @@ open class RNMBXMapView: UIView {
     self.fireEvent(event: event, callback: self.reactOnMapChange)
   }
 
-  private func getOrnamentOptionsFromPosition(_ position: [String: Int]) -> (position: OrnamentPosition, margins: CGPoint)? {
+  private func getOrnamentOptionsFromPosition(_ position: [String: NSNumber]) -> (position: OrnamentPosition, margins: CGPoint)? {
     let left = position["left"]
     let right = position["right"]
     let top = position["top"]
     let bottom = position["bottom"]
     
     if let left = left, let top = top {
-      return (OrnamentPosition.topLeading, CGPoint(x: left, y: top))
+      return (OrnamentPosition.topLeading, CGPoint(x: Int(truncating: left), y: Int(truncating: top)))
     } else if let right = right, let top = top {
-      return (OrnamentPosition.topTrailing, CGPoint(x: right, y: top))
+      return (OrnamentPosition.topTrailing, CGPoint(x: Int(truncating: right), y: Int(truncating: top)))
     } else if let bottom = bottom, let right = right {
-      return (OrnamentPosition.bottomTrailing, CGPoint(x: right, y: bottom))
+      return (OrnamentPosition.bottomTrailing, CGPoint(x: Int(truncating: right), y: Int(truncating: bottom)))
     } else if let bottom = bottom, let left = left {
-      return (OrnamentPosition.bottomLeading, CGPoint(x: left, y: bottom))
+      return (OrnamentPosition.bottomLeading, CGPoint(x: Int(truncating: left), y: Int(truncating: bottom)))
     }
     
     return nil
@@ -1484,7 +1484,6 @@ class RNMBXPointAnnotationManager : AnnotationInteractionDelegate {
       noAnnotationFound(tap)
       return
     }
-    let existingAnnotations = self.manager.annotations
     let options = RenderedQueryOptions(layerIds: [layerId], filter: nil)
     mapFeatureQueryable.queryRenderedFeatures(
       with: tap.location(in: tap.view),
@@ -1505,7 +1504,7 @@ class RNMBXPointAnnotationManager : AnnotationInteractionDelegate {
             }
 
             // Find if any `queriedFeatureIds` match an annotation's `id`
-            let tappedAnnotations = existingAnnotations.filter { queriedFeatureIds.contains($0.id) }
+            let tappedAnnotations = self.manager.annotations.filter { queriedFeatureIds.contains($0.id) }
 
             // If `tappedAnnotations` is not empty, call delegate
             if !tappedAnnotations.isEmpty {
@@ -1584,10 +1583,10 @@ class RNMBXPointAnnotationManager : AnnotationInteractionDelegate {
     }
       switch sender.state {
         case .began:
-        let existingAnnotations = self.manager.annotations
         mapFeatureQueryable.queryRenderedFeatures(
           with: sender.location(in: sender.view),
             options: options) { [weak self] (result) in
+
               guard let self = self else { return }
               switch result {
                 case .success(let queriedFeatures):
@@ -1598,6 +1597,7 @@ class RNMBXPointAnnotationManager : AnnotationInteractionDelegate {
                       }
                       return featureId
                   }
+
                   // Find if any `queriedFeatureIds` match an annotation's `id`
                 let draggedAnnotations = self.manager.annotations.filter { queriedFeatureIds.contains($0.id) }
                 let enabledAnnotations = draggedAnnotations.filter { self.lookup($0)?.draggable ?? false }
@@ -1613,10 +1613,12 @@ class RNMBXPointAnnotationManager : AnnotationInteractionDelegate {
                   Logger.log(level:.warn, message:"Failed to query map for annotations due to error: \(error)")
                 }
               }
+
       case .changed:
           guard var annotation = self.draggedAnnotation else {
               return
           }
+          
           self.onDragHandler(self.manager, didDetectDraggedAnnotations: [annotation], dragState: .changed, targetPoint: targetPoint)
 
           let idx = self.manager.annotations.firstIndex { an in return an.id == annotation.id }
