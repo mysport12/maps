@@ -1,33 +1,17 @@
-import org.apache.tools.ant.taskdefs.condition.Os
-
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
-
 buildscript {
     ext {
-        buildToolsVersion = "31.0.0"
-        minSdkVersion = 21
-        compileSdkVersion = 31
-        targetSdkVersion = 31
-
-        if (System.properties['os.arch'] == "aarch64") {
-            // For M1 Users we need to use the NDK 24 which added support for aarch64
-            ndkVersion = "24.0.8215888"
-        } else {
-            // Otherwise we default to the side-by-side NDK version from AGP.
-            ndkVersion = "21.4.7075529"
-        }
-
         RNMapboxMapsImpl = "mapbox"
 
         useCustomMapbox = false
 
-        if (System.getenv('CI_MAP_IMPL').equals('maplibre')) {
-            RNMapboxMapsImpl = "maplibre"
-        } else if (System.getenv('CI_MAP_IMPL').equals('mapbox')) {
+        if (System.getenv('CI_MAP_IMPL').equals('mapbox')) {
             RNMapboxMapsImpl = "mapbox"
             kotlinVersion = '1.6.21'
-        } else if (System.getenv('CI_MAP_IMPL').equals('mapbox-gl')) {
-            RNMapboxMapsImpl = "mapbox-gl"
+        } else if (System.getenv('CI_MAP_IMPL').equals('mapbox11')) {
+            RNMapboxMapsVersion = '11.1.0'
+            RNMapboxMapsImpl = "mapbox"
+        } else if (project.hasProperty('RNMBX11') && project.getProperty('RNMBX11').toBoolean()) {
+            RNMapboxMapsVersion = '11.1.0'
         }
 
         // Mapbox deps
@@ -43,68 +27,41 @@ buildscript {
                 implementation 'com.mapbox.mapboxsdk:mapbox-android-plugin-markerview-v9:0.4.0'
             }
         }
+
+        buildToolsVersion = "34.0.0"
+        minSdkVersion = 21
+        compileSdkVersion = 34
+        targetSdkVersion = 34
+        ndkVersion = "25.1.8937393"
+        kotlinVersion = '1.8.0'
     }
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:7.1.1")
+        classpath("com.android.tools.build:gradle")
         classpath("com.facebook.react:react-native-gradle-plugin")
-        classpath("de.undercouch:gradle-download-task:5.0.1")
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
     }
 }
 
 allprojects {
     repositories {
-        maven {
-            // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
-            url("$rootDir/../node_modules/react-native/android")
-        }
-        maven {
-            // Android JSC is installed from npm
-            url("$rootDir/../node_modules/jsc-android/dist")
-        }
-        if (rootProject.ext.get("RNMapboxMapsImpl") == "mapbox") {
-            maven {
-                url 'https://api.mapbox.com/downloads/v2/releases/maven'
-                authentication {
-                    basic(BasicAuthentication)
-                }
-                credentials {
-                    // Do not change the username below.
-                    // This should always be `mapbox` (not your username). 
-                    username = 'mapbox'
-                    // Use the secret token you stored in gradle.properties as the password
-                    password = project.properties['MAPBOX_DOWNLOADS_TOKEN'] ?: ""
-                }
-            }
-        }
-
-        if (rootProject.ext.get('useCustomMapbox')) {
                 maven {
-                    url 'https://api.mapbox.com/downloads/v2/releases/maven'
-                    authentication {
-                        basic(BasicAuthentication)
-                    }
-                    credentials {
-                    username = "mapbox"
-                    password = "REPLACE WITH YOUR MAPBOX DOWNLOAD TOKEN"
-
-                    }
-                }
-        }
-
-        mavenCentral {
-            // We don't want to fetch react-native from Maven Central as there are
-            // older versions over there.
-            content {
-                excludeGroup "com.facebook.react"
+            url 'https://api.mapbox.com/downloads/v2/releases/maven'
+            authentication {
+                basic(BasicAuthentication)
+            }
+            credentials {
+                // Do not change the username below.
+                // This should always be `mapbox` (not your username).
+                username = 'mapbox'
+                // Use the secret token you stored in gradle.properties as the password
+                password = project.properties['MAPBOX_DOWNLOADS_TOKEN'] ?: ""
             }
         }
-        google()
-        maven { url 'https://www.jitpack.io' }
     }
 }
+
+apply plugin: "com.facebook.react.rootproject"

@@ -1,10 +1,10 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 
-import UserLocation from '../../javascript/components/UserLocation';
-import { ShapeSource } from '../../javascript/components/ShapeSource';
-import CircleLayer from '../../javascript/components/CircleLayer';
-import locationManager from '../../javascript/modules/location/locationManager';
+import UserLocation from '../../src/components/UserLocation';
+import { ShapeSource } from '../../src/components/ShapeSource';
+import CircleLayer from '../../src/components/CircleLayer';
+import locationManager from '../../src/modules/location/locationManager';
 
 const position = {
   coords: {
@@ -29,6 +29,9 @@ describe('UserLocation', () => {
     jest.spyOn(locationManager, 'addListener');
 
     jest.spyOn(locationManager, 'removeListener');
+    jest
+      .spyOn(locationManager, 'setMinDisplacement')
+      .mockImplementation(jest.fn());
 
     beforeEach(() => {
       jest.clearAllMocks();
@@ -89,7 +92,7 @@ describe('UserLocation', () => {
 
       render(<UserLocation onUpdate={onUpdateCallback} />);
 
-      locationManager.onUpdate({
+      locationManager._onUpdate({
         coords: {
           accuracy: 9.977999687194824,
           altitude: 44.64373779296875,

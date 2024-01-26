@@ -1,4 +1,4 @@
-import MapboxGL from '../javascript';
+import MapboxGL from '../src';
 
 describe('Public Interface', () => {
   it('should contain all expected components and utils', () => {
@@ -14,9 +14,17 @@ describe('Public Interface', () => {
       'Callout',
       'Camera',
       'UserLocation',
+      'NativeUserLocation', // deprecated
+      'LocationPuck',
+      'StyleImport',
+      'Viewport',
+      'CustomLocationProvider',
 
       // modules
       'offlineManager',
+      'TileStore',
+      'offlineManagerLegacy',
+      'OfflineCreatePackOptions',
       'snapshotManager',
       'locationManager',
 
@@ -26,6 +34,7 @@ describe('Public Interface', () => {
       'CircleLayer',
       'HeatmapLayer',
       'LineLayer',
+      'ModelLayer',
       'SymbolLayer',
       'BackgroundLayer',
       'RasterLayer',
@@ -40,9 +49,13 @@ describe('Public Interface', () => {
       'ImageSource',
       'RasterDemSource',
       'Images',
+      'Image',
+      'Models',
 
       // constants
-      'UserTrackingModes',
+      'UserTrackingModes', // deprecated
+      'UserTrackingMode',
+      'UserLocationRenderMode',
       'StyleURL',
       'EventTypes',
       'CameraModes',
@@ -71,14 +84,19 @@ describe('Public Interface', () => {
       'LightAnchor',
       'OfflinePackDownloadState',
       'OfflineCallbackName',
+      'TileServers',
 
       // methods
       'setWellKnownTileServer',
+      'clearData',
       'setAccessToken',
       'getAccessToken',
       'setTelemetryEnabled',
       'setConnected',
       'requestAndroidLocationPermissions',
+      'getAnnotationsLayerID',
+      'addCustomHeader',
+      'removeCustomHeader',
 
       // animated
       'Animated',
@@ -94,6 +112,8 @@ describe('Public Interface', () => {
       // helpers
       'Logger',
       'Style',
+
+      '__experimental',
     ];
     actualKeys.forEach((key) => expect(expectedKeys).toContain(key));
   });

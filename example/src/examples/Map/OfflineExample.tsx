@@ -1,19 +1,28 @@
 import geoViewport from '@mapbox/geo-viewport';
-import Mapbox, { Camera, MapView, offlineManager } from '@rnmapbox/maps';
+import Mapbox, {
+  Camera,
+  MapView,
+  offlineManager,
+  StyleURL,
+} from '@rnmapbox/maps';
 import React, { useState } from 'react';
 import { Button, Dimensions, TextInput } from 'react-native';
 
-import Page from '../common/Page';
+import { ExampleWithMetadata } from '../common/ExampleMetadata'; // exclude-from-doc
 
 const CENTER_COORD: [number, number] = [-73.970895, 40.723279];
 const MAPBOX_VECTOR_TILE_SIZE = 512;
+console.log('=> Mapbox[0]:', Mapbox);
+console.log('=> Mapbox.StyleURL[1]:', Mapbox.StyleURL);
+console.log('=> StyleURL[2]:', StyleURL);
+const STYLE_URL = Mapbox.StyleURL.Satellite;
 
-export default function OfflineExample({ ...props }): JSX.Element {
+const OfflineExample = () => {
   const [packName, setPackName] = useState('pack-1');
   const [showEditTitle, setShowEditTitle] = useState(false);
 
   return (
-    <Page {...props}>
+    <>
       <Button
         title={`Pack name: ${packName}`}
         onPress={() => {
@@ -68,6 +77,22 @@ export default function OfflineExample({ ...props }): JSX.Element {
         }}
       />
       <Button
+        title="Resume pack"
+        onPress={async () => {
+          const pack = await offlineManager.getPack(packName);
+          if (pack) {
+            await pack.resume();
+          }
+        }}
+      />
+      <Button
+        title="Remove packs"
+        onPress={async () => {
+          const result = await offlineManager.resetDatabase();
+          console.log('Reset DB done:', result);
+        }}
+      />
+      <Button
         title="Create Pack"
         onPress={() => {
           const { width, height } = Dimensions.get('window');
@@ -80,7 +105,7 @@ export default function OfflineExample({ ...props }): JSX.Element {
 
           const options = {
             name: packName,
-            styleURL: Mapbox.StyleURL.Street,
+            styleURL: STYLE_URL,
             bounds: [
               [bounds[0], bounds[1]],
               [bounds[2], bounds[3]],
@@ -92,18 +117,30 @@ export default function OfflineExample({ ...props }): JSX.Element {
             },
           };
           offlineManager.createPack(options, (region, status) =>
-            console.log(
-              '=> progress callback region:',
-              props,
-              'status: ',
-              status,
-            ),
+            console.log('=> progress callback region:', 'status: ', status),
           );
         }}
       />
-      <MapView style={{ flex: 1 }}>
+      <MapView style={{ flex: 1 }} styleURL={STYLE_URL}>
         <Camera zoomLevel={10} centerCoordinate={CENTER_COORD} />
       </MapView>
-    </Page>
+    </>
   );
-}
+};
+
+export default OfflineExample;
+
+/* end-example-doc */
+
+const metadata: ExampleWithMetadata['metadata'] = {
+  title: 'Offline Example',
+  tags: [
+    'offlineManager#createPack',
+    'offlineManager#getPack',
+    'offlineManager#getPacks',
+  ],
+  docs: `
+Demonstates basic use of offlineManager api.
+`,
+};
+OfflineExample.metadata = metadata;

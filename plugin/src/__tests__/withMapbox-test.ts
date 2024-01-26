@@ -1,26 +1,60 @@
-import { applyCocoaPodsModifications } from '../withMapbox';
+import {
+  applyCocoaPodsModifications,
+  _addMapboxMavenRepo,
+} from '../withMapbox';
 
-import * as fixtures from './fixtures/cocoapodFiles';
+import * as iosFixtures from './fixtures/cocoapodFiles';
+import * as androidFixtures from './fixtures/buildGradleFiles';
+
+describe('applyAndroidGradleModifications', () => {
+  it(`adds the correct repo to build.gradle`, () => {
+    const result = _addMapboxMavenRepo(androidFixtures.expoTemplateBuildGradle);
+    expect(result).toMatchSnapshot();
+  });
+
+  it(`adds the correct maven repo under allProjects to build.gradle`, () => {
+    const result = _addMapboxMavenRepo(
+      androidFixtures.expoTemplateBuildGradleWithoutMavenLocal,
+    );
+    expect(result).toMatchSnapshot();
+  });
+
+  it(`adds the correct maven repo under allProjects to build.gradle with expo-camera`, () => {
+    const result = _addMapboxMavenRepo(
+      androidFixtures.expoTemplateBuildGradleWithExpoCamera,
+    );
+    expect(result).toMatchSnapshot();
+  });
+});
 
 describe('applyCocoaPodsModifications', () => {
   it('adds blocks to a react native template podfile', () => {
     expect(
-      applyCocoaPodsModifications(fixtures.reactNativeTemplatePodfile, {}),
+      applyCocoaPodsModifications(iosFixtures.reactNativeTemplatePodfile, {}),
+    ).toMatchSnapshot();
+  });
+  it('adds blocks to a react native template podfile with params', () => {
+    expect(
+      applyCocoaPodsModifications(iosFixtures.reactNativeTemplatePodfile, {
+        RNMapboxMapsUseV11: true,
+        RNMapboxMapsVersion: '11.0.0.beta4',
+        RNMapboxMapsDownloadToken: 'pk.123',
+      }),
     ).toMatchSnapshot();
   });
   it('adds blocks to a expo prebuild template podfile', () => {
     expect(
-      applyCocoaPodsModifications(fixtures.expoTemplatePodfile, {}),
+      applyCocoaPodsModifications(iosFixtures.expoTemplatePodfile, {}),
     ).toMatchSnapshot();
   });
   it('adds blocks to a expo prebuild template podfile with custom modifications', () => {
     expect(
-      applyCocoaPodsModifications(fixtures.customExpoTemplatePodfile, {}),
+      applyCocoaPodsModifications(iosFixtures.customExpoTemplatePodfile, {}),
     ).toMatchSnapshot();
   });
   it('fails to add blocks to a bare podfile', () => {
     expect(() =>
-      applyCocoaPodsModifications(fixtures.blankTemplatePodfile, {}),
+      applyCocoaPodsModifications(iosFixtures.blankTemplatePodfile, {}),
     ).toThrow('Failed to match');
     expect(() => applyCocoaPodsModifications('', {})).toThrow(
       'Failed to match',
@@ -28,7 +62,7 @@ describe('applyCocoaPodsModifications', () => {
   });
   it('does not re add blocks to an applied template podfile', () => {
     const runOnce = applyCocoaPodsModifications(
-      fixtures.reactNativeTemplatePodfile,
+      iosFixtures.reactNativeTemplatePodfile,
       {},
     );
 
@@ -36,7 +70,7 @@ describe('applyCocoaPodsModifications', () => {
   });
   it('works after revisions to blocks', () => {
     const runOnce = applyCocoaPodsModifications(
-      fixtures.expoTemplateWithRevisions,
+      iosFixtures.expoTemplateWithRevisions,
       {},
     );
 
@@ -46,7 +80,7 @@ describe('applyCocoaPodsModifications', () => {
   // has a pre_install/post_install blocmk commented out, before the `use_react_native` function.
   it('does not work with revisions to blocks after comments', () => {
     const runOnce = applyCocoaPodsModifications(
-      fixtures.expoTemplateWithRevisionsAfterComments,
+      iosFixtures.expoTemplateWithRevisionsAfterComments,
       {},
     );
 

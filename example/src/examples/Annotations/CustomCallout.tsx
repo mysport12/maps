@@ -1,11 +1,11 @@
-import MapboxGL, { SymbolLayerStyle } from '@rnmapbox/maps';
+import Mapbox, { type SymbolLayerStyle } from '@rnmapbox/maps';
 import { Feature } from '@turf/helpers';
-import React, { FC, useState } from 'react';
+import React, { useState } from 'react';
 import { StyleProp, Text, TextStyle, View, ViewStyle } from 'react-native';
 
 import exampleIcon from '../../assets/pin.png';
 import sheet from '../../styles/sheet';
-import Page from '../common/Page';
+import { ExampleWithMetadata } from '../common/ExampleMetadata'; // exclude-from-doc
 
 const defaultCamera = {
   centerCoordinate: [12.338, 45.4385],
@@ -34,7 +34,7 @@ type CustomCalloutViewProps = {
   message: string;
 };
 
-const CustomCalloutView: FC<CustomCalloutViewProps> = ({ message }) => {
+const CustomCalloutView = ({ message }: CustomCalloutViewProps) => {
   return (
     <View style={styles.calloutContainerStyle}>
       <Text style={styles.customCalloutText}>{message}</Text>
@@ -42,61 +42,54 @@ const CustomCalloutView: FC<CustomCalloutViewProps> = ({ message }) => {
   );
 };
 
-type CustomCalloutProps = {
-  label: string;
-  onDismissExample: () => any;
-};
-
-const CustomCallout: FC<CustomCalloutProps> = (props) => {
+const CustomCallout = () => {
   const [selectedFeature, setSelectedFeature] =
-    useState<Feature<{ type: string; coordinates: number[] }, any>>();
+    useState<GeoJSON.Feature<GeoJSON.Point>>();
 
-  const onPinPress = (e: any): void => {
+  const onPinPress = (e: { features: Array<GeoJSON.Feature> }): void => {
     if (selectedFeature) {
       setSelectedFeature(undefined);
       return;
     }
 
-    const feature = e?.features[0];
+    const feature = e?.features[0] as Feature<GeoJSON.Point>;
     setSelectedFeature(feature);
   };
 
   return (
-    <Page {...props}>
-      <MapboxGL.MapView style={sheet.matchParent}>
-        <MapboxGL.Camera defaultSettings={defaultCamera} />
-        <MapboxGL.ShapeSource
-          id="mapPinsSource"
-          shape={featureCollection}
-          onPress={onPinPress}
-        >
-          <MapboxGL.SymbolLayer id="mapPinsLayer" style={styles.mapPinLayer} />
-        </MapboxGL.ShapeSource>
-        {selectedFeature && (
-          <MapboxGL.MarkerView
-            id="selectedFeatureMarkerView"
-            coordinate={selectedFeature.geometry.coordinates}
-          >
-            <CustomCalloutView message={selectedFeature?.properties?.message} />
-          </MapboxGL.MarkerView>
-        )}
-      </MapboxGL.MapView>
-    </Page>
+    <Mapbox.MapView style={sheet.matchParent}>
+      <Mapbox.Camera defaultSettings={defaultCamera} />
+      <Mapbox.Images images={{ exampleIcon }} />
+      <Mapbox.ShapeSource
+        id="mapPinsSource"
+        shape={featureCollection}
+        onPress={onPinPress}
+      >
+        <Mapbox.SymbolLayer id="mapPinsLayer" style={styles.mapPinLayer} />
+      </Mapbox.ShapeSource>
+      {selectedFeature && (
+        <Mapbox.MarkerView coordinate={selectedFeature.geometry.coordinates}>
+          <CustomCalloutView message={selectedFeature?.properties?.message} />
+        </Mapbox.MarkerView>
+      )}
+    </Mapbox.MapView>
   );
 };
 
-interface CustomCalloutStyles {
+const styles: {
+  matchParent: StyleProp<ViewStyle>;
   mapPinLayer: SymbolLayerStyle;
   customCalloutText: StyleProp<TextStyle>;
   calloutContainerStyle: StyleProp<ViewStyle>;
-}
-
-const styles: CustomCalloutStyles = {
+} = {
+  matchParent: {
+    flex: 1,
+  },
   mapPinLayer: {
     iconAllowOverlap: true,
     iconAnchor: 'bottom',
     iconSize: 1.0,
-    iconImage: exampleIcon,
+    iconImage: 'exampleIcon',
   },
   customCalloutText: {
     color: 'black',
@@ -113,3 +106,14 @@ const styles: CustomCalloutStyles = {
 };
 
 export default CustomCallout;
+
+/* end-example-doc */
+
+const metadata: ExampleWithMetadata['metadata'] = {
+  title: 'Custom Callout',
+  tags: ['MarkerView'],
+  docs: `
+Use MarkerView to create a custom callout.
+`,
+};
+CustomCallout.metadata = metadata;

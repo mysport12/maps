@@ -3,16 +3,15 @@ import {
   Alert,
   Text,
   View,
+  Button,
   TouchableOpacity,
   Dimensions,
   StyleSheet,
 } from 'react-native';
-import MapboxGL from '@rnmapbox/maps';
+import Mapbox, { offlineManager, MapView, Camera } from '@rnmapbox/maps';
 import geoViewport from '@mapbox/geo-viewport';
 
 import sheet from '../../styles/sheet';
-import BaseExamplePropTypes from '../common/BaseExamplePropTypes';
-import Page from '../common/Page';
 import Bubble from '../common/Bubble';
 
 const CENTER_COORD = [-73.970895, 40.723279];
@@ -39,10 +38,6 @@ const styles = StyleSheet.create({
 });
 
 class CreateOfflineRegion extends React.Component {
-  static propTypes = {
-    ...BaseExamplePropTypes,
-  };
-
   constructor(props) {
     super(props);
 
@@ -53,17 +48,21 @@ class CreateOfflineRegion extends React.Component {
     };
 
     this.onDownloadProgress = this.onDownloadProgress.bind(this);
+    this.errorListener = this.errorListener.bind(this);
     this.onDidFinishLoadingStyle = this.onDidFinishLoadingStyle.bind(this);
 
     this.onResume = this.onResume.bind(this);
     this.onPause = this.onPause.bind(this);
     this.onStatusRequest = this.onStatusRequest.bind(this);
+    this.onCreate = this.onCreate.bind(this);
+
+    this.options = {};
   }
 
   componentWillUnmount() {
     // avoid setState warnings if we back out before we finishing downloading
-    MapboxGL.offlineManager.deletePack(this.state.name);
-    MapboxGL.offlineManager.unsubscribe('test');
+    offlineManager.deletePack(this.state.name);
+    offlineManager.unsubscribe('test');
   }
 
   async onDidFinishLoadingStyle() {
@@ -75,9 +74,9 @@ class CreateOfflineRegion extends React.Component {
       MAPBOX_VECTOR_TILE_SIZE,
     );
 
-    const options = {
+    this.options = {
       name: this.state.name,
-      styleURL: MapboxGL.StyleURL.Street,
+      styleURL: Mapbox.StyleURL.Street,
       bounds: [
         [bounds[0], bounds[1]],
         [bounds[2], bounds[3]],
@@ -85,9 +84,10 @@ class CreateOfflineRegion extends React.Component {
       minZoom: 10,
       maxZoom: 20,
     };
+  }
 
-    // start download
-    MapboxGL.offlineManager.createPack(options, this.onDownloadProgress);
+  errorListener(offlineRegion, error) {
+    console.log('Error:', error);
   }
 
   onDownloadProgress(offlineRegion, offlineRegionStatus) {
@@ -96,6 +96,15 @@ class CreateOfflineRegion extends React.Component {
       offlineRegion,
       offlineRegionStatus,
     });
+  }
+
+  onCreate() {
+    // start download
+    offlineManager.createPack(
+      this.options,
+      this.onDownloadProgress,
+      this.errorListener,
+    );
   }
 
   onResume() {
@@ -126,9 +135,9 @@ class CreateOfflineRegion extends React.Component {
 
   _getRegionDownloadState(downloadState) {
     switch (downloadState) {
-      case MapboxGL.OfflinePackDownloadState.Active:
+      case Mapbox.OfflinePackDownloadState.Active:
         return 'Active';
-      case MapboxGL.OfflinePackDownloadState.Complete:
+      case Mapbox.OfflinePackDownloadState.Complete:
         return 'Complete';
       default:
         return 'Inactive';
@@ -139,15 +148,15 @@ class CreateOfflineRegion extends React.Component {
     const { offlineRegionStatus } = this.state;
 
     return (
-      <Page {...this.props}>
-        <MapboxGL.MapView
+      <>
+        <MapView
           ref={(c) => (this._map = c)}
           onPress={this.onPress}
           onDidFinishLoadingMap={this.onDidFinishLoadingStyle}
           style={sheet.matchParent}
         >
-          <MapboxGL.Camera zoomLevel={10} centerCoordinate={CENTER_COORD} />
-        </MapboxGL.MapView>
+          <Camera zoomLevel={10} centerCoordinate={CENTER_COORD} />
+        </MapView>
 
         {offlineRegionStatus !== null ? (
           <Bubble>
@@ -174,6 +183,7 @@ class CreateOfflineRegion extends React.Component {
               </Text>
 
               <View style={styles.buttonCnt}>
+                <Button title="Create" onPress={this.onCreate} />
                 <TouchableOpacity onPress={this.onResume}>
                   <View style={styles.button}>
                     <Text style={styles.buttonTxt}>Resume</Text>
@@ -195,9 +205,21 @@ class CreateOfflineRegion extends React.Component {
             </View>
           </Bubble>
         ) : null}
-      </Page>
+      </>
     );
   }
 }
 
 export default CreateOfflineRegion;
+
+/* end-example-doc */
+
+/** @type ExampleWithMetadata['metadata'] */
+const metadata = {
+  title: 'Change Offline Region',
+  tags: ['offlineManage#createPack'],
+  docs: `
+Creates offline pack and montiors them
+`,
+};
+CreateOfflineRegion.metadata = metadata;

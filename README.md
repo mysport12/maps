@@ -21,11 +21,8 @@ _A community-supported, open-source React Native library for building maps with 
 
 ---
 ## News & Discussions
-#### <span style="color:red">&rarr;</span> Future of this repo: participate in the [discussion thread](https://github.com/rnmapbox/maps/discussions/1680)
-
 #### <span style="color:red">&rarr;</span> Call for additional maintainers [discussion thread](https://github.com/rnmapbox/maps/discussions/1551)
 
-#### <span style="color:red">&rarr;</span> This README is for the unreleased 10* branch. Please see [v8 branch](https://github.com/rnmapbox/maps/tree/v8) for documentation on 8.* releases
 ---
 
 <table>
@@ -60,64 +57,29 @@ _A community-supported, open-source React Native library for building maps with 
 ---
 
 ### Supported Implementations 
-At the moment, the following implementations are supported: 
+At the moment we support Mapbox (v10) and Mapbox (v11) beta.
+We default to Mapbox (v10).
 
-
-|*RNMapboxMapsImpl*|*Notes*|
-|----------------|-----|
-|mapbox|New [Mapbox v10](https://www.mapbox.com/mobile-maps-sdk) implementation - recommended|
-|maplibre|[MapLibre](https://github.com/maplibre/maplibre-gl-native) opensource fork of Mapbox SDKs - will be dropped in next version|
-|mapbox-gl|Legacy mapbox implementation [iOS](https://docs.mapbox.com/android/legacy/maps/guides/) [Android](https://docs.mapbox.com/ios/legacy/maps/guides/) - legacy, will be dropped in next version|
-
-_See [iOS](ios/install.md) & [Android](android/install.md) setup guide for more details on setting `RNMapboxMapsImpl`_
+_See [iOS](ios/install.md) & [Android](android/install.md) setup guide for using v11 beta_
 
 
 
 
 ## Prerequisite
 
-1. On Android we support from version 6 (API 23) upwards
-2. Please [Sign Up to Mapbox](https://account.mapbox.com/auth/signup/) to get the Mapbox Access Token.
+1. Please [Sign Up to Mapbox](https://account.mapbox.com/auth/signup/) to get the Mapbox Access Token.
 
 
 ## Dependencies
 
 - [node](https://nodejs.org)
 - [npm](https://www.npmjs.com/)
-- [React Native](https://facebook.github.io/react-native/) (0.60+)
+- [React Native](https://facebook.github.io/react-native/) (0.70+, older versions from 0.64+ might or might not work)
 
 
 ## Installation
 
-### Step 1 - Install Package:
-
-#### Using `yarn`
-Install the latest source from git:
-```sh
-yarn add rnmapbox/maps#main
-``` 
-
-#### Using `npm`
-Install the latest source from git:
-```sh
-npm install --save rnmapbox/maps#main
-``` 
-
-#### Installing other versions
-Replace `rnmapbox/maps#main` with the following to install other versions:
-- `@rnmapbox/maps` installs the latest release
-
-
-#### Using `expo`
-Please follow the [Expo Guide](/plugin/install.md).
-
-### Step 2 - Installation Guides:
-
-- [Android](/android/install.md)
-- [iOS](/ios/install.md)
-- [Expo](/plugin/install.md)
-- [Example](/example)
-
+Check our [Installation instructions](https://rnmapbox.github.io/docs/install)
 
 ### Getting Started
 For more information, check out our [Getting Started](/docs/GettingStarted.md) section
@@ -147,15 +109,15 @@ npm run android
 ```js
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import MapboxGL from '@rnmapbox/maps';
+import Mapbox from '@rnmapbox/maps';
 
-MapboxGL.setAccessToken('<YOUR_ACCESSTOKEN>');
+Mapbox.setAccessToken('<YOUR_ACCESSTOKEN>');
 
 const App = () => {
   return (
     <View style={styles.page}>
       <View style={styles.container}>
-        <MapboxGL.MapView style={styles.map} />
+        <Mapbox.MapView style={styles.map} />
       </View>
     </View>
   );
@@ -184,6 +146,7 @@ const styles = StyleSheet.create({
 ### Components
 
 - [MapView](/docs/MapView.md)
+- [StyleImport](/docs/StyleImport.md)
 - [Light](/docs/Light.md)
 - [StyleSheet](/docs/StyleSheet.md)
 - [PointAnnotation](/docs/PointAnnotation.md)
@@ -191,7 +154,10 @@ const styles = StyleSheet.create({
 - [Callout](/docs/Callout.md)
 - [Camera](docs/Camera.md)
 - [UserLocation](docs/UserLocation.md)
+- [LocationPuck](docs/LocationPuck.md)
 - [Images](docs/Images.md)
+- [Image](docs/Image.md)
+- [Models](docs/Models.md)
 
 ### Sources
 
@@ -211,6 +177,7 @@ const styles = StyleSheet.create({
 - [SymbolLayer](/docs/SymbolLayer.md)
 - [HeatmapLayer](/docs/HeatmapLayer.md)
 - [SkyLayer](/docs/SkyLayer.md)
+- [ModelLayer](/docs/ModelLayer.md)
 
 ### Terrain
 
@@ -224,7 +191,7 @@ const styles = StyleSheet.create({
 
 ### Misc
 
-- [MapboxGL](/docs/MapboxGL.md)
+- [Mapbox](/docs/Mapbox.md)
 - [CustomHttpHeaders](/docs/CustomHttpHeaders.md)
 - [Logger](/docs/Logger.md)
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 import { Text, View } from 'react-native';
 
-import Callout from '../../javascript/components/Callout';
+import Callout from '../../src/components/Callout';
 
 describe('Callout', () => {
   test('renders with custom title', () => {
@@ -15,7 +15,7 @@ describe('Callout', () => {
   describe('_renderDefaultCallout', () => {
     test('renders default children', () => {
       const { UNSAFE_getByType, UNSAFE_getAllByType } = render(<Callout />);
-      const callout = UNSAFE_getByType('RCTMGLCallout');
+      const callout = UNSAFE_getByType('RNMBXCallout');
 
       expect(callout).toBeDefined();
       expect(UNSAFE_getAllByType(Text).length).toBe(1);
@@ -34,7 +34,7 @@ describe('Callout', () => {
         <Callout {...testProps} />,
       );
 
-      const callout = UNSAFE_getByType('RCTMGLCallout');
+      const callout = UNSAFE_getByType('RNMBXCallout');
       const views = UNSAFE_getAllByType(View);
       const text = UNSAFE_getByType(Text);
 
@@ -76,7 +76,7 @@ describe('Callout', () => {
           <View>{'Foo Bar'}</View>
         </Callout>,
       );
-      const callout = UNSAFE_getByType('RCTMGLCallout');
+      const callout = UNSAFE_getByType('RNMBXCallout');
       const views = UNSAFE_getAllByType(View);
 
       const calloutWrapperTestStyle = callout.props.style[1].width;

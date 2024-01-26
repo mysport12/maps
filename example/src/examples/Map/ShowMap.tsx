@@ -1,17 +1,18 @@
-import React, { FC, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
-import MapboxGL from '@rnmapbox/maps';
+import Mapbox from '@rnmapbox/maps';
+import { ButtonGroup } from '@rneui/base';
 
 import sheet from '../../styles/sheet';
 import { onSortOptions } from '../../utils';
-import TabBarPage from '../common/TabBarPage';
+import { ExampleWithMetadata } from '../common/ExampleMetadata'; // exclude-from-doc
 
-const ShowMap: FC<any> = (props) => {
-  const _mapOptions = Object.keys(MapboxGL.StyleURL)
+const ShowMap = () => {
+  const _mapOptions = Object.keys(Mapbox.StyleURL)
     .map((key) => {
       return {
         label: key,
-        data: (MapboxGL.StyleURL as any)[key], // bad any, because enums
+        data: (Mapbox.StyleURL as any)[key], // bad any, because enums
       };
     })
     .sort(onSortOptions);
@@ -19,14 +20,14 @@ const ShowMap: FC<any> = (props) => {
   const [styleURL, setStyleURL] = useState({ styleURL: _mapOptions[0].data });
 
   useEffect(() => {
-    MapboxGL.locationManager.start();
+    Mapbox.locationManager.start();
 
     return (): void => {
-      MapboxGL.locationManager.stop();
+      Mapbox.locationManager.stop();
     };
   }, []);
 
-  const onMapChange = (index: number, newStyleURL: MapboxGL.StyleURL): void => {
+  const onMapChange = (index: number, newStyleURL: Mapbox.StyleURL): void => {
     setStyleURL({ styleURL: newStyleURL });
   };
 
@@ -35,23 +36,36 @@ const ShowMap: FC<any> = (props) => {
   };
 
   return (
-    <TabBarPage
-      {...props}
-      scrollable
-      options={_mapOptions}
-      onOptionPress={onMapChange}
-    >
-      <MapboxGL.MapView
+    <>
+      <ButtonGroup
+        buttons={_mapOptions.map((i) => i.label)}
+        selectedIndex={_mapOptions.findIndex(
+          (i) => i.data === styleURL.styleURL,
+        )}
+        onPress={(index) => onMapChange(index, _mapOptions[index].data)}
+      />
+      <Mapbox.MapView
         styleURL={styleURL.styleURL}
         style={sheet.matchParent}
         testID={'show-map'}
       >
-        <MapboxGL.Camera followZoomLevel={12} followUserLocation />
+        <Mapbox.Camera followZoomLevel={12} followUserLocation />
 
-        <MapboxGL.UserLocation onPress={onUserMarkerPress} />
-      </MapboxGL.MapView>
-    </TabBarPage>
+        <Mapbox.UserLocation onPress={onUserMarkerPress} />
+      </Mapbox.MapView>
+    </>
   );
 };
 
 export default ShowMap;
+
+/* end-example-doc */
+
+const metadata: ExampleWithMetadata['metadata'] = {
+  title: 'Show Map',
+  tags: ['Camera#followZoomLevel', 'UserLocation#onPress'],
+  docs: `
+Shows a map with the user location annotation enabled, and on press of the user location annotation, an alert is shown.
+`,
+};
+ShowMap.metadata = metadata;

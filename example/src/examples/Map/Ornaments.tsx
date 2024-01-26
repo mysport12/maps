@@ -1,10 +1,16 @@
-import React, { FC, useState } from 'react';
-import MapboxGL from '@rnmapbox/maps';
-import { Button, StyleSheet, Text } from 'react-native';
+import React, { useState } from 'react';
+import { MapView, Camera, Images } from '@rnmapbox/maps';
+import { Button, StyleSheet, Text, ImageSourcePropType } from 'react-native';
+import { Divider } from '@rneui/base';
 
-import sheet from '../../styles/sheet';
-import Page from '../common/Page';
 import Bubble from '../common/Bubble';
+import { ExampleWithMetadata } from '../common/ExampleMetadata'; // exclude-from-doc
+
+type CompassImage = 'compass1' | 'compass2';
+const images: Record<CompassImage, ImageSourcePropType> = {
+  compass1: require('../../assets/compass1.png'),
+  compass2: require('../../assets/compass2.png'),
+};
 
 enum OrnamentType {
   Logo = 'logo',
@@ -27,12 +33,6 @@ const POSITIONS = {
   [OrnamentPosition.BottomLeft]: { bottom: 8, left: 8 },
 };
 
-const styles = StyleSheet.create({
-  bubble: {
-    marginBottom: 96,
-  },
-});
-
 type OrnamentButtonsProps = {
   ornamentType: OrnamentType;
   visibility: Record<OrnamentType, true | false | undefined>;
@@ -41,13 +41,13 @@ type OrnamentButtonsProps = {
   onPressPosition: (ornamentType: OrnamentType) => void;
 };
 
-const OrnamentButtons: FC<OrnamentButtonsProps> = ({
+const OrnamentButtons = ({
   ornamentType,
   visibility,
   position,
   onPressVisibility,
   onPressPosition,
-}) => (
+}: OrnamentButtonsProps) => (
   <>
     <Button
       title={'Visiblity: ' + visibility[ornamentType]}
@@ -60,7 +60,7 @@ const OrnamentButtons: FC<OrnamentButtonsProps> = ({
   </>
 );
 
-const ShowMap: FC<any> = (props) => {
+const Ornaments = () => {
   const [visibility, setVisibility] = useState({
     [OrnamentType.Logo]: undefined,
     [OrnamentType.Attribution]: undefined,
@@ -110,9 +110,9 @@ const ShowMap: FC<any> = (props) => {
   };
 
   return (
-    <Page {...props}>
-      <MapboxGL.MapView
-        style={sheet.matchParent}
+    <>
+      <MapView
+        style={styles.matchParent}
         logoEnabled={visibility[OrnamentType.Logo]}
         logoPosition={POSITIONS[position[OrnamentType.Logo]]}
         attributionEnabled={visibility[OrnamentType.Attribution]}
@@ -122,8 +122,9 @@ const ShowMap: FC<any> = (props) => {
         scaleBarEnabled={visibility[OrnamentType.ScaleBar]}
         scaleBarPosition={POSITIONS[position[OrnamentType.ScaleBar]]}
       >
-        <MapboxGL.Camera />
-      </MapboxGL.MapView>
+        <Images images={images} />
+        <Camera />
+      </MapView>
 
       <Bubble style={styles.bubble}>
         <Text>Logo</Text>
@@ -152,6 +153,32 @@ const ShowMap: FC<any> = (props) => {
           onPressVisibility={handlePressVisibility}
           onPressPosition={handlePressPosition}
         />
+        <Button
+          title={'Image: ' + compassImage}
+          onPress={() => {
+            if (!compassImage) {
+              setCompassImage('compass1');
+            } else if (compassImage === 'compass1') {
+              setCompassImage('compass2');
+            } else {
+              setCompassImage(undefined);
+            }
+          }}
+        />
+        <Button
+          title={'Fade when north: ' + compassFadeWhenNorth}
+          onPress={() => {
+            if (compassFadeWhenNorth === undefined) {
+              setCompassFadeWhenNorth(true);
+            } else if (compassFadeWhenNorth) {
+              setCompassFadeWhenNorth(false);
+            } else {
+              setCompassFadeWhenNorth(undefined);
+            }
+          }}
+        />
+
+        <Divider style={styles.divider} />
 
         <Text>ScaleBar</Text>
         <OrnamentButtons
@@ -162,8 +189,45 @@ const ShowMap: FC<any> = (props) => {
           onPressPosition={handlePressPosition}
         />
       </Bubble>
-    </Page>
+    </>
   );
 };
 
-export default ShowMap;
+const styles = StyleSheet.create({
+  divider: {
+    width: '100%',
+    marginTop: 5,
+    marginBottom: 10,
+  },
+  bubble: {
+    flex: 0,
+    alignItems: 'flex-start',
+    padding: 10,
+    marginBottom: 96,
+  },
+  matchParent: {
+    flex: 1,
+  },
+});
+
+export default Ornaments;
+
+const metadata: ExampleWithMetadata['metadata'] = {
+  title: 'Ornaments',
+  tags: [
+    'MapView#logoEnabled',
+    'MapView#logoPosition',
+    'MapView#attributionEnabled',
+    'MapView#attributionPosition',
+    'MapView#compassEnabled',
+    'MapView#compassPosition',
+    'MapView#compassImage',
+    'MapView#compassFadeWhenNorth',
+    'MapView#scaleBarEnabled',
+    'MapView#scaleBarPosition',
+  ],
+  docs: `
+Customize ornaments of the map(logo, compass, scalebar, attribution)
+`,
+};
+Ornaments.metadata = metadata;

@@ -1,10 +1,7 @@
 import { NativeModules } from 'react-native';
 
-import SnapshotOptions from '../../../javascript/modules/snapshot/SnapshotOptions';
-import {
-  makePoint,
-  makeFeatureCollection,
-} from '../../../javascript/utils/geoUtils';
+import SnapshotOptions from '../../../src/modules/snapshot/SnapshotOptions';
+import { makePoint, makeFeatureCollection } from '../../../src/utils/geoUtils';
 
 describe('SnapshotOptions', () => {
   it('should throw error if no centerCoordinate or bounds are provided', () => {
@@ -17,7 +14,7 @@ describe('SnapshotOptions', () => {
     const options = new SnapshotOptions({ centerCoordinate });
 
     expect(options.toJSON()).toEqual({
-      styleURL: NativeModules.MGLModule.StyleURL.Street,
+      styleURL: NativeModules.RNMBXModule.StyleURL.Street,
       heading: 0.0,
       pitch: 0.0,
       zoomLevel: 16.0,
@@ -39,7 +36,7 @@ describe('SnapshotOptions', () => {
       height: 600,
       writeToDisk: true,
       withLogo: true,
-      styleURL: NativeModules.MGLModule.StyleURL.Dark,
+      styleURL: NativeModules.RNMBXModule.StyleURL.Dark,
     };
 
     const options = new SnapshotOptions(expectedOptions);
@@ -59,7 +56,7 @@ describe('SnapshotOptions', () => {
       ],
       width: 400,
       height: 600,
-      styleURL: NativeModules.MGLModule.StyleURL.Light,
+      styleURL: NativeModules.RNMBXModule.StyleURL.Light,
       writeToDisk: false,
       withLogo: true,
     };
