@@ -89,7 +89,7 @@ interface NativeCameraStop {
 export interface CameraRef {
   setCamera: (
     config: CameraStop | CameraStops,
-    ignoreFollowUserLocation: boolean,
+    ignoreFollowUserLocation?: boolean,
   ) => void;
   fitBounds: (
     ne: Position,
@@ -381,9 +381,10 @@ export const Camera = memo(
         return JSON.stringify(makeLatLngBounds(maxBounds.ne, maxBounds.sw));
       }, [maxBounds]);
 
-      // @ts-expect-error The compiler doesn't understand that the `config` union type is guaranteed
-      // to be an object type.
-      function setCamera(config, ignoreFollowUserLocation = false) {
+      const setCamera: CameraRef['setCamera'] = (
+        config,
+        ignoreFollowUserLocation = false,
+      ) => {
         if (!allowUpdates) {
           return;
         }
@@ -418,14 +419,14 @@ export const Camera = memo(
             nativeCamera.current?.setNativeProps({ stop: _nativeStop });
           }
         }
-      }
+      };
 
-      function fitBounds(
-        ne: Array<number>,
-        sw: Array<number>,
-        paddingConfig: Array<number> | number | undefined,
+      const fitBounds: CameraRef['fitBounds'] = (
+        ne,
+        sw,
+        paddingConfig,
         _animationDuration = 0,
-      ) {
+      ) => {
         let _padding = {
           paddingTop: 0,
           paddingBottom: 0,
@@ -465,39 +466,42 @@ export const Camera = memo(
           animationDuration: _animationDuration,
           animationMode: 'easeTo',
         });
-      }
+      };
 
-      function flyTo(
-        _centerCoordinate: Array<number>,
+      const flyTo: CameraRef['flyTo'] = (
+        _centerCoordinate,
         _animationDuration = 2000,
-      ) {
+      ) => {
         setCamera({
           type: 'CameraStop',
           centerCoordinate: _centerCoordinate,
           animationDuration: _animationDuration,
         });
-      }
+      };
 
-      function moveTo(
-        _centerCoordinate: Array<number>,
+      const moveTo: CameraRef['moveTo'] = (
+        _centerCoordinate,
         _animationDuration = 0,
-      ) {
+      ) => {
         setCamera({
           type: 'CameraStop',
           centerCoordinate: _centerCoordinate,
           animationDuration: _animationDuration,
           animationMode: 'easeTo',
         });
-      }
+      };
 
-      function zoomTo(_zoomLevel: number, _animationDuration = 2000) {
+      const zoomTo: CameraRef['zoomTo'] = (
+        _zoomLevel,
+        _animationDuration = 2000,
+      ) => {
         setCamera({
           type: 'CameraStop',
           zoomLevel: _zoomLevel,
           animationDuration: _animationDuration,
           animationMode: 'flyTo',
         });
-      }
+      };
 
       useImperativeHandle(ref, () => ({
         /**

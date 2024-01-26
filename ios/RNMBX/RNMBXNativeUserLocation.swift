@@ -1,5 +1,4 @@
 import MapboxMaps
-import React
 
 @objc
 public class RNMBXNativeUserLocation: UIView, RNMBXMapComponent {
