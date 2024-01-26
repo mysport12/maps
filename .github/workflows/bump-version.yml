@@ -35,7 +35,7 @@ jobs:
     # run that runs on: tag. (Using the GitHub token would
     # not run the workflow to prevent infinite recursion.)
     - name: Check out source
-      uses: actions/checkout@v4
+      uses: actions/checkout@v3
       with:
         ssh-key: ${{ secrets.DEPLOY_KEY }}
         ref: ${{ github.ref }}
@@ -53,4 +53,4 @@ jobs:
       run: npm version ${{ github.event.inputs.version }}
 
     - name: Push latest version
-      run: git push origin ${{ github.ref }} --follow-tags
+      run: git push origin main --follow-tags
