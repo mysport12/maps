@@ -389,6 +389,8 @@ export const Camera = memo(
           return;
         }
 
+        lastTS += 1;
+
         if (!config.type)
           // @ts-expect-error The compiler doesn't understand that the `config` union type is guaranteed
           // to be an object type.
@@ -410,13 +412,15 @@ export const Camera = memo(
               _nativeStops = [..._nativeStops, _nativeStop];
             }
             nativeCamera.current?.setNativeProps({
-              stop: { stops: _nativeStops },
+              stop: { stops: _nativeStops, __updateTS: lastTS },
             });
           }
         } else if (config.type === 'CameraStop') {
           const _nativeStop = buildNativeStop(config, ignoreFollowUserLocation);
           if (_nativeStop) {
-            nativeCamera.current?.setNativeProps({ stop: _nativeStop });
+            nativeCamera.current?.setNativeProps({
+              stop: { __updateTS: lastTS, ..._nativeStop },
+            });
           }
         }
       };
@@ -591,6 +595,8 @@ export const Camera = memo(
     },
   ),
 );
+
+let lastTS = 0;
 
 const RNMBXCamera = NativeCameraView;
 
