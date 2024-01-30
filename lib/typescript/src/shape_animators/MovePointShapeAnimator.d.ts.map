@@ -1,0 +1,1 @@
+{"version":3,"file":"MovePointShapeAnimator.d.ts","sourceRoot":"","sources":["../../../../src/shape_animators/MovePointShapeAnimator.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,QAAQ,EAAE,MAAM,mBAAmB,CAAC;AAK7C,MAAM,CAAC,OAAO,OAAO,sBAAsB;IACzC,WAAW,EAAE,MAAM,CAAC;gBAER,IAAI,EAAE,QAAQ;IAM1B,KAAK;CAGN"}
