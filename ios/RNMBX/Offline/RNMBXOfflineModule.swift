@@ -621,7 +621,7 @@ class RNMBXOfflineModule: RCTEventEmitter {
         let boundsStr = options["bounds"] as! String
         let boundsData = boundsStr.data(using: .utf8)
         let boundsFC = try JSONDecoder().decode(FeatureCollection.self, from: boundsData!)
-        var geometry = RCTMGLFeatureUtils.fcToGeomtry(boundsFC)
+        var geometry = RNMBXFeatureUtils.fcToGeomtry(boundsFC)
         guard case .geometryCollection(let gc) = geometry else {
           return
         }
@@ -666,7 +666,7 @@ class RNMBXOfflineModule: RCTEventEmitter {
     return _makeRegionStatusPayload(pack.name, progress: pack.progress, state: pack.state, metadata: pack.metadata)
   }
   
-  func makeProgressEventLegacy(_ name: String, status: OfflineRegionStatus) -> RCTMGLEvent {
+  func makeProgressEventLegacy(_ name: String, status: OfflineRegionStatus) -> RNMBXEvent {
     let progressPercentage = status.requiredResourceCount == 0 ? 0 : Float(status.completedResourceCount) / Float(status.requiredResourceCount)
     var payload: Dictionary<String, Any> = [:]
     payload["state"] = status.downloadState.rawValue
@@ -677,7 +677,7 @@ class RNMBXOfflineModule: RCTEventEmitter {
     payload["completedTileSize"] = status.completedTileSize
     payload["completedTileCount"] = status.completedTileCount
     payload["requiredResourceCount"] = status.requiredResourceCount
-    return RCTMGLEvent(type: .offlineProgress, payload: payload)
+    return RNMBXEvent(type: .offlineProgress, payload: payload)
   }
   
   func offlinePackProgressDidChangeLegacy(name: String, status: OfflineRegionStatus) {
@@ -690,12 +690,12 @@ class RNMBXOfflineModule: RCTEventEmitter {
   }
   
   func offlinePackDidReceiveErrorLegacy(name: String, error: ResponseError) {
-    let event = RCTMGLEvent(type: .offlineError, payload: ["name": name, "message": error.message])
+    let event = RNMBXEvent(type: .offlineError, payload: ["name": name, "message": error.message])
     self._sendEvent(Callbacks.error.rawValue, event: event)
   }
   
   func offlinePackDidExceedTileLimitLegacy(name: String, limit: UInt64) {
-    let event = RCTMGLEvent(type: .offlineTileLimit, payload: ["name": name, "message": "Exceeded the Mapbox tile limit of \(limit)."])
+    let event = RNMBXEvent(type: .offlineTileLimit, payload: ["name": name, "message": "Exceeded the Mapbox tile limit of \(limit)."])
     self._sendEvent(Callbacks.error.rawValue, event: event)
   }
   
@@ -758,10 +758,10 @@ class RNMBXOfflineModule: RCTEventEmitter {
 
 @available(*, deprecated)
 final class RegionObserver : OfflineRegionObserver {
-  weak var offlineModule : RCTMGLOfflineModule? = nil
+  weak var offlineModule : RNMBXOfflineModule? = nil
   var packName : String = ""
   
-  init(name: String, offlineModule: RCTMGLOfflineModule) {
+  init(name: String, offlineModule: RNMBXOfflineModule) {
     self.offlineModule = offlineModule
     self.packName = name
     
