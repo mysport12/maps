@@ -63,7 +63,7 @@ public class RNMBXNativeUserLocation: UIView, RNMBXMapComponent {
       switch(value) {
       case "heading":
         _puckBearing = .heading
-      case "coures":
+      case "course":
         _puckBearing = .course
       case nil:
         _puckBearing = nil
