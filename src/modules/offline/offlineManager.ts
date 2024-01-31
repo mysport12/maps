@@ -130,7 +130,7 @@ class OfflineManager {
    * const progressListener = (offlineRegion, status) => console.log(offlineRegion, status);
    * const errorListener = (offlineRegion, err) => console.log(offlineRegion, err);
    *
-   * await MapboxGL.offlineManager.createPack({
+   * await MapboxGL.offlineManager.createPackLegacy({
    *   name: 'offlinePack',
    *   styleURL: 'mapbox://...',
    *   minZoom: 14,
@@ -385,7 +385,7 @@ class OfflineManager {
    * The Mapbox Terms of Service prohibit changing or bypassing this limit without permission from Mapbox.
    *
    * @example
-   * MapboxGL.offlineManager.setTileCountLimit(1000);
+   * MapboxGL.offlineManager.setTileCountLimitLegacy(1000);
    *
    * @param {Number} limit Map tile limit count.
    * @return {void}
