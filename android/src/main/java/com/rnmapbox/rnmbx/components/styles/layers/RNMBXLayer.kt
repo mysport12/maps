@@ -321,7 +321,7 @@ abstract class RNMBXLayer<T : Layer?>(protected var mContext: Context) : Abstrac
         private get() =
             if (mMap == null) {
                 null
-            } else mMapView?.savedStyle 
+            } else mMapView?.savedStyle
 
     abstract fun makeLayer(): T
     abstract fun addStyles()
