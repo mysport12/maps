@@ -284,7 +284,9 @@ class UserLocation extends React.Component<Props, UserLocationState> {
         animated={animated}
         onPress={onPress}
         coordinates={coordinates}
-        style={{ iconRotate: heading }}
+        style={{
+          iconRotate: heading,
+        }}
       >
         {children || normalIcon(showsUserHeadingIndicator, heading)}
       </Annotation>

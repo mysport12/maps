@@ -262,7 +262,7 @@ open class RNMBXMapView: UIView {
     super.insertReactSubview(subview, at: atIndex)
   }
   
-  @objc open override func removeReactSubview(_ subview:UIView!) {
+  @objc open override func removeReactSubview(_ subview: UIView!) {
     removeFromMap(subview)
     super.removeReactSubview(subview)
   }
@@ -1586,7 +1586,7 @@ class RNMBXPointAnnotationManager : AnnotationInteractionDelegate {
         mapFeatureQueryable.queryRenderedFeatures(
           with: sender.location(in: sender.view),
             options: options) { [weak self] (result) in
-
+              
               guard let self = self else { return }
               switch result {
                 case .success(let queriedFeatures):
@@ -1618,7 +1618,7 @@ class RNMBXPointAnnotationManager : AnnotationInteractionDelegate {
           guard var annotation = self.draggedAnnotation else {
               return
           }
-          
+        
           self.onDragHandler(self.manager, didDetectDraggedAnnotations: [annotation], dragState: .changed, targetPoint: targetPoint)
 
           let idx = self.manager.annotations.firstIndex { an in return an.id == annotation.id }
