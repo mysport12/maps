@@ -1,0 +1,1 @@
+{"version":3,"names":["ShapeAnimatorManager","nextTag","tag"],"sourceRoot":"../../../src","sources":["shape_animators/ShapeAnimatorManager.tsx"],"mappings":";;;;;;;AAAe,MAAMA,oBAAoB,CAAC;EAGxC,OAAOC,OAAO,GAAW;IACvB,IAAI,CAACC,GAAG,IAAI,CAAC;IACb,OAAO,IAAI,CAACA,GAAG;EACjB;AACF;AAAC;AAAA,gBAPoBF,oBAAoB,SAC1B,EAAE"}

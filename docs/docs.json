@@ -606,7 +606,7 @@
             "name": "ne",
             "description": "Northeast coordinate of bounding box",
             "type": {
-              "name": "Array"
+              "name": "Position"
             },
             "optional": false
           },
@@ -614,7 +614,7 @@
             "name": "sw",
             "description": "Southwest coordinate of bounding box",
             "type": {
-              "name": "Array"
+              "name": "Position"
             },
             "optional": false
           },
@@ -622,7 +622,7 @@
             "name": "paddingConfig",
             "description": "The viewport padding, specified as a number (all sides equal), a 2-item array ([vertical, horizontal]), or a 4-item array ([top, right, bottom, left])",
             "type": {
-              "name": "Array<number> \\| number \\| undefined"
+              "name": "number \\| Array"
             },
             "optional": false
           },
@@ -649,7 +649,7 @@
             "name": "_centerCoordinate",
             "optional": false,
             "type": {
-              "name": "Array"
+              "name": null
             }
           },
           {
@@ -675,7 +675,7 @@
             "name": "_centerCoordinate",
             "optional": false,
             "type": {
-              "name": "Array"
+              "name": null
             }
           },
           {
@@ -701,7 +701,7 @@
             "name": "_zoomLevel",
             "optional": false,
             "type": {
-              "name": "number"
+              "name": null
             }
           },
           {
@@ -8041,7 +8041,7 @@
           }
         ],
         "examples": [
-          "const progressListener = (offlineRegion, status) => console.log(offlineRegion, status);\nconst errorListener = (offlineRegion, err) => console.log(offlineRegion, err);\n\nawait MapboxGL.offlineManager.createPack({\n  name: 'offlinePack',\n  styleURL: 'mapbox://...',\n  minZoom: 14,\n  maxZoom: 20,\n  bounds: [[neLng, neLat], [swLng, swLat]]\n}, progressListener, errorListener)"
+          "const progressListener = (offlineRegion, status) => console.log(offlineRegion, status);\nconst errorListener = (offlineRegion, err) => console.log(offlineRegion, err);\n\nawait MapboxGL.offlineManager.createPackLegacy({\n  name: 'offlinePack',\n  styleURL: 'mapbox://...',\n  minZoom: 14,\n  maxZoom: 20,\n  bounds: [[neLng, neLat], [swLng, swLat]]\n}, progressListener, errorListener)"
         ],
         "returns": {
           "description": "",
@@ -8309,7 +8309,7 @@
           }
         ],
         "examples": [
-          "MapboxGL.offlineManager.setTileCountLimit(1000);"
+          "MapboxGL.offlineManager.setTileCountLimitLegacy(1000);"
         ],
         "returns": {
           "description": "",

@@ -287,9 +287,9 @@ Set the camera position to enclose the provided bounds, with optional<br/>paddin
 #### arguments
 | Name | Type | Required | Description  |
 | ---- | :--: | :------: | :----------: |
-| `ne` | `Array` | `Yes` | Northeast coordinate of bounding box |
-| `sw` | `Array` | `Yes` | Southwest coordinate of bounding box |
-| `paddingConfig` | `Array<number> \| number \| undefined` | `Yes` | The viewport padding, specified as a number (all sides equal), a 2-item array ([vertical, horizontal]), or a 4-item array ([top, right, bottom, left]) |
+| `ne` | `Position` | `Yes` | Northeast coordinate of bounding box |
+| `sw` | `Position` | `Yes` | Southwest coordinate of bounding box |
+| `paddingConfig` | `number \| Array` | `Yes` | The viewport padding, specified as a number (all sides equal), a 2-item array ([vertical, horizontal]), or a 4-item array ([top, right, bottom, left]) |
 | `_animationDuration` | `n/a` | `No` | undefined |
 
 
@@ -307,7 +307,7 @@ Sets the camera to center around the provided coordinate using a realistic 'trav
 #### arguments
 | Name | Type | Required | Description  |
 | ---- | :--: | :------: | :----------: |
-| `_centerCoordinate` | `Array` | `Yes` | undefined |
+| `_centerCoordinate` | `n/a` | `Yes` | undefined |
 | `_animationDuration` | `n/a` | `No` | undefined |
 
 
@@ -325,7 +325,7 @@ Sets the camera to center around the provided coordinate, with optional duration
 #### arguments
 | Name | Type | Required | Description  |
 | ---- | :--: | :------: | :----------: |
-| `_centerCoordinate` | `Array` | `Yes` | undefined |
+| `_centerCoordinate` | `n/a` | `Yes` | undefined |
 | `_animationDuration` | `n/a` | `No` | undefined |
 
 
@@ -343,7 +343,7 @@ Zooms the camera to the provided level, with optional duration.
 #### arguments
 | Name | Type | Required | Description  |
 | ---- | :--: | :------: | :----------: |
-| `_zoomLevel` | `number` | `Yes` | undefined |
+| `_zoomLevel` | `n/a` | `Yes` | undefined |
 | `_animationDuration` | `n/a` | `No` | undefined |
 
 
