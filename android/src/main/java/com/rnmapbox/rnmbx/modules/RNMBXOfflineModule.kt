@@ -920,3 +920,7 @@ fun TileRegion.toPercentage(): Double {
 fun TileRegion.hasCompleted(): Boolean {
     return (completedResourceCount == requiredResourceCount)
 }
+
+
+
+
