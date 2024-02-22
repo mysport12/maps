@@ -2,6 +2,7 @@ import React, {
   forwardRef,
   memo,
   useCallback,
+  useEffect,
   useImperativeHandle,
   useMemo,
   useRef,
@@ -13,6 +14,8 @@ import { type Position } from '../types/Position';
 import { makeLatLngBounds, makePoint } from '../utils/geoUtils';
 import { type NativeRefType } from '../utils/nativeRef';
 import NativeCameraView from '../specs/RNMBXCameraNativeComponent';
+import RNMBXCameraModule from '../specs/NativeRNMBXCameraModule';
+import { NativeCommands, type NativeArg } from '../utils/NativeCommands';
 
 const NativeModule = NativeModules.RNMBXModule;
 
@@ -253,6 +256,15 @@ export const Camera = memo(
         null,
       ) as NativeRefType<NativeCameraProps>;
 
+      const commands = useMemo(() => new NativeCommands(RNMBXCameraModule), []);
+
+      useEffect(() => {
+        if (nativeCamera.current) {
+          commands.setNativeRef(nativeCamera.current);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, [commands, nativeCamera.current]);
+
       const buildNativeStop = useCallback(
         (
           stop: CameraStop,
@@ -389,8 +401,6 @@ export const Camera = memo(
           return;
         }
 
-        lastTS += 1;
-
         if (!config.type)
           // @ts-expect-error The compiler doesn't understand that the `config` union type is guaranteed
           // to be an object type.
@@ -411,16 +421,19 @@ export const Camera = memo(
             if (_nativeStop) {
               _nativeStops = [..._nativeStops, _nativeStop];
             }
-            nativeCamera.current?.setNativeProps({
-              stop: { stops: _nativeStops, __updateTS: lastTS },
-            });
+
+            commands.call<void>('updateCameraStop', [
+              {
+                stops: _nativeStops,
+              } as unknown as NativeArg[],
+            ]);
           }
         } else if (config.type === 'CameraStop') {
           const _nativeStop = buildNativeStop(config, ignoreFollowUserLocation);
           if (_nativeStop) {
-            nativeCamera.current?.setNativeProps({
-              stop: { __updateTS: lastTS, ..._nativeStop },
-            });
+            commands.call<void>('updateCameraStop', [
+              _nativeStop as unknown as NativeArg,
+            ]);
           }
         }
       };
@@ -595,8 +608,6 @@ export const Camera = memo(
     },
   ),
 );
-
-let lastTS = 0;
 
 const RNMBXCamera = NativeCameraView;
 
