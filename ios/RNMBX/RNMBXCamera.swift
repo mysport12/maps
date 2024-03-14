@@ -458,6 +458,15 @@ open class RNMBXCamera : RNMBXMapComponentBase {
           pitch: pitch ?? map.mapboxMap.cameraState.pitch
         )
       }
+    } else {
+      camera = CameraOptions(
+        center: nil,
+        padding: padding,
+        anchor: nil,
+        zoom: zoom,
+        bearing: heading,
+        pitch: pitch
+      )
     }
 
     guard let camera = camera else {
