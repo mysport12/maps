@@ -8461,7 +8461,9 @@
             "optional": false
           }
         ],
-        "examples": ["MapboxGL.offlineManagerLegacy.setTileCountLimit(1000);"],
+        "examples": [
+          "await Mapbox.offlineManagerLegacy.setTileCountLimit(1000);"
+        ],
         "returns": {
           "description": "",
           "type": {
