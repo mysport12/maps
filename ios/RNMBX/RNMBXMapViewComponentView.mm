@@ -25,6 +25,12 @@ using namespace facebook::react;
     RNMBXMapViewComponentView* _componentView;
 }
 
+// Needed because of this: https://github.com/facebook/react-native/pull/37274
++ (void)load
+{
+  [super load];
+}
+
 - (instancetype)initWithComponentView:(RNMBXMapViewComponentView*)componentView {
     if (self = [super init]) {
         _componentView = componentView;
@@ -181,10 +187,7 @@ using namespace facebook::react;
         _view.reactCompassImage = compassImage;
     }
 
-    id scaleBarEnabled = RNMBXConvertFollyDynamicToId(newViewProps.scaleBarEnabled);
-    if (scaleBarEnabled != nil) {
-        _view.reactScaleBarEnabled = scaleBarEnabled;
-    }
+    RNMBX_REMAP_OPTIONAL_PROP_BOOL(scaleBarEnabled, reactScaleBarEnabled)
 
     id scaleBarPosition = RNMBXConvertFollyDynamicToId(newViewProps.scaleBarPosition);
     if (scaleBarPosition != nil) {

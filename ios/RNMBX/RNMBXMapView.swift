@@ -5,6 +5,43 @@ import MapKit
 public typealias RNMBXMapViewFactoryFunc = (String, UIView) -> (MapView?)
 
 /**
+ * InitWaiter: simple waiters gets queued unitl the init happens
+ */
+class InitWaiter<Type> {
+  var object: Type? = nil;
+  typealias Callback = (_ t:Type) -> Void;
+  var waiters: [Callback] = []
+
+  /// if the object has value call immediately, otherwise queue
+  func callOrWait(_ callback: @escaping Callback) {
+    if let object = object {
+      callback(object)
+      assert(waiters.count == 0, "the object is inited but there are still waiters")
+    } else {
+      waiters.append(callback)
+    }
+  }
+  
+  func hasInited() -> Bool {
+    return object != nil
+  }
+  
+  /// call whan the object has inited, queued calls will be executed
+  func onInit(_ object: Type) {
+    self.object = object
+    let oldWaiters = waiters
+    waiters = []
+    oldWaiters.forEach { $0(object) }
+  }
+  
+  /// reset, calls will be queued again
+  func reset() {
+    self.object = nil
+  }
+}
+
+
+/**
  * Experimental MapView factory for advanced usecases
  */
 public class RNMBXMapViewFactory {
@@ -131,8 +168,8 @@ open class RNMBXMapView: UIView {
   @objc
   var onCameraChanged: RCTDirectEventBlock?
   
-  var styleLoaded: Bool = false
-  var styleLoadWaiters : [(MapboxMap)->Void] = []
+  var styleLoadWaiters = InitWaiter<MapboxMap>()
+  var cameraWaiters = InitWaiter<MapView>()
   
   var features: [FeatureEntry] = []
   
@@ -171,7 +208,7 @@ open class RNMBXMapView: UIView {
   }()
   
   var _mapView: MapView! = nil
-  func createMapView() {
+  func createMapView() -> MapView {
     if let mapViewImpl = mapViewImpl, let mapViewInstance = createAndAddMapViewImpl(mapViewImpl, self) {
       _mapView = mapViewInstance
     } else {
@@ -192,6 +229,7 @@ open class RNMBXMapView: UIView {
     _mapView.gestures.delegate = self
     setupEvents()
     afterMapViewAdded()
+    return _mapView
   }
 
   func createAndAddMapViewImpl(_ impl: String, _ view: RNMBXMapView) -> MapView? {
@@ -203,20 +241,23 @@ open class RNMBXMapView: UIView {
     }
   }
 
+  @available(*, deprecated, renamed: "withMapView", message: "mapView can be nil if the map initialization has not finished, use withMapView instead")
   public var mapView : MapView! {
     get { return _mapView }
   }
+  
+  @available(*, deprecated, renamed: "withMapboxMap", message: "mapboxMap can be nil if the map initialization has not finished, use withMapboxMap instead")
   var mapboxMap: MapboxMap! {
-    get { _mapView.mapboxMap }
+    get { _mapView?.mapboxMap }
   }
 
   @objc public func addToMap(_ subview: UIView) {
-    withMapView {
+    withMapView { mapView in
       if let mapComponent = subview as? RNMBXMapComponent {
-        let style = self.mapView.mapboxMap.style
+        let style = mapView.mapboxMap.style
         var addToMap = false
         if mapComponent.waitForStyleLoad() {
-          if (self.styleLoaded) {
+          if (self.styleLoadWaiters.hasInited()) {
             addToMap = true
           }
         } else {
@@ -303,7 +344,7 @@ open class RNMBXMapView: UIView {
   
   // MARK: - React Native properties
   let changes : PropertyChanges<RNMBXMapView> = PropertyChanges()
-  var mapViewWaiters : [()->Void] = []
+  var mapViewWaiters = InitWaiter<MapView>()
   
   enum Property : String {
     case projection
@@ -363,11 +404,17 @@ open class RNMBXMapView: UIView {
     changes.add(name: property.rawValue, update: property.apply)
   }
   
-  func withMapView(callback: @escaping () -> Void) {
-    if _mapView != nil {
-      callback()
+  func withMapView(callback: @escaping (_: MapView) -> Void) {
+    mapViewWaiters.callOrWait(callback)
+  }
+  
+  func withMapboxMap(callback: @escaping (_: MapboxMap) -> Void) {
+    if let mapboxMap = _mapView?.mapboxMap {
+      callback(mapboxMap)
     } else {
-      mapViewWaiters.append(callback)
+      mapViewWaiters.callOrWait { mapView in
+        callback(mapView.mapboxMap)
+      }
     }
   }
   
@@ -698,10 +745,9 @@ open class RNMBXMapView: UIView {
 
   @objc override public func didSetProps(_ props: [String]) {
     if (_mapView == nil) {
-      createMapView()
+      let view = createMapView()
       
-      mapViewWaiters.forEach { $0() }
-      mapViewWaiters.removeAll()
+      mapViewWaiters.onInit(view)
     }
     changes.apply(self)
   }
@@ -790,10 +836,11 @@ open class RNMBXMapView: UIView {
   }
   
   public func applyStyleURL() {
-    var initialLoad = !self.styleLoaded
+    var initialLoad = !self.styleLoadWaiters.hasInited()
     if !initialLoad { refreshComponentsBeforeStyleChange() }
-    self.styleLoaded = false
     if let value = reactStyleURL {
+      self.styleLoadWaiters.reset()
+
       if let _ = URL(string: value) {
           if let styleURI = StyleURI(rawValue: value) {
               mapView.mapboxMap.loadStyleURI(styleURI)
@@ -1045,13 +1092,8 @@ extension RNMBXMapView {
     self.onEvery(event: .styleLoaded, handler: { (self, event) in
       self.addFeaturesToMap(style: self.mapboxMap.style)
       
-      if !self.styleLoaded {
-        self.styleLoaded = true
-        if let mapboxMap = self.mapboxMap {
-          let waiters = self.styleLoadWaiters
-          self.styleLoadWaiters = []
-          waiters.forEach { $0(mapboxMap) }
-        }
+      if !self.styleLoadWaiters.hasInited(), let mapboxMap = self.mapboxMap {
+        self.styleLoadWaiters.onInit(mapboxMap)
       }
 
       let event = RNMBXEvent(type:.didFinishLoadingStyle, payload: nil)
@@ -1370,13 +1412,35 @@ extension RNMBXMapView {
       fatalError("mapboxMap is null")
     }
     
-    if styleLoaded {
-      block(mapboxMap)
-    } else {
-      styleLoadWaiters.append(block)
-    }
+    styleLoadWaiters.callOrWait(block)
   }
 }
+
+typealias LayerSourceDetails = (source: String?, sourceLayer: String?)
+
+#if RNMBX_11
+func getLayerSourceDetails(layer: (any Layer)?) -> LayerSourceDetails? {
+    if let circleLayer = layer as? CircleLayer {
+        return (circleLayer.source, circleLayer.sourceLayer)
+    } else if let fillExtrusionLayer = layer as? FillExtrusionLayer {
+        return (fillExtrusionLayer.source, fillExtrusionLayer.sourceLayer)
+    } else if let fillLayer = layer as? FillLayer {
+        return (fillLayer.source, fillLayer.sourceLayer)
+    } else if let heatmapLayer = layer as? HeatmapLayer {
+        return (heatmapLayer.source, heatmapLayer.sourceLayer)
+    } else if let hillshadeLayer = layer as? HillshadeLayer {
+        return (hillshadeLayer.source, hillshadeLayer.sourceLayer)
+    } else if let lineLayer = layer as? LineLayer {
+        return (lineLayer.source, lineLayer.sourceLayer)
+    } else if let rasterLayer = layer as? RasterLayer {
+        return (rasterLayer.source, rasterLayer.sourceLayer)
+    } else if let symbolLayer = layer as? SymbolLayer {
+        return (symbolLayer.source, symbolLayer.sourceLayer)
+    } else {
+        return nil
+    }
+}
+#endif
 
 extension RNMBXMapView {
   func setSourceVisibility(_ visible: Bool, sourceId: String, sourceLayerId: String?) -> Void {
@@ -1386,14 +1450,18 @@ extension RNMBXMapView {
       let layer = logged("setSourceVisibility.layer", info: { "\(layerInfo.id)" }) {
         try style.layer(withId: layerInfo.id)
       }
+
       #if RNMBX_11
-      // RNMBX_11_TODO
+        let sourceDetails = getLayerSourceDetails(layer: layer)
       #else
-      if let layer = layer {
-        if layer.source == sourceId {
+        let sourceDetails: LayerSourceDetails? = (source: layer?.source, sourceLayer: layer?.sourceLayer)
+      #endif
+
+      if let layer = layer, let sourceDetails = sourceDetails {
+        if sourceDetails.source == sourceId {
           var good = true
           if let sourceLayerId = sourceLayerId {
-            if sourceLayerId != layer.sourceLayer {
+            if sourceLayerId != sourceDetails.sourceLayer {
               good = false
             }
           }
@@ -1406,7 +1474,6 @@ extension RNMBXMapView {
           }
         }
       }
-      #endif
     }
   }
 }

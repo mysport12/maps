@@ -5,10 +5,12 @@ import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.uimanager.ThemedReactContext
 import com.facebook.react.uimanager.annotations.ReactProp
 import com.facebook.react.viewmanagers.RNMBXRasterSourceManagerInterface
+import com.rnmapbox.rnmbx.events.constants.EventKeys
+import com.rnmapbox.rnmbx.events.constants.eventMapOf
 import javax.annotation.Nonnull
 
 class RNMBXRasterSourceManager(reactApplicationContext: ReactApplicationContext) :
-    RNMBXTileSourceManager<RNMBXRasterSource?>(reactApplicationContext),
+    RNMBXTileSourceManager<RNMBXRasterSource>(reactApplicationContext),
     RNMBXRasterSourceManagerInterface<RNMBXRasterSource> {
     @Nonnull
     override fun getName(): String {
@@ -26,7 +28,10 @@ class RNMBXRasterSourceManager(reactApplicationContext: ReactApplicationContext)
     }
 
     override fun customEvents(): Map<String, String>? {
-        return null
+        return eventMapOf(
+            EventKeys.RASTER_SOURCE_LAYER_CLICK to "onMapboxRasterSourcePress",
+            EventKeys.MAP_ANDROID_CALLBACK to "onAndroidCallback"
+        )
     }
 
     companion object {
