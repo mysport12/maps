@@ -625,7 +625,7 @@ class RNMBXOfflineModule(private val mReactContext: ReactApplicationContext) :
             _makeRegionStatusPayload(name, progress, state, null)
         )
     }
-    
+
     private fun toJSONObjectSupportingLegacyMetadata(value: Value): JSONObject? {
         // see https://github.com/rnmapbox/maps/issues/2803
         try {

@@ -4,7 +4,6 @@
 @interface RCT_EXTERN_MODULE(RNMBXOfflineModule, RCTEventEmitter<RCTBridgeModule>)
 
 RCT_EXTERN_METHOD(getPacks:(RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
-
 RCT_EXTERN_METHOD(createPack:(NSDictionary *) options resolver: (RCTPromiseResolveBlock)resolve rejecter:(RCTPromiseRejectBlock)reject)
 
 RCT_EXTERN_METHOD(resumePackDownload:(NSString *)name

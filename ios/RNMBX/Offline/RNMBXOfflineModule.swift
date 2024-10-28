@@ -602,18 +602,6 @@ class RNMBXOfflineModule: RCTEventEmitter {
     self._sendEvent(Callbacks.error.rawValue, event: event)
   }
 }
-
-@available(*, deprecated)
-final class RegionObserver : OfflineRegionObserver {
-  weak var offlineModule : RNMBXOfflineModule? = nil
-  var packName : String = ""
-  
-  init(name: String, offlineModule: RNMBXOfflineModule) {
-    self.offlineModule = offlineModule
-    self.packName = name
-    
-  }  
-}
 // MARK: progress throttle
 
 extension RNMBXOfflineModule {
@@ -646,7 +634,6 @@ extension RNMBXOfflineModule {
      
     return false;
   }
-
 }
 
 extension TileRegionLoadProgress {

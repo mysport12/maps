@@ -151,13 +151,13 @@ class OfflineManagerLegacy {
    * The Mapbox Terms of Service prohibit changing or bypassing this limit without permission from Mapbox.
    *
    * @example
-   * MapboxGL.offlineManagerLegacy.setTileCountLimit(1000);
+   * await Mapbox.offlineManagerLegacy.setTileCountLimit(1000);
    *
    * @param {Number} limit Map tile limit count.
    * @return {void}
    */
-  setTileCountLimit(limit: number) {
-    MapboxOfflineManager.setTileCountLimit(limit);
+  async setTileCountLimit(limit: number) {
+    await MapboxOfflineManager.setTileCountLimit(limit);
   }
 
 
