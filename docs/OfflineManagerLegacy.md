@@ -133,4 +133,17 @@ const offlinePack = await Mapbox.offlineManagerLegacy.getPack();
 ```
 
 
+### setTileCountLimit(limit)
 
+Sets the maximum number of Mapbox-hosted tiles that may be downloaded and stored on the current device.<br/>The Mapbox Terms of Service prohibit changing or bypassing this limit without permission from Mapbox.
+
+#### arguments
+| Name | Type | Required | Description  |
+| ---- | :--: | :------: | :----------: |
+| `limit` | `Number` | `Yes` | Map tile limit count. |
+
+
+
+```javascript
+MapboxGL.offlineManagerLegacy.setTileCountLimit(1000);
+```

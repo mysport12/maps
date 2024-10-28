@@ -428,4 +428,11 @@ func getRegionByName(name: String, offlineRegions: [OfflineRegion]) -> OfflineRe
       reject("migrateOfflineCache error:", error.localizedDescription, error)
     }
   }
+
+  @objc
+  func setTileCountLimit(_ limit: NSNumber, 
+                  resolver: @escaping RCTPromiseResolveBlock,
+                  rejecter: @escaping RCTPromiseRejectBlock) {
+    self.offlineRegionManager.setOfflineMapboxTileCountLimitForLimit(limit.uint64Value)
+  }
 }

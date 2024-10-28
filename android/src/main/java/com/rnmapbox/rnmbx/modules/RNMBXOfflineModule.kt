@@ -25,10 +25,8 @@ import org.json.JSONObject
 import java.io.File
 import java.io.UnsupportedEncodingException
 import java.nio.file.Files
-import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
-import java.util.*
 import java.util.concurrent.CountDownLatch
 
 import com.rnmapbox.rnmbx.v11compat.offlinemanager.*
@@ -101,8 +99,6 @@ class RNMBXOfflineModule(private val mReactContext: ReactApplicationContext) :
     ReactContextBaseJavaModule(
         mReactContext
     ) {
-    private var offlineManagerLegacy: OfflineRegionManager? = null
-    private lateinit var offlineRegionLegacy: OfflineRegion
     var tileRegionPacks = HashMap<String, TileRegionPack>()
     private var mProgressEventThrottle = 300.0
 
@@ -121,14 +117,6 @@ class RNMBXOfflineModule(private val mReactContext: ReactApplicationContext) :
 
     override fun getName(): String {
         return REACT_CLASS
-    }
-
-    private fun getOfflineManagerLegacy(): OfflineRegionManager? {
-        if (offlineManagerLegacy == null) {
-            Log.d("OFFLINE DOWNLOAD", "Creating offline region manager instance")
-            offlineManagerLegacy = OfflineRegionManager(MapInitOptions.getDefaultResourceOptions(mReactContext))
-        }
-        return offlineManagerLegacy
     }
 
     @ReactMethod
@@ -172,86 +160,6 @@ class RNMBXOfflineModule(private val mReactContext: ReactApplicationContext) :
         } catch (e: Throwable) {
             promise.reject("createPack", e)
         }
-    }
-
-    @ReactMethod
-    fun createPackLegacy(options: ReadableMap, promise: Promise) {
-        val metadataStr = options.getString("metadata")
-        val name = ConvertUtils.getString("name", options, "")
-        val manager = getOfflineManagerLegacy()
-        val latLngBounds = getBoundsFromOptions(options)
-        val definition = OfflineRegionTilePyramidDefinition.Builder()
-            .bounds(latLngBounds.toBounds())
-            .glyphsRasterizationMode(GlyphsRasterizationMode.IDEOGRAPHS_RASTERIZED_LOCALLY)
-            .styleURL((options.getString("styleURL"))!!)
-            .minZoom(options.getInt("minZoom").toDouble())
-            .maxZoom(options.getInt("maxZoom").toDouble())
-            .pixelRatio(mReactContext.resources.displayMetrics.scaledDensity)
-            .build()
-        promise.resolve(fromOfflineRegion(latLngBounds, metadataStr))
-        UiThreadUtil.runOnUiThread(object: Runnable {
-            override fun run() {
-                manager!!.createOfflineRegion(definition) { expected ->
-                    if (expected.isValue) {
-                        expected.value?.let {
-                            offlineRegionLegacy = it
-                            offlineRegionLegacy.setMetadata(getMetadataBytes(metadataStr!!)!!) {
-                                if (it.isValue) {
-                                    Log.d("Offline", "Metadata added to region")
-                                } else {
-                                    Log.d("Offline", "Could not set metadata on region")
-                                }
-                            }
-                            offlineRegionLegacy.setOfflineRegionObserver(object : OfflineRegionObserver {
-                                var prevStatus: OfflineRegionStatus? = null
-                                var timestamp: Long = System.currentTimeMillis()
-                                private fun shouldSendUpdate(
-                                    currentTimestamp: Long,
-                                    curStatus: OfflineRegionStatus
-                                ): Boolean {
-                                    if (prevStatus?.downloadState != curStatus.downloadState) {
-                                        return true
-                                    }
-                                    if (currentTimestamp - timestamp > mProgressEventThrottle) {
-                                        return true
-                                    }
-                                    return false
-                                }
-                                override fun mapboxTileCountLimitExceeded(limit: Long) {
-                                    val message = String.format(Locale.getDefault(),"Mapbox tile limit exceeded %d", limit)
-                                    sendEvent(makeErrorEvent(name, EventTypes.OFFLINE_TILE_LIMIT, message))
-                                }
-                                override fun statusChanged(status: OfflineRegionStatus) {
-                                    val update = shouldSendUpdate(System.currentTimeMillis(), status)
-                                    if (update) {
-                                        sendEvent(makeStatusEventLegacy(name, status))
-                                        timestamp = System.currentTimeMillis()
-                                    }
-                                    prevStatus = status
-                                }
-                                override fun responseError(error: ResponseError) {
-                                    offlineRegionLegacy.setOfflineRegionDownloadState(
-                                        OfflineRegionDownloadState.INACTIVE
-                                    )
-                                    sendEvent(
-                                        makeErrorEvent(
-                                            name,
-                                            EventTypes.OFFLINE_ERROR,
-                                            error.message
-                                        )
-                                    )
-                                }
-                            })
-                            offlineRegionLegacy.setOfflineRegionDownloadState(OfflineRegionDownloadState.ACTIVE)
-                        }
-                    } else {
-                        sendEvent(
-                            makeErrorEvent(name, EventTypes.OFFLINE_ERROR, expected.error!!)
-                        )
-                    }
-                }
-            }
-        })
     }
 
     @ReactMethod
@@ -716,178 +624,6 @@ class RNMBXOfflineModule(private val mReactContext: ReactApplicationContext) :
             EventTypes.OFFLINE_STATUS,
             _makeRegionStatusPayload(name, progress, state, null)
         )
-    }
-
-    private fun convertLegacyRegionsToJSON(regions: List<OfflineRegion>, promise: Promise) {
-        try {
-            val result = Arguments.createArray()
-            for (region: OfflineRegion in regions) {
-                val bounds = region.tilePyramidDefinition!!.bounds
-                val metadata = String(region.metadata)
-                val map = Arguments.createMap()
-                map.putArray("bounds", GeoJSONUtils.fromCoordinateBounds(bounds))
-                map.putMap("metadata", convertJsonToMap(JSONObject(metadata)))
-                result.pushMap(map)
-            }
-            promise.resolve(result)
-        } catch (interruptedException: InterruptedException) {
-            promise.reject(interruptedException)
-        }
-    }
-
-    @ReactMethod
-    fun deletePackLegacy(name: String, promise: Promise) {
-        UiThreadUtil.runOnUiThread(object: Runnable {
-            override fun run() {
-                val legacyManger = getOfflineManagerLegacy()
-                legacyManger!!.getOfflineRegions { expected ->
-                    if (expected.isValue) {
-                        expected.value?.let { regions ->
-                            var downloadedRegionExists = false
-                            for (region in regions) {
-                                val regionName = JSONObject(String(region.metadata)).getString("name")
-                                if (regionName == name) {
-                                    downloadedRegionExists = true
-                                    region.purge { promise.resolve(null) }
-                                }
-                            }
-                            if (!downloadedRegionExists) {
-                                promise.resolve(null)
-                            }
-                        }
-                    } else {
-                        promise.reject("deletePackLegacy", expected.error!!)
-                    }
-                }
-            }
-        })
-    }
-
-    @ReactMethod
-    fun getPacksLegacy(promise: Promise) {
-        UiThreadUtil.runOnUiThread(object: Runnable {
-            override fun run() {
-                try {
-                    val legacyManger = getOfflineManagerLegacy()
-                    legacyManger!!.getOfflineRegions { regions ->
-                        if (regions.isValue) {
-                            convertLegacyRegionsToJSON((regions.value)!!, promise)
-                        } else {
-                            Log.d("OFFLINE DOWNLOAD", "regions is an error")
-    //                            promise.reject("getPacksLegacy", regions.error!!)
-                        }
-                    }
-                } catch (e: Exception){
-                    e.message?.let { Log.d("OFFLINE DOWNLOAD", it) }
-                }
-            }
-        })
-    }
-
-    @ReactMethod
-    fun setTileCountLimitLegacy(tileCountLimit: Int) {
-        val offlineManagerLegacy = getOfflineManagerLegacy()
-        offlineManagerLegacy!!.setOfflineMapboxTileCountLimit(tileCountLimit.toLong())
-    }
-
-    private fun makeStatusEventLegacy(
-            regionName: String,
-            status: OfflineRegionStatus
-        ): OfflineEvent {
-            return OfflineEvent(
-                OFFLINE_PROGRESS,
-                EventTypes.OFFLINE_STATUS,
-                makeRegionStatusLegacy(regionName, status)
-            )
-        }
-
-    private fun makeRegionStatusLegacy(
-        regionName: String,
-        status: OfflineRegionStatus
-    ): WritableMap {
-        val map = Arguments.createMap()
-        val offlineDownloadState = status.downloadState
-        var downloadState = 0
-        val progressPercentage =
-            (status.completedResourceCount.toDouble() * 100.0) / (status.requiredResourceCount.toDouble())
-        if (progressPercentage == 100.0) {
-            downloadState = 0
-        } else if (offlineDownloadState == OfflineRegionDownloadState.ACTIVE) {
-            downloadState = 1
-        }
-        map.putString("name", regionName)
-        map.putInt("state", downloadState)
-        map.putDouble("percentage", progressPercentage)
-        map.putInt("completedResourceCount", status.completedResourceCount.toInt())
-        map.putInt("completedResourceSize", status.completedResourceSize.toInt())
-        map.putInt("completedTileCount", status.completedTileCount.toInt())
-        map.putInt("completedTileSize", status.completedTileSize.toInt())
-        map.putInt("requiredResourceCount", status.requiredResourceCount.toInt())
-        Log.d("OFFLINE DOWNLOAD", map.toString())
-        return map
-    }
-
-    private fun getBoundsFromOptions(options: ReadableMap): LatLngBounds {
-        val featureCollectionJSONStr = ConvertUtils.getString("bounds", options, "{}")
-        val featureCollection = FeatureCollection.fromJson(featureCollectionJSONStr)
-        return GeoJSONUtils.toLatLngBounds(featureCollection)
-    }
-
-    private fun fromOfflineRegion(bounds: LatLngBounds, metadataStr: String?): WritableMap {
-        val map = Arguments.createMap()
-        map.putArray("bounds", GeoJSONUtils.fromLatLngBounds(bounds))
-        map.putString("metadata", metadataStr)
-        return map
-    }
-
-    @Throws(JSONException::class)
-    private fun convertJsonToMap(jsonObject: JSONObject): WritableMap? {
-        val map: WritableMap = WritableNativeMap()
-        val iterator = jsonObject.keys()
-        while (iterator.hasNext()) {
-            val key = iterator.next()
-            val value = jsonObject[key]
-            if (value is JSONObject) {
-                map.putMap(key, convertJsonToMap(value))
-            } else if (value is JSONArray) {
-                map.putArray(key, convertJsonToArray(value))
-            } else if (value is Boolean) {
-                map.putBoolean(key, value)
-            } else if (value is Int) {
-                map.putInt(key, value)
-            } else if (value is Double) {
-                map.putDouble(key, value)
-            } else if (value is String) {
-                map.putString(key, value)
-            } else {
-                map.putString(key, value.toString())
-            }
-        }
-        return map
-    }
-
-    @Throws(JSONException::class)
-    private fun convertJsonToArray(jsonArray: JSONArray): WritableArray? {
-        val array: WritableArray = WritableNativeArray()
-        for (i in 0 until jsonArray.length()) {
-            val value = jsonArray[i]
-            if (value is JSONObject) {
-                array.pushMap(convertJsonToMap(value))
-            } else if (value is JSONArray) {
-                array.pushArray(convertJsonToArray(value))
-            } else if (value is Boolean) {
-                array.pushBoolean(value)
-            } else if (value is Int) {
-                array.pushInt(value)
-            } else if (value is Double) {
-                array.pushDouble(value)
-            } else if (value is String) {
-                array.pushString(value)
-            } else {
-                array.pushString(value.toString())
-            }
-        }
-        return array
     }
     
     private fun toJSONObjectSupportingLegacyMetadata(value: Value): JSONObject? {

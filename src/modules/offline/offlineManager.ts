@@ -123,40 +123,6 @@ class OfflineManager {
   }
 
   /**
-   * Legacy Download Method - Creates and registers an offline pack that downloads the resources needed to use the given region offline.
-   *
-   * @example
-   *
-   * const progressListener = (offlineRegion, status) => console.log(offlineRegion, status);
-   * const errorListener = (offlineRegion, err) => console.log(offlineRegion, err);
-   *
-   * await MapboxGL.offlineManager.createPackLegacy({
-   *   name: 'offlinePack',
-   *   styleURL: 'mapbox://...',
-   *   minZoom: 14,
-   *   maxZoom: 20,
-   *   bounds: [[neLng, neLat], [swLng, swLat]]
-   * }, progressListener, errorListener)
-   *
-   * @param  {OfflineCreatePackOptions} options Create options for a offline pack that specifices zoom levels, style url, and the region to download.
-   * @param  {Callback=} progressListener Callback that listens for status events while downloading the offline resource.
-   * @param  {Callback=} errorListener Callback that listens for status events while downloading the offline resource.
-   * @return {void}
-   */
-  async createPackLegacy(
-    options: OfflineCreatePackOptionsArgs,
-    progressListener: ProgressListener,
-    errorListener: ErrorListener,
-  ) {
-    const packOptions = new OfflineCreatePackOptions(options);
-    this.subscribe(packOptions.name, progressListener, errorListener);
-    const nativeOfflinePack = await MapboxOfflineManager.createPackLegacy(
-      packOptions,
-    );
-    this._offlinePacks[packOptions.name] = new OfflinePack(nativeOfflinePack);
-  }
-
-  /**
    * Invalidates the specified offline pack. This method checks that the tiles in the specified offline pack match those from the server. Local tiles that do not match the latest version on the server are updated.
    *
    * This is more efficient than deleting the offline pack and downloading it again. If the data stored locally matches that on the server, new data will not be downloaded.
@@ -201,22 +167,6 @@ class OfflineManager {
       await MapboxOfflineManager.deletePack(name);
       delete this._offlinePacks[name];
     }
-  }
-
-  /**
-   * Unregisters the given offline pack and allows resources that are no longer required by any remaining packs to be potentially freed.
-   *
-   * @example
-   * await MapboxGL.offlineManager.deletePackLegacy('packName')
-   *
-   * @param  {String}  name  Name of the offline pack.
-   * @return {void}
-   */
-  async deletePackLegacy(name?: string) {
-    if (!name) {
-      return;
-    }
-    await MapboxOfflineManager.deletePackLegacy(name);
   }
 
   /**
@@ -320,25 +270,6 @@ class OfflineManager {
   }
 
   /**
-   * Retrieves all the current offline legacy packs that are stored in the database.
-   *
-   * @example
-   * const offlinePacks = await MapboxGL.offlineManager.getPacksLegacy();
-   *
-   * @return {Array<OfflinePack>}
-   */
-  async getPacksLegacy() {
-    const packs = await MapboxOfflineManager.getPacksLegacy();
-    return Object.keys(packs).map((name) => ({
-      ...packs[name],
-      metadata:
-        typeof packs[name].metadata === 'string'
-          ? JSON.parse(packs[name].metadata)
-          : packs[name].metadata,
-    }));
-  }
-
-  /**
    * Retrieves an offline pack that is stored in the database by name.
    *
    * @example
@@ -378,20 +309,6 @@ class OfflineManager {
    */
   setTileCountLimit(limit: number): void {
     MapboxOfflineManager.setTileCountLimit(limit);
-  }
-
-  /**
-   * Legacy Download Method - Sets the maximum number of Mapbox-hosted tiles that may be downloaded and stored on the current device.
-   * The Mapbox Terms of Service prohibit changing or bypassing this limit without permission from Mapbox.
-   *
-   * @example
-   * MapboxGL.offlineManager.setTileCountLimitLegacy(1000);
-   *
-   * @param {Number} limit Map tile limit count.
-   * @return {void}
-   */
-  setTileCountLimitLegacy(limit: number) {
-    MapboxOfflineManager.setTileCountLimitLegacy(limit);
   }
 
   /**

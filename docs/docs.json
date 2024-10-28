@@ -8012,45 +8012,6 @@
         }
       },
       {
-        "name": "createPackLegacy",
-        "description": "Legacy Download Method - Creates and registers an offline pack that downloads the resources needed to use the given region offline.",
-        "params": [
-          {
-            "name": "options",
-            "description": "Create options for a offline pack that specifices zoom levels, style url, and the region to download.",
-            "type": {
-              "name": "OfflineCreatePackOptions"
-            },
-            "optional": false
-          },
-          {
-            "name": "progressListener",
-            "description": "Callback that listens for status events while downloading the offline resource.",
-            "type": {
-              "name": "Callback"
-            },
-            "optional": true
-          },
-          {
-            "name": "errorListener",
-            "description": "Callback that listens for status events while downloading the offline resource.",
-            "type": {
-              "name": "Callback"
-            },
-            "optional": true
-          }
-        ],
-        "examples": [
-          "const progressListener = (offlineRegion, status) => console.log(offlineRegion, status);\nconst errorListener = (offlineRegion, err) => console.log(offlineRegion, err);\n\nawait MapboxGL.offlineManager.createPackLegacy({\n  name: 'offlinePack',\n  styleURL: 'mapbox://...',\n  minZoom: 14,\n  maxZoom: 20,\n  bounds: [[neLng, neLat], [swLng, swLat]]\n}, progressListener, errorListener)"
-        ],
-        "returns": {
-          "description": "",
-          "type": {
-            "name": "void"
-          }
-        }
-      },
-      {
         "name": "invalidatePack",
         "description": "Invalidates the specified offline pack. This method checks that the tiles in the specified offline pack match those from the server. Local tiles that do not match the latest version on the server are updated.This is more efficient than deleting the offline pack and downloading it again. If the data stored locally matches that on the server, new data will not be downloaded.",
         "params": [
@@ -8088,29 +8049,6 @@
         ],
         "examples": [
           "await Mapbox.offlineManager.deletePack('packName')"
-        ],
-        "returns": {
-          "description": "",
-          "type": {
-            "name": "void"
-          }
-        }
-      },
-      {
-        "name": "deletePackLegacy",
-        "description": "Unregisters the given offline pack and allows resources that are no longer required by any remaining packs to be potentially freed.",
-        "params": [
-          {
-            "name": "name",
-            "description": "Name of the offline pack.",
-            "type": {
-              "name": "String"
-            },
-            "optional": false
-          }
-        ],
-        "examples": [
-          "await MapboxGL.offlineManager.deletePackLegacy('packName')"
         ],
         "returns": {
           "description": "",
@@ -8213,20 +8151,6 @@
         }
       },
       {
-        "name": "getPacksLegacy",
-        "description": "Retrieves all the current offline legacy packs that are stored in the database.",
-        "params": [],
-        "examples": [
-          "const offlinePacks = await MapboxGL.offlineManager.getPacksLegacy();"
-        ],
-        "returns": {
-          "description": "",
-          "type": {
-            "name": "Array"
-          }
-        }
-      },
-      {
         "name": "getPack",
         "description": "Retrieves an offline pack that is stored in the database by name.",
         "params": [
@@ -8287,29 +8211,6 @@
         ],
         "examples": [
           "Mapbox.offlineManager.setTileCountLimit(1000);"
-        ],
-        "returns": {
-          "description": "",
-          "type": {
-            "name": "void"
-          }
-        }
-      },
-      {
-        "name": "setTileCountLimitLegacy",
-        "description": "Legacy Download Method - Sets the maximum number of Mapbox-hosted tiles that may be downloaded and stored on the current device.\nThe Mapbox Terms of Service prohibit changing or bypassing this limit without permission from Mapbox.",
-        "params": [
-          {
-            "name": "limit",
-            "description": "Map tile limit count.",
-            "type": {
-              "name": "Number"
-            },
-            "optional": false
-          }
-        ],
-        "examples": [
-          "MapboxGL.offlineManager.setTileCountLimitLegacy(1000);"
         ],
         "returns": {
           "description": "",
@@ -8486,9 +8387,7 @@
         "name": "migrateOfflineCache",
         "description": "Migrates the offline cache from pre-v10 SDKs to the new v10 cache location",
         "params": [],
-        "examples": [
-          "await Mapbox.offlineManager.migrateOfflineCache()"
-        ],
+        "examples": ["await Mapbox.offlineManager.migrateOfflineCache()"],
         "returns": {
           "description": "",
           "type": {
@@ -8500,9 +8399,7 @@
         "name": "resetDatabase",
         "description": "Deletes the existing database, which includes both the ambient cache and offline packs, then reinitializes it.",
         "params": [],
-        "examples": [
-          "await Mapbox.offlineManager.resetDatabase();"
-        ],
+        "examples": ["await Mapbox.offlineManager.resetDatabase();"],
         "returns": {
           "description": "",
           "type": {
@@ -8544,6 +8441,27 @@
           "description": "",
           "type": {
             "name": "OfflinePack"
+          }
+        }
+      },
+      {
+        "name": "setTileCountLimit",
+        "description": "Sets the maximum number of Mapbox-hosted tiles that may be downloaded and stored on the current device.\nThe Mapbox Terms of Service prohibit changing or bypassing this limit without permission from Mapbox.",
+        "params": [
+          {
+            "name": "limit",
+            "description": "Map tile limit count.",
+            "type": {
+              "name": "Number"
+            },
+            "optional": false
+          }
+        ],
+        "examples": ["MapboxGL.offlineManagerLegacy.setTileCountLimit(1000);"],
+        "returns": {
+          "description": "",
+          "type": {
+            "name": "void"
           }
         }
       }

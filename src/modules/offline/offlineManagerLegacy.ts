@@ -147,6 +147,21 @@ class OfflineManagerLegacy {
   }
 
   /**
+   * Sets the maximum number of Mapbox-hosted tiles that may be downloaded and stored on the current device.
+   * The Mapbox Terms of Service prohibit changing or bypassing this limit without permission from Mapbox.
+   *
+   * @example
+   * MapboxGL.offlineManagerLegacy.setTileCountLimit(1000);
+   *
+   * @param {Number} limit Map tile limit count.
+   * @return {void}
+   */
+  setTileCountLimit(limit: number) {
+    MapboxOfflineManager.setTileCountLimit(limit);
+  }
+
+
+  /**
    * Retrieves an offline pack that is stored in the database by name.
    *
    * @example

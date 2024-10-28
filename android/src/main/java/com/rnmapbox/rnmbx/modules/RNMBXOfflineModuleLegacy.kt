@@ -211,6 +211,11 @@ class RNMBXOfflineModuleLegacy(private val mReactContext: ReactApplicationContex
     }
 
     @ReactMethod
+    fun setTileCountLimit(tileCountLimit: Int) {
+        offlineRegionManager.setOfflineMapboxTileCountLimit(tileCountLimit.toLong())
+    }
+
+    @ReactMethod
     fun getPacks(promise: Promise) {
         UiThreadUtil.runOnUiThread {
             offlineRegionManager.getOfflineRegions(object: OfflineRegionCallback {

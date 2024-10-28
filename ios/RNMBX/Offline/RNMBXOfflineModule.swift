@@ -1,6 +1,5 @@
 import Foundation
 import MapboxMaps
-import UIKit
 
 extension Date {
   func toJSONString() -> String {
@@ -17,8 +16,6 @@ extension Date {
 @objc(RNMBXOfflineModule)
 class RNMBXOfflineModule: RCTEventEmitter {
   var hasListeners = false
-  var legacyPackTimestamp : Double = 0.0
-  var legacyPackState : Int = -1
   
   static let RNMapboxInfoMetadataKey = "_rnmapbox"
 
@@ -50,11 +47,6 @@ class RNMBXOfflineModule: RCTEventEmitter {
     return OfflineRegionManager(resourceOptions: .init(accessToken: RNMBXModule.accessToken!))
     #endif
   }()
-
-  lazy var offlineManagerLegacy : OfflineRegionManager = {
-    return OfflineRegionManager(resourceOptions: ResourceOptionsManager.default.resourceOptions)
-  }()
-  var offlineRegionLegacy: OfflineRegion!
 
   lazy var tileStore : TileStore = {
     return TileStore.default
@@ -609,151 +601,6 @@ class RNMBXOfflineModule: RCTEventEmitter {
     let event = RNMBXEvent(type: .offlineError, payload: ["name": name, "message": error.localizedDescription])
     self._sendEvent(Callbacks.error.rawValue, event: event)
   }
-
-  // Legacy Methods
-
-  @objc
-  func createPackLegacy(_ options: NSDictionary, resolver: @escaping RCTPromiseResolveBlock, rejecter: @escaping RCTPromiseRejectBlock) {
-      do {
-        let metadataStr = options["metadata"] as! String
-        let metadata = try JSONSerialization.jsonObject(with: metadataStr.data(using: .utf8)!, options: []) as! [String:Any]
-        let id = metadata["name"] as! String
-        let boundsStr = options["bounds"] as! String
-        let boundsData = boundsStr.data(using: .utf8)
-        let boundsFC = try JSONDecoder().decode(FeatureCollection.self, from: boundsData!)
-        var geometry = RNMBXFeatureUtils.fcToGeomtry(boundsFC)
-        guard case .geometryCollection(let gc) = geometry else {
-          return
-        }
-        let geometries = gc.geometries
-        guard geometries.count == 2 else {
-          return
-        }
-        guard case .point(let g0) = geometries[0] else {
-          return
-        }
-        guard case .point(let g1) = geometries[1] else {
-          return
-        }
-        let regionOptions = OfflineRegionTilePyramidDefinition(
-          styleURL: options["styleURL"] as! String,
-          bounds: CoordinateBounds(southwest: g1.coordinates, northeast: g0.coordinates, infiniteBounds: false),
-          minZoom: options["minZoom"] as! Double,
-          maxZoom: options["maxZoom"] as! Double,
-          pixelRatio: Float(UIScreen.main.scale),
-          glyphsRasterizationMode: .ideographsRasterizedLocally
-        )
-        DispatchQueue.main.async {
-          self.offlineManagerLegacy.createOfflineRegion(for: regionOptions) { result in
-            let region = try? result.get()
-            self.offlineRegionLegacy = region
-            self.offlineRegionLegacy.setMetadata(metadataStr.data(using: .utf8)!) { result in }
-            self.offlineRegionLegacy.setOfflineRegionObserverFor(RegionObserver(name: id, offlineModule: self))
-            self.offlineRegionLegacy.setOfflineRegionDownloadStateFor(.active)
-          }
-          resolver([
-            "bounds": boundsStr,
-            "metadata": String(data:try! JSONSerialization.data(withJSONObject: metadata, options: [.prettyPrinted]), encoding: .utf8)
-          ])
-        }
-      } catch {
-        print("error", error)
-        rejecter("createPack", error.localizedDescription, error)
-      }
-  }
-
-  func _makeRegionStatusPayloadLegacy(pack: TileRegionPack) -> [String:Any?] {
-    return _makeRegionStatusPayload(pack.name, progress: pack.progress, state: pack.state, metadata: pack.metadata)
-  }
-  
-  func makeProgressEventLegacy(_ name: String, status: OfflineRegionStatus) -> RNMBXEvent {
-    let progressPercentage = status.requiredResourceCount == 0 ? 0 : Float(status.completedResourceCount) / Float(status.requiredResourceCount)
-    var payload: Dictionary<String, Any> = [:]
-    payload["state"] = status.downloadState.rawValue
-    payload["name"] = name
-    payload["percentage"] = progressPercentage * 100.0
-    payload["completedResourceCount"] = status.completedResourceCount
-    payload["completedResourceSize"] = status.completedResourceSize
-    payload["completedTileSize"] = status.completedTileSize
-    payload["completedTileCount"] = status.completedTileCount
-    payload["requiredResourceCount"] = status.requiredResourceCount
-    return RNMBXEvent(type: .offlineProgress, payload: payload)
-  }
-  
-  func offlinePackProgressDidChangeLegacy(name: String, status: OfflineRegionStatus) {
-    if self.shouldSendProgressEventLegacy(currentState: status.downloadState.rawValue) {
-      let event = makeProgressEventLegacy(name, status: status )
-      self._sendEvent(Callbacks.progress.rawValue, event: event)
-      self.legacyPackState = status.downloadState.rawValue
-      self.legacyPackTimestamp = CACurrentMediaTime() * 1000
-    }
-  }
-  
-  func offlinePackDidReceiveErrorLegacy(name: String, error: ResponseError) {
-    let event = RNMBXEvent(type: .offlineError, payload: ["name": name, "message": error.message])
-    self._sendEvent(Callbacks.error.rawValue, event: event)
-  }
-  
-  func offlinePackDidExceedTileLimitLegacy(name: String, limit: UInt64) {
-    let event = RNMBXEvent(type: .offlineTileLimit, payload: ["name": name, "message": "Exceeded the Mapbox tile limit of \(limit)."])
-    self._sendEvent(Callbacks.error.rawValue, event: event)
-  }
-  
-  @objc
-  func setTileCountLimitLegacy(_ limit: NSNumber) {
-    self.offlineManagerLegacy.setOfflineMapboxTileCountLimitForLimit(limit.uint64Value)
-  }
-    
-  @objc
-  func getPacksLegacy(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock)
-  {
-    DispatchQueue.main.async {
-      self.offlineManagerLegacy.offlineRegions { result in
-        switch result {
-        case .success(let regions):
-            resolve(regions.map { (region) -> [String:Any] in
-              var ret : [String : Any] = [:]
-              let metadata = region.getMetadata()
-              let bounds = region.getTilePyramidDefinition()?.bounds
-              ret["bounds"] = bounds?.toArray()
-              do {
-                ret["metadata"] = try JSONSerialization.jsonObject(with: region.getMetadata(), options: []) as! [String:Any]
-              } catch {
-                ret["metadata"] = [:]
-              }
-              return ret
-            })
-        case .failure(let error):
-          reject("getPacksLegacy", error.localizedDescription, error)
-        }
-      }
-    }
-  }
-  
-  @objc
-  func deletePackLegacy(_ name: String, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock)
-  {
-    DispatchQueue.main.async {
-        self.offlineManagerLegacy.offlineRegions { result in
-          switch result {
-          case .success(let regions):
-            do {
-              for region in regions {
-                let metadata = try JSONSerialization.jsonObject(with: region.getMetadata(), options: []) as! [String:Any]
-                if (metadata["name"] as! String == name) {
-                  region.purge { expected in }
-                }
-              }
-              resolve(nil)
-            } catch {
-              reject("deletePackLegacy", error.localizedDescription, error)
-            }
-          case .failure(let error):
-            reject("deletePackLegacy", error.localizedDescription, error)
-          }
-        }
-    }
-  }
 }
 
 @available(*, deprecated)
@@ -765,20 +612,7 @@ final class RegionObserver : OfflineRegionObserver {
     self.offlineModule = offlineModule
     self.packName = name
     
-  }
-  
-  func statusChanged(for status: OfflineRegionStatus) {
-    offlineModule?.offlinePackProgressDidChangeLegacy(name: packName, status: status)
-  }
-  
-  func responseError(forError error: ResponseError) {
-    print("error \(error)")
-    offlineModule?.offlinePackDidReceiveErrorLegacy(name: packName, error: error)
-  }
-  
-  func mapboxTileCountLimitExceeded(forLimit limit: UInt64) {
-    offlineModule?.offlinePackDidExceedTileLimitLegacy(name: packName, limit: limit)
-  }
+  }  
 }
 // MARK: progress throttle
 
@@ -813,21 +647,6 @@ extension RNMBXOfflineModule {
     return false;
   }
 
-  func shouldSendProgressEventLegacy(currentState : Int) -> Bool {
-    if (self.legacyPackState == -1) {
-            return true;
-        }
-        
-        if (self.legacyPackState != currentState) {
-            return true;
-        }
-        
-    if ((CACurrentMediaTime() * 1000) - self.legacyPackTimestamp > self.progressEventThrottle.waitBetweenEvents ?? 500) {
-            return true;
-        }
-        
-        return false;
-  }
 }
 
 extension TileRegionLoadProgress {
